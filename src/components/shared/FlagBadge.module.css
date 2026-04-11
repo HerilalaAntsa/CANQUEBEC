@@ -1,0 +1,28 @@
+/* FlagBadge.module.css */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.flag {
+  font-size: 1.2em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge.sm .flag { font-size: 1em; }
+.badge.sm .name { font-size: var(--text-sm); }
+
+.badge.lg .flag { font-size: 1.5em; }
+.badge.lg .name { font-size: var(--text-lg); font-family: var(--font-display); }
+
+.badge.xl .flag { font-size: 2em; }
+.badge.xl .name { font-size: var(--text-2xl); font-family: var(--font-display); font-weight: 700; }

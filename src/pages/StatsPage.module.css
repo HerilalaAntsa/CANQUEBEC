@@ -1,0 +1,51 @@
+/* StatsPage.module.css */
+.page { padding: var(--space-6) 0; }
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  margin-bottom: var(--space-8);
+}
+
+/* Placeholder "à venir" */
+.soon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.soonIcon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.soonTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.soonText {
+  color: var(--color-text-muted);
+  max-width: 400px;
+  line-height: 1.7;
+}
+
+.soonDate {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  background: rgba(249, 168, 37, 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(249, 168, 37, 0.3);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
