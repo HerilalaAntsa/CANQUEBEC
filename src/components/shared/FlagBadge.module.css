@@ -5,6 +5,9 @@
   gap: var(--space-2);
   font-weight: 600;
   white-space: nowrap;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .flag {
@@ -16,6 +19,8 @@
 .name {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .badge.sm .flag { font-size: 1em; }

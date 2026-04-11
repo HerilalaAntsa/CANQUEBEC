@@ -39,7 +39,7 @@
 
 .legend {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
   flex-wrap: wrap;
 }
@@ -60,7 +60,17 @@
 }
 
 .tableWrap {
-  /* Top 4 rows surlignées */
+  /* Colonnes BP / BC masquées sur mobile */
+}
+
+/* Masquer colonnes BP et BC sur mobile (colonnes 6 et 7) */
+@media (max-width: 599px) {
+  .tableWrap :global(th:nth-child(7)),
+  .tableWrap :global(td:nth-child(7)),
+  .tableWrap :global(th:nth-child(8)),
+  .tableWrap :global(td:nth-child(8)) {
+    display: none;
+  }
 }
 
 /* 1er — qualifié direct */

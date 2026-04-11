@@ -5,33 +5,59 @@
 .hero {
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
   margin-bottom: var(--space-8);
-  padding: var(--space-6);
+  padding: var(--space-4);
   background: linear-gradient(135deg, var(--color-primary) 0%, #0d1117 100%);
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-primary-light);
 }
 
+@media (min-width: 480px) {
+  .hero {
+    padding: var(--space-6);
+    gap: var(--space-5);
+  }
+}
+
 .heroLogo {
-  width: 72px;
-  height: 72px;
+  width: 52px;
+  height: 52px;
   object-fit: contain;
   border-radius: var(--radius);
   flex-shrink: 0;
 }
 
+@media (min-width: 480px) {
+  .heroLogo {
+    width: 72px;
+    height: 72px;
+  }
+}
+
 .heroTitle {
   font-family: var(--font-display);
-  font-size: var(--text-2xl);
+  font-size: var(--text-xl);
   font-weight: 700;
   margin-bottom: var(--space-1);
   line-height: 1.1;
 }
 
+@media (min-width: 480px) {
+  .heroTitle {
+    font-size: var(--text-2xl);
+  }
+}
+
 .heroSub {
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   color: var(--color-text-muted);
+}
+
+@media (min-width: 480px) {
+  .heroSub {
+    font-size: var(--text-sm);
+  }
 }
 
 /* Grid des widgets */

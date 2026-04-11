@@ -7,19 +7,27 @@
   font-family: var(--font-display);
   font-weight: 700;
   border-radius: var(--radius);
-  min-width: 72px;
-  padding: var(--space-1) var(--space-3);
+  min-width: 60px;
+  padding: var(--space-1) var(--space-2);
+  flex-shrink: 0;
 }
 
 .badge.md {
   font-size: var(--text-lg);
-  min-width: 80px;
-  padding: var(--space-2) var(--space-3);
+  min-width: 68px;
+  padding: var(--space-2) var(--space-2);
+}
+
+@media (min-width: 400px) {
+  .badge.md {
+    min-width: 80px;
+    padding: var(--space-2) var(--space-3);
+  }
 }
 
 .badge.sm {
   font-size: var(--text-base);
-  min-width: 60px;
+  min-width: 52px;
 }
 
 .badge.lg {

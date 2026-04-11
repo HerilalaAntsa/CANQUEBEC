@@ -36,6 +36,14 @@
   color: var(--color-text);
   letter-spacing: 0.04em;
   line-height: 1;
+  /* Masqué sur très petits écrans */
+  display: none;
+}
+
+@media (min-width: 380px) {
+  .logoText {
+    display: block;
+  }
 }
 
 .logoSub {
@@ -51,6 +59,7 @@
   flex: 1;
   max-width: 360px;
   margin-left: auto;
+  min-width: 0;
 }
 
 /* Desktop nav */

@@ -1,9 +1,16 @@
 /* CalendrierFilters.module.css */
 .bar {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
   margin-bottom: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
 
 .select {
@@ -17,6 +24,13 @@
   cursor: pointer;
   transition: border-color var(--transition);
   appearance: auto;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .select {
+    width: auto;
+  }
 }
 
 .select:focus {
@@ -34,6 +48,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition);
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 640px) {
+  .reset {
+    width: auto;
+    grid-column: unset;
+  }
 }
 
 .reset:hover {
