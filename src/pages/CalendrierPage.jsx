@@ -82,7 +82,7 @@ export default function CalendrierPage() {
             {byRound.length > 0 && (
               <section className={styles.phaseFinale}>
                 <div className={styles.phaseHeader}>
-                  <h2 className={styles.phaseTitle}>🏆 Phase finale — Coupe du Québec</h2>
+                  <h2 className={styles.phaseTitle}>🏆 Phase finale — Coupe des Nations</h2>
                   <p className={styles.phaseSub}>À partir du 17 juillet 2026 · CHAUVEAU · VANIER</p>
                 </div>
 
