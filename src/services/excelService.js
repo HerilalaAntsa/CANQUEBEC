@@ -112,27 +112,102 @@ function parseHoraire(buffer, corrId) {
 
 // ─── MATCHS ───────────────────────────────────
 
+// Noms de mois français → index 0-11 pour new Date(2026, idx, day)
+const MONTHS_FR = {
+  janvier: 0, 'février': 1, fevrier: 1, mars: 2, avril: 3,
+  mai: 4, juin: 5, juillet: 6, 'août': 7, aout: 7,
+  septembre: 8, octobre: 9, novembre: 10, 'décembre': 11, decembre: 11,
+};
+
+function parseStringDate(str) {
+  if (!str) return null;
+  const s = str.toString().toLowerCase().trim();
+  for (const [month, idx] of Object.entries(MONTHS_FR)) {
+    if (s.includes(month)) {
+      const dayMatch = s.match(/\d+/);
+      if (dayMatch) return new Date(2026, idx, parseInt(dayMatch[0]));
+    }
+  }
+  return null;
+}
+
+function normalizeRound(raw) {
+  const s = raw.toLowerCase().trim();
+  if (s.includes('1/8'))     return '1/8e de finale';
+  if (s.includes('1/4'))     return 'Quarts de finale';
+  if (s.includes('1/2'))     return 'Demi-finales';
+  if (s.includes('final'))   return 'Finale';
+  if (s.includes('barrage')) return 'Barrages';
+  return raw.trim();
+}
+
+const ROUND_KEYWORDS = ['1/8', '1/4', '1/2', 'finale', 'barrage'];
+
 function parseMatches(ws) {
   if (!ws) return [];
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
   const matches = [];
   let currentJournee = 0;
+  let inPhaseFinale   = false;
+  let currentRound    = '';
 
   for (const row of rows) {
     if (!row || row.every(c => c === null)) continue;
 
-    // Ligne séparateur de journée : col B = "JOURNÉE 01"
-    if (typeof row[1] === 'string' && row[1].toUpperCase().startsWith('JOURNÉE')) {
+    // Ligne header
+    if (row[1] === 'Date' || row[0] === 'ID ') continue;
+
+    // Détection frontière phase finale
+    if (typeof row[1] === 'string' && row[1].toUpperCase().includes('PHASE FINALE')) {
+      inPhaseFinale = true;
+      continue;
+    }
+
+    // Ligne séparateur journée : col B = "JOURNÉE 01"
+    if (!inPhaseFinale && typeof row[1] === 'string' && row[1].toUpperCase().startsWith('JOURNÉE')) {
       const m = row[1].match(/(\d+)/);
       if (m) currentJournee = parseInt(m[1]);
       continue;
     }
 
-    // Ligne header
-    if (row[1] === 'Date' || row[0] === 'ID ') continue;
+    // ── Phase finale ──────────────────────────────────
+    if (inPhaseFinale) {
+      // Détection ronde depuis col[5] (ex: "1/8e finale", "1/4 finale")
+      const possibleRound = row[5] ? row[5].toString().trim() : '';
+      if (ROUND_KEYWORDS.some(k => possibleRound.toLowerCase().includes(k))) {
+        currentRound = normalizeRound(possibleRound);
+      }
+      if (!currentRound) continue;
 
-    // Ligne de match valide : doit avoir une date et deux équipes
+      const rawDate = row[1];
+      const date = rawDate instanceof Date
+        ? rawDate
+        : parseStringDate(rawDate);
+
+      matches.push({
+        id:       null,
+        journee:  null,
+        phase:    currentRound,
+        date,
+        dateRaw:  typeof rawDate === 'string' ? rawDate : null,
+        venue:    row[2] ? row[2].toString().trim() : '',
+        time:     row[3] ? row[3].toString().trim() : '',
+        group:    row[4] ? row[4].toString().trim().toUpperCase() : '',
+        teamA:    'À déterminer',
+        teamB:    'À déterminer',
+        scoreA:   null,
+        scoreB:   null,
+        status:   'upcoming',
+        restTeams: '',
+        referee:  '',
+        ref1:     '',
+        ref2:     '',
+      });
+      continue;
+    }
+
+    // ── Match phase de groupes ────────────────────────
     const rawDate = row[1];
     const teamA = normalizeTeamName(row[5]);
     const teamB = normalizeTeamName(row[7]);
@@ -146,21 +221,21 @@ function parseMatches(ws) {
     const scoreB = typeof row[9] === 'number' ? row[9] : null;
 
     matches.push({
-      id:       row[0] ? parseInt(row[0]) : null,
-      journee:  currentJournee,
+      id:        row[0] ? parseInt(row[0]) : null,
+      journee:   currentJournee,
       date,
-      venue:    normalizeTeamName(row[2]),  // VANIER / NEUFCHATEL
-      time:     row[3] ? row[3].toString().trim() : '',
-      group:    row[4] ? row[4].toString().trim().toUpperCase() : '',
+      venue:     row[2] ? row[2].toString().trim() : '',
+      time:      row[3] ? row[3].toString().trim() : '',
+      group:     row[4] ? row[4].toString().trim().toUpperCase() : '',
       teamA,
       teamB,
       scoreA,
       scoreB,
-      status:   (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
+      status:    (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
       restTeams: row[10] ? row[10].toString().trim() : '',
-      referee:  row[11] ? row[11].toString().trim() : '',
-      ref1:     row[12] ? row[12].toString().trim() : '',
-      ref2:     row[13] ? row[13].toString().trim() : '',
+      referee:   row[11] ? row[11].toString().trim() : '',
+      ref1:      row[12] ? row[12].toString().trim() : '',
+      ref2:      row[13] ? row[13].toString().trim() : '',
     });
   }
 

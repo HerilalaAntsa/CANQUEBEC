@@ -1,0 +1,413 @@
+{
+  "generatedAt": "2026-04-11T03:24:44.884Z",
+  "source": "HORAIRE_2026.xlsx",
+  "totalMatches": 45,
+  "playedMatches": 0,
+  "matches": [
+    {
+      "id": 1,
+      "date": "2026-05-15",
+      "venue": "VANIER",
+      "teamA": "GUINÉE",
+      "teamB": "RD CONGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 2,
+      "date": "2026-05-15",
+      "venue": "VANIER",
+      "teamA": "CAMEROUN",
+      "teamB": "CÔTE D’IVOIRE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 5,
+      "date": "2026-05-16",
+      "venue": "VANIER",
+      "teamA": "HAÏTI",
+      "teamB": "GABON",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 6,
+      "date": "2026-05-16",
+      "venue": "VANIER",
+      "teamA": "CENTRAFRIQUE",
+      "teamB": "CANADA",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 7,
+      "date": "2026-05-16",
+      "venue": "VANIER",
+      "teamA": "QUÉBEC",
+      "teamB": "MADAGASCAR",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 8,
+      "date": "2026-05-16",
+      "venue": "VANIER",
+      "teamA": "NATIONS-UNIES",
+      "teamB": "GAMBIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 9,
+      "date": "2026-05-22",
+      "venue": "VANIER",
+      "teamA": "TANZANIE",
+      "teamB": "BURKINA FASO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 10,
+      "date": "2026-05-22",
+      "venue": "VANIER",
+      "teamA": "QUÉBEC",
+      "teamB": "GAMBIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 11,
+      "date": "2026-05-23",
+      "venue": "NEUFCHATEL",
+      "teamA": "HAÏTI",
+      "teamB": "TOGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 12,
+      "date": "2026-05-23",
+      "venue": "NEUFCHATEL",
+      "teamA": "GUINÉE",
+      "teamB": "MALI",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 13,
+      "date": "2026-05-23",
+      "venue": "VANIER",
+      "teamA": "CAMEROUN",
+      "teamB": "CANADA",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 14,
+      "date": "2026-05-23",
+      "venue": "VANIER",
+      "teamA": "GABON",
+      "teamB": "RD CONGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 15,
+      "date": "2026-05-23",
+      "venue": "VANIER",
+      "teamA": "ALGÉRIE",
+      "teamB": "CENTRAFRIQUE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 16,
+      "date": "2026-05-23",
+      "venue": "VANIER",
+      "teamA": "MADAGASCAR",
+      "teamB": "CÔTE D’IVOIRE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 17,
+      "date": "2026-05-29",
+      "venue": "VANIER",
+      "teamA": "CÔTE D’IVOIRE",
+      "teamB": "QUÉBEC",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 18,
+      "date": "2026-05-29",
+      "venue": "VANIER",
+      "teamA": "CAMEROUN",
+      "teamB": "ALGÉRIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 19,
+      "date": "2026-05-30",
+      "venue": "NEUFCHATEL",
+      "teamA": "MADAGASCAR",
+      "teamB": "CANADA",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 20,
+      "date": "2026-05-30",
+      "venue": "NEUFCHATEL",
+      "teamA": "SÉNÉGAL",
+      "teamB": "BURKINA FASO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 21,
+      "date": "2026-05-30",
+      "venue": "VANIER",
+      "teamA": "GUINÉE",
+      "teamB": "TANZANIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 22,
+      "date": "2026-05-30",
+      "venue": "VANIER",
+      "teamA": "HAÏTI",
+      "teamB": "RD CONGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 23,
+      "date": "2026-05-30",
+      "venue": "VANIER",
+      "teamA": "NATIONS-UNIES",
+      "teamB": "CENTRAFRIQUE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 24,
+      "date": "2026-05-30",
+      "venue": "VANIER",
+      "teamA": "GABON",
+      "teamB": "MALI",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 49,
+      "date": "2026-06-26",
+      "venue": "VANIER",
+      "teamA": "QUÉBEC",
+      "teamB": "CAMEROUN",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 50,
+      "date": "2026-06-26",
+      "venue": "VANIER",
+      "teamA": "GABON",
+      "teamB": "BURKINA FASO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 51,
+      "date": "2026-06-27",
+      "venue": "NEUFCHATEL",
+      "teamA": "HAÏTI",
+      "teamB": "GUINÉE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 52,
+      "date": "2026-06-27",
+      "venue": "NEUFCHATEL",
+      "teamA": "ALGÉRIE",
+      "teamB": "NATIONS-UNIES",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 53,
+      "date": "2026-06-27",
+      "venue": "VANIER",
+      "teamA": "MALI",
+      "teamB": "TOGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 54,
+      "date": "2026-06-27",
+      "venue": "VANIER",
+      "teamA": "CANADA",
+      "teamB": "GAMBIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 55,
+      "date": "2026-06-27",
+      "venue": "VANIER",
+      "teamA": "TANZANIE",
+      "teamB": "SÉNÉGAL",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 57,
+      "date": "2026-07-03",
+      "venue": "VANIER",
+      "teamA": "QUÉBEC",
+      "teamB": "ALGÉRIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 58,
+      "date": "2026-07-03",
+      "venue": "VANIER",
+      "teamA": "MALI",
+      "teamB": "SÉNÉGAL",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 59,
+      "date": "2026-07-04",
+      "venue": "NEUFCHATEL",
+      "teamA": "TANZANIE",
+      "teamB": "HAÏTI",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 60,
+      "date": "2026-07-04",
+      "venue": "NEUFCHATEL",
+      "teamA": "BURKINA FASO",
+      "teamB": "GUINÉE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 61,
+      "date": "2026-07-04",
+      "venue": "VANIER",
+      "teamA": "CANADA",
+      "teamB": "NATIONS-UNIES",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 62,
+      "date": "2026-07-04",
+      "venue": "VANIER",
+      "teamA": "RD CONGO",
+      "teamB": "TOGO",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 63,
+      "date": "2026-07-04",
+      "venue": "VANIER",
+      "teamA": "CENTRAFRIQUE",
+      "teamB": "CAMEROUN",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 64,
+      "date": "2026-07-04",
+      "venue": "VANIER",
+      "teamA": "CÔTE D’IVOIRE",
+      "teamB": "GAMBIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 65,
+      "date": "2026-07-10",
+      "venue": "VANIER",
+      "teamA": "RD CONGO",
+      "teamB": "TANZANIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 66,
+      "date": "2026-07-10",
+      "venue": "VANIER",
+      "teamA": "GAMBIE",
+      "teamB": "CAMEROUN",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 67,
+      "date": "2026-07-11",
+      "venue": "NEUFCHATEL",
+      "teamA": "CÔTE D’IVOIRE",
+      "teamB": "ALGÉRIE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 68,
+      "date": "2026-07-11",
+      "venue": "NEUFCHATEL",
+      "teamA": "GABON",
+      "teamB": "SÉNÉGAL",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 69,
+      "date": "2026-07-11",
+      "venue": "???",
+      "teamA": "CANADA",
+      "teamB": "QUÉBEC",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 70,
+      "date": "2026-07-11",
+      "venue": "VANIER",
+      "teamA": "TOGO",
+      "teamB": "GUINÉE",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 71,
+      "date": "2026-07-11",
+      "venue": "VANIER",
+      "teamA": "MALI",
+      "teamB": "HAÏTI",
+      "scoreA": null,
+      "scoreB": null
+    },
+    {
+      "id": 72,
+      "date": "2026-07-11",
+      "venue": "VANIER",
+      "teamA": "MADAGASCAR",
+      "teamB": "NATIONS-UNIES",
+      "scoreA": null,
+      "scoreB": null
+    }
+  ]
+}

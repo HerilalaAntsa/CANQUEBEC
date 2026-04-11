@@ -10,6 +10,12 @@
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
+/* Match phase finale — équipes TBD */
+.cardTBD {
+  border-color: rgba(249, 168, 37, 0.3);
+  background: linear-gradient(135deg, var(--color-surface) 0%, rgba(249, 168, 37, 0.04) 100%);
+}
+
 .card:hover {
   border-color: var(--color-primary-light);
   box-shadow: var(--shadow);

@@ -25,3 +25,62 @@
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
 }
+
+/* ── Phase finale ── */
+.phaseFinale {
+  margin-top: var(--space-10);
+  border-top: 2px solid var(--color-accent);
+  padding-top: var(--space-6);
+}
+
+.phaseHeader {
+  margin-bottom: var(--space-6);
+}
+
+.phaseTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-accent);
+  margin-bottom: var(--space-1);
+}
+
+.phaseSub {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.roundSection {
+  margin-bottom: var(--space-8);
+}
+
+.roundTitle {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  border-radius: var(--radius);
+  display: inline-block;
+}
+
+.roundGrid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .roundGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .roundGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
