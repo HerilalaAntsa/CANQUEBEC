@@ -14,7 +14,7 @@ export default function AppShell({ children }) {
       <footer className={styles.footer}>
         <span>© {YEAR} Ligue des Nations de Québec</span>
         <span className={styles.sep}>·</span>
-        <span>Développé par <strong>Antsa Rakotomananjo</strong> — RAH</span>
+        <span>Développé par <strong>RAH</strong></span>
       </footer>
       <BottomNav />
     </div>
