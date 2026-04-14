@@ -1,12 +1,13 @@
-/* TopBar.module.css */
+/* TopBar.module.css — QCN light */
 .bar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: var(--topbar-height);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: #ffffff;
+  border-bottom: 2px solid var(--color-accent);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   z-index: 100;
   display: flex;
   align-items: center;
@@ -23,33 +24,30 @@
 }
 
 .logoImg {
-  height: 36px;
-  width: 36px;
+  height: 38px;
+  width: 38px;
   object-fit: contain;
   border-radius: var(--radius-sm);
 }
 
 .logoText {
   font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  color: var(--color-text);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--color-primary);
   letter-spacing: 0.04em;
   line-height: 1;
-  /* Masqué sur très petits écrans */
   display: none;
 }
 
 @media (min-width: 380px) {
-  .logoText {
-    display: block;
-  }
+  .logoText { display: block; }
 }
 
 .logoSub {
   font-size: var(--text-xs);
   color: var(--color-accent);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   display: block;
   line-height: 1;
@@ -63,39 +61,39 @@
 }
 
 /* Desktop nav */
-.desktopNav {
-  display: none;
-}
+.desktopNav { display: none; }
 
 @media (min-width: 768px) {
   .desktopNav {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
-    margin-left: var(--space-4);
+    gap: 2px;
+    margin-left: var(--space-3);
   }
 
   .navLink {
     display: flex;
     align-items: center;
-    gap: var(--space-1);
     padding: var(--space-2) var(--space-3);
     border-radius: var(--radius);
     color: var(--color-text-muted);
     font-size: var(--text-sm);
-    font-weight: 500;
+    font-weight: 600;
     text-decoration: none;
     transition: all var(--transition);
     white-space: nowrap;
+    border-bottom: 2px solid transparent;
   }
 
   .navLink:hover {
-    color: var(--color-text);
+    color: var(--color-primary);
     background: var(--color-overlay);
   }
 
   .navLink.active {
     color: var(--color-accent);
-    background: rgba(249, 168, 37, 0.1);
+    border-bottom-color: var(--color-accent);
+    background: rgba(212, 0, 30, 0.06);
+    font-weight: 700;
   }
 }

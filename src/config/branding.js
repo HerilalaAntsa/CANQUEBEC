@@ -1,40 +1,38 @@
-// Source de vérité de la charte graphique LNQ 2026
-// Inspiré des assets : public/assets/logo.jpg + affiche-1.jpg
-
+// Source de vérité de la charte graphique QCN 2026
 export const BRAND = {
-  // Couleurs principales
-  primary:       '#0a3d62',  // Bleu marine profond (football)
-  primaryLight:  '#1a6ea8',  // Bleu clair (hover, accents)
-  accent:        '#f9a825',  // Or/jaune (trophée, mise en avant)
-  accentDark:    '#e65100',  // Orange vif (aujourd'hui, live)
+  name:          'Québec Coupe des Nations',
+  shortName:     'QCN',
+  year:          2026,
 
-  // Fonds
-  background:    '#0d1117',  // Fond principal sombre
-  surface:       '#161b22',  // Cards, panels
-  surfaceAlt:    '#1c2330',  // Hover, alternance tableau
-  overlay:       '#21262d',  // Modals, dropdowns
+  // Couleurs QCN
+  primary:       '#003087',
+  primaryLight:  '#1a5fc4',
+  accent:        '#d4001e',
+  accentDark:    '#a30017',
+
+  // Fonds clairs
+  background:    '#f4f6f9',
+  surface:       '#ffffff',
+  surfaceAlt:    '#f0f2f6',
+  overlay:       '#e8ecf2',
 
   // Textes
-  text:          '#e6edf3',  // Texte principal
-  textMuted:     '#8b949e',  // Secondaire, labels
-  textFaint:     '#484f58',  // Très discret, placeholders
+  text:          '#0f1923',
+  textMuted:     '#536171',
+  textFaint:     '#9faab5',
 
   // États
-  success:       '#2ea043',  // Victoire, terminé
-  successLight:  '#1a7f37',
-  warning:       '#d29922',  // Match en cours
-  danger:        '#da3633',  // Défaite
+  success:       '#1a7f4b',
+  warning:       '#d47500',
+  danger:        '#c0392b',
 
-  // Bordures
-  border:        '#30363d',
-  borderLight:   '#21262d',
+  // Zones classement
+  zoneGreen:     '#1a7f4b',   // Top 8 — qualifiés
+  zoneOrange:    '#d47500',   // 9-14 — milieu
+  zoneRed:       '#c0392b',   // 15-18 — barragistes
 
   // Typographie
   fontPrimary:   "'Inter', 'Segoe UI', system-ui, sans-serif",
-  fontDisplay:   "'Barlow Condensed', 'Arial Narrow', sans-serif",  // Titres sportifs
-
-  // Espacements de base
-  radius:        '8px',
-  radiusLg:      '12px',
-  radiusSm:      '4px',
+  fontDisplay:   "'Barlow Condensed', 'Arial Narrow', sans-serif",
 };
+

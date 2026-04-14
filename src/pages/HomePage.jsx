@@ -6,27 +6,34 @@ import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './HomePage.module.css';
 
-function MiniStandings({ standings, teams, group }) {
-  const enriched = standings
-    .map(s => ({ ...s, group: teams.find(t => t.name === s.team)?.group ?? '' }))
-    .filter(s => s.group === group)
-    .sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
+function MiniStandings({ standings, teams }) {
+  const enriched = useMemo(() =>
+    standings
+      .map(s => ({ ...s, group: teams.find(t => t.name === s.team)?.group ?? '' }))
+      .filter(s => s.group)
+      .sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff || b.goalsFor - a.goalsFor)
+      .map((s, i) => ({ ...s, pos: i + 1 })),
+    [standings, teams]
+  );
 
-  if (!enriched.length) return <p className={styles.empty}>\u00c0 venir</p>;
+  if (!enriched.length) return <p className={styles.empty}>À venir</p>;
 
-  const total = enriched.length;
-
-  const getZone = (i) => {
-    if (i === 0) return styles.zoneGreen;          // 1er — qualifié
-    if (i >= total - 2) return styles.zoneRed;     // 2 derniers — non qualifiés
-    return '';
+  const getZone = (pos) => {
+    if (pos <= 8)  return styles.zoneGreen;
+    if (pos <= 14) return styles.zoneOrange;
+    return styles.zoneRed;
   };
 
   return (
     <div className={styles.miniTable}>
-      {enriched.map((s, i) => (
-        <Link key={s.team} to={`/equipe/${generateSlug(s.team)}`} className={`${styles.miniRow} ${getZone(i)}`}>
-          <span className={styles.miniPos}>{i + 1}</span>
+      {enriched.map(s => (
+        <Link
+          key={s.team}
+          to={'/equipe/' + generateSlug(s.team)}
+          className={styles.miniRow + ' ' + getZone(s.pos)}
+        >
+          <span className={styles.miniPos}>{s.pos}</span>
+          <span className={styles.miniGr}>{s.group}</span>
           <span className={styles.miniTeam}><FlagBadge team={s.team} size="sm" /></span>
           <span className={styles.miniPts}>{s.points} pts</span>
         </Link>
@@ -37,9 +44,6 @@ function MiniStandings({ standings, teams, group }) {
 
 export default function HomePage() {
   const { matches, standings, teams, loading, error, fileInfo } = useLeagueData();
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
 
   const upcoming = useMemo(() =>
     matches
@@ -63,7 +67,7 @@ export default function HomePage() {
         <div className="container">
           <div className={styles.loadingWrap}>
             <div className={styles.spinner} />
-            <p className={styles.loadingText}>Chargement des données...</p>
+            <p className={styles.loadingText}>Chargement des données…</p>
           </div>
         </div>
       </div>
@@ -75,9 +79,11 @@ export default function HomePage() {
       <div className={styles.page}>
         <div className="container">
           <div className={styles.errorWrap}>
-            <h2>⚠️ Erreur de chargement</h2>
+            <h2>Erreur de chargement</h2>
             <p>{error}</p>
-            <p className={styles.errorHint}>Vérifiez que le fichier Excel est dans <code>/public/data/</code></p>
+            <p className={styles.errorHint}>
+              Vérifiez que le fichier Excel est dans <code>/public/data/</code>
+            </p>
             <div style={{ marginTop: '1rem' }}>
               <Link to="/" className={styles.ctaBtn}>Réessayer</Link>
             </div>
@@ -93,11 +99,13 @@ export default function HomePage() {
 
         {/* Hero */}
         <div className={styles.hero}>
-          <img src="/assets/logo.jpg" alt="LNQ" className={styles.heroLogo}
+          <img src="/assets/logo.jpg" alt="QCN" className={styles.heroLogo}
             onError={(e) => { e.target.style.display = 'none'; }} />
           <div>
-            <h1 className={styles.heroTitle}>Ligue des Nations de Québec</h1>
-            <p className={styles.heroSub}>Saison 2026 · Vanier & Neufchâtel · {teams.length} équipes</p>
+            <h1 className={styles.heroTitle}>Québec Coupe des Nations</h1>
+            <p className={styles.heroSub}>
+              Saison 2026 · Vanier &amp; Neufchâtel · {teams.length} équipes
+            </p>
           </div>
         </div>
 
@@ -106,8 +114,8 @@ export default function HomePage() {
           {/* Prochains matchs */}
           <section className={styles.widget}>
             <div className={styles.widgetHeader}>
-              <h2 className={styles.widgetTitle}>📅 Prochains matchs</h2>
-              <Link to="/calendrier" className={styles.widgetLink}>Voir tout →</Link>
+              <h2 className={styles.widgetTitle}>Prochains matchs</h2>
+              <Link to="/qualification" className={styles.widgetLink}>Voir tout →</Link>
             </div>
             {upcoming.length > 0 ? (
               <div className={styles.matchList}>
@@ -121,8 +129,8 @@ export default function HomePage() {
           {/* Derniers résultats */}
           <section className={styles.widget}>
             <div className={styles.widgetHeader}>
-              <h2 className={styles.widgetTitle}>🏁 Derniers résultats</h2>
-              <Link to="/calendrier" className={styles.widgetLink}>Voir tout →</Link>
+              <h2 className={styles.widgetTitle}>Derniers résultats</h2>
+              <Link to="/qualification" className={styles.widgetLink}>Voir tout →</Link>
             </div>
             {recentResults.length > 0 ? (
               <div className={styles.matchList}>
@@ -133,31 +141,38 @@ export default function HomePage() {
             )}
           </section>
 
-          {/* Classements mini */}
-          <section className={styles.widget}>
+          {/* Classement général */}
+          <section className={styles.widget + ' ' + styles.widgetFull}>
             <div className={styles.widgetHeader}>
-              <h2 className={styles.widgetTitle}>🏆 Groupe A</h2>
-              <Link to="/classement" className={styles.widgetLink}>Classement complet →</Link>
+              <h2 className={styles.widgetTitle}>Classement général</h2>
+              <Link to="/classement" className={styles.widgetLink}>Complet →</Link>
             </div>
-            <MiniStandings standings={standings} teams={teams} group="A" />
-          </section>
-
-          <section className={styles.widget}>
-            <div className={styles.widgetHeader}>
-              <h2 className={styles.widgetTitle}>🏆 Groupe B</h2>
-              <Link to="/classement" className={styles.widgetLink}>Classement complet →</Link>
+            <div className={styles.miniLegend}>
+              <span>
+                <span className={styles.legendDot}
+                  style={{ background: 'var(--color-zone-green)' }} />
+                Top 8
+              </span>
+              <span>
+                <span className={styles.legendDot}
+                  style={{ background: 'var(--color-zone-orange)' }} />
+                9e–14e
+              </span>
+              <span>
+                <span className={styles.legendDot}
+                  style={{ background: 'var(--color-zone-red)' }} />
+                Barragistes
+              </span>
             </div>
-            <MiniStandings standings={standings} teams={teams} group="B" />
+            <MiniStandings standings={standings} teams={teams} />
           </section>
-
-
 
         </div>
 
-        {/* Footer info fichier */}
         {fileInfo?.horaire && (
           <p className={styles.fileInfo}>
-            📊 Données : {fileInfo.horaire.name} · Chargé {new Date(fileInfo.horaire.loadedAt).toLocaleTimeString('fr-CA')}
+            Données : {fileInfo.horaire.name} · Chargé{' '}
+            {new Date(fileInfo.horaire.loadedAt).toLocaleTimeString('fr-CA')}
           </p>
         )}
 

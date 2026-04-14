@@ -1,61 +1,42 @@
-/* SortableTable.module.css */
+/* SortableTable.module.css — QCN light */
 .wrap {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
+  background: var(--color-surface);
 }
 
 .th {
-  padding: var(--space-3) var(--space-3);
+  padding: var(--space-3);
   text-align: left;
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  background: var(--color-overlay);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-alt);
+  border-bottom: 2px solid var(--color-border);
   white-space: nowrap;
   user-select: none;
 }
 
-.th.sortable {
-  cursor: pointer;
-}
+.th.sortable { cursor: pointer; }
+.th.sortable:hover { color: var(--color-primary); background: var(--color-overlay); }
+.th.right, .td.right { text-align: right; }
+.sortIcon { color: var(--color-accent); }
 
-.th.sortable:hover {
-  color: var(--color-text);
-  background: var(--color-surface-alt);
-}
-
-.th.right,
-.td.right {
-  text-align: right;
-}
-
-.sortIcon {
-  color: var(--color-accent);
-}
-
-.tr:nth-child(even) {
-  background: rgba(255,255,255,0.02);
-}
-
-.tr:hover {
-  background: var(--color-overlay);
-}
-
-.tr.clickable {
-  cursor: pointer;
-}
+.tr:nth-child(even) { background: rgba(0,0,0,0.02); }
+.tr:hover { background: var(--color-overlay) !important; }
+.tr.clickable { cursor: pointer; }
 
 .td {
   padding: var(--space-3);
@@ -64,14 +45,8 @@
   vertical-align: middle;
 }
 
-.tr:last-child .td {
-  border-bottom: none;
-}
-
-.td.highlight {
-  font-weight: 700;
-  color: var(--color-accent);
-}
+.tr:last-child .td { border-bottom: none; }
+.td.highlight { font-weight: 700; color: var(--color-primary); font-size: var(--text-base); }
 
 .empty {
   padding: var(--space-8);

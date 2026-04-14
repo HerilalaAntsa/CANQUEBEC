@@ -2,11 +2,11 @@ import { NavLink } from 'react-router-dom';
 import styles from './BottomNav.module.css';
 
 const NAV_ITEMS = [
-  { to: '/',           icon: '🏠', label: 'Accueil'   },
-  { to: '/calendrier', icon: '📅', label: 'Calendrier' },
-  { to: '/classement', icon: '🏆', label: 'Classement' },
-  { to: '/stats',      icon: '⚽', label: 'Stats'      },
-  { to: '/equipes',    icon: '🛡️', label: 'Équipes'   },
+  { to: '/',              icon: '🏠', label: 'Accueil'      },
+  { to: '/qualification', icon: '📅', label: 'Qualification' },
+  { to: '/finale',        icon: '🏆', label: 'Finale'        },
+  { to: '/classement',    icon: '📊', label: 'Classement'    },
+  { to: '/equipes',       icon: '🛡️', label: 'Équipes'       },
 ];
 
 export default function BottomNav() {

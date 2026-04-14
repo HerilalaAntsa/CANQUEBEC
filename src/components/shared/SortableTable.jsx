@@ -17,6 +17,7 @@ export default function SortableTable({
   onRowClick,
   rowKey = 'id',
   emptyMessage = 'Aucune donnée',
+  getRowClass,
 }) {
   const [sortKey, setSortKey] = useState(defaultSort ?? columns[0]?.key);
   const [sortDir, setSortDir] = useState(defaultDir);
@@ -74,7 +75,7 @@ export default function SortableTable({
             sorted.map((row, i) => (
               <tr
                 key={row[rowKey] ?? i}
-                className={`${styles.tr} ${onRowClick ? styles.clickable : ''}`}
+                className={`${styles.tr} ${onRowClick ? styles.clickable : ''} ${getRowClass ? getRowClass(row) : ''}`}
                 onClick={() => onRowClick?.(row)}
               >
                 {columns.map(col => (

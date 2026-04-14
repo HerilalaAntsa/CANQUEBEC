@@ -12,9 +12,18 @@ export default function AppShell({ children }) {
         {children}
       </main>
       <footer className={styles.footer}>
-        <span>© {YEAR} Ligue des Nations de Québec</span>
-        <span className={styles.sep}>·</span>
-        <span>Développé par <strong>RAH</strong></span>
+        <div className={styles.footerInner}>
+          <img
+            src="/assets/logo-24.jpg"
+            alt="Communauté Foot"
+            className={styles.footerLogo}
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div className={styles.footerText}>
+            <span className={styles.footerCommunity}>Communauté Foot</span>
+            <span className={styles.footerCopy}>© {YEAR} Québec Coupe des Nations · Développé par <strong>RAH</strong></span>
+          </div>
+        </div>
       </footer>
       <BottomNav />
     </div>

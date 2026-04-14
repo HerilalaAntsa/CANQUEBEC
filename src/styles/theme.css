@@ -1,81 +1,89 @@
 /* ============================================================
-   THEME.CSS — LNQ 2026
-   Source de vérité CSS — toutes les Custom Properties ici
+   THEME.CSS — Québec Coupe des Nations (QCN) 2026
+   Thème CLAIR — Bleu Québec + Rouge QCN
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Couleurs principales */
-  --color-primary:       #0a3d62;
-  --color-primary-light: #1a6ea8;
-  --color-accent:        #f9a825;
-  --color-accent-dark:   #e65100;
+  /* Couleurs QCN */
+  --color-primary:        #003087;   /* Bleu Québec profond */
+  --color-primary-light:  #1a5fc4;   /* Bleu hover */
+  --color-accent:         #d4001e;   /* Rouge QCN */
+  --color-accent-dark:    #a30017;   /* Rouge foncé */
 
-  /* Fonds */
-  --color-bg:            #0d1117;
-  --color-surface:       #161b22;
-  --color-surface-alt:   #1c2330;
-  --color-overlay:       #21262d;
+  /* Fonds clairs */
+  --color-bg:             #f4f6f9;
+  --color-surface:        #ffffff;
+  --color-surface-alt:    #f0f2f6;
+  --color-overlay:        #e8ecf2;
 
   /* Textes */
-  --color-text:          #e6edf3;
-  --color-text-muted:    #8b949e;
-  --color-text-faint:    #484f58;
+  --color-text:           #0f1923;
+  --color-text-muted:     #536171;
+  --color-text-faint:     #9faab5;
 
   /* États */
-  --color-success:       #2ea043;
-  --color-success-light: #1a7f37;
-  --color-warning:       #d29922;
-  --color-danger:        #da3633;
-  --color-info:          #58a6ff;
+  --color-success:        #1a7f4b;
+  --color-success-light:  #e6f7ee;
+  --color-warning:        #d47500;
+  --color-warning-light:  #fff3cd;
+  --color-danger:         #c0392b;
+  --color-danger-light:   #fdecea;
+  --color-info:           #0070f3;
+
+  /* Zone qualifications */
+  --color-zone-green:     #1a7f4b;
+  --color-zone-orange:    #d47500;
+  --color-zone-red:       #c0392b;
 
   /* Bordures */
-  --color-border:        #30363d;
-  --color-border-light:  #21262d;
+  --color-border:         #d0d7de;
+  --color-border-light:   #e8ecf0;
 
   /* Typographie */
   --font-primary:  'Inter', 'Segoe UI', system-ui, sans-serif;
   --font-display:  'Barlow Condensed', 'Arial Narrow', sans-serif;
 
   /* Tailles de texte */
-  --text-xs:    0.75rem;   /* 12px */
-  --text-sm:    0.875rem;  /* 14px */
-  --text-base:  1rem;      /* 16px */
-  --text-lg:    1.125rem;  /* 18px */
-  --text-xl:    1.25rem;   /* 20px */
-  --text-2xl:   1.5rem;    /* 24px */
-  --text-3xl:   1.875rem;  /* 30px */
+  --text-xs:    0.75rem;
+  --text-sm:    0.875rem;
+  --text-base:  1rem;
+  --text-lg:    1.125rem;
+  --text-xl:    1.25rem;
+  --text-2xl:   1.5rem;
+  --text-3xl:   1.875rem;
+  --text-4xl:   2.25rem;
 
   /* Espacements */
-  --space-1:    0.25rem;
-  --space-2:    0.5rem;
-  --space-3:    0.75rem;
-  --space-4:    1rem;
-  --space-5:    1.25rem;
-  --space-6:    1.5rem;
-  --space-8:    2rem;
-  --space-10:   2.5rem;
-  --space-12:   3rem;
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
 
   /* Rayons */
-  --radius-sm:  4px;
-  --radius:     8px;
-  --radius-lg:  12px;
-  --radius-xl:  16px;
+  --radius-sm:   4px;
+  --radius:      8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
   --radius-full: 9999px;
 
   /* Ombres */
-  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow:     0 4px 12px rgba(0, 0, 0, 0.5);
-  --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow:     0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
 
   /* Transitions */
-  --transition: 150ms ease;
+  --transition:      150ms ease;
   --transition-slow: 300ms ease;
 
   /* Layout */
-  --topbar-height:   60px;
+  --topbar-height:    64px;
   --bottomnav-height: 64px;
-  --max-width:       1100px;
+  --max-width:        1100px;
 }

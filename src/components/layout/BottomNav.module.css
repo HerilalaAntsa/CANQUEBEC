@@ -1,12 +1,13 @@
-/* BottomNav.module.css */
+/* BottomNav.module.css — QCN light */
 .nav {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   height: var(--bottomnav-height);
-  background: var(--color-surface);
+  background: #ffffff;
   border-top: 1px solid var(--color-border);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
   display: flex;
   z-index: 100;
 }
@@ -20,23 +21,23 @@
   gap: 2px;
   color: var(--color-text-muted);
   text-decoration: none;
-  font-size: var(--text-xs);
-  font-weight: 500;
+  font-size: 0.65rem;
+  font-weight: 600;
   transition: color var(--transition);
   padding: var(--space-1) 0;
   min-width: 0;
+  border-top: 2px solid transparent;
 }
 
-.link:hover {
-  color: var(--color-text);
-}
+.link:hover { color: var(--color-primary); }
 
 .link.active {
   color: var(--color-accent);
+  border-top-color: var(--color-accent);
 }
 
 .icon {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   line-height: 1;
 }
 
@@ -48,9 +49,6 @@
   padding: 0 2px;
 }
 
-/* Masquer sur desktop */
 @media (min-width: 768px) {
-  .nav {
-    display: none;
-  }
+  .nav { display: none; }
 }
