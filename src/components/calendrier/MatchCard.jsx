@@ -9,6 +9,29 @@ const VENUE_LABELS = {
   'CHAUVEAU':   '📍 Chauveau',
 };
 
+const ARB_ROLES = [
+  { key: 'referee',     label: 'C'  },
+  { key: 'ref1',        label: 'T1' },
+  { key: 'ref2',        label: 'T2' },
+  { key: 'coordinator', label: 'Co' },
+];
+
+function ArbitresRow({ match }) {
+  const list = ARB_ROLES.filter(r => match[r.key]);
+  if (!list.length) return null;
+  return (
+    <div className={styles.arbitres}>
+      🧑‍⚖️
+      {list.map(r => (
+        <span key={r.key} className={styles.arbChip}>
+          <span className={styles.arbRole}>{r.label}</span>
+          {match[r.key]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function formatDate(date, dateRaw) {
   if (!date) return dateRaw ?? '';
   const d = new Date(date);
@@ -49,9 +72,7 @@ export default function MatchCard({ match }) {
 
       <div className={styles.footer}>
         <StatusPill match={match} />
-        {match.referee && (
-          <span className={styles.referee}>🧑‍⚖️ {match.referee}</span>
-        )}
+        <ArbitresRow match={match} />
       </div>
     </article>
   );

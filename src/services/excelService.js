@@ -198,11 +198,12 @@ function parseMatches(ws) {
         teamB:    'À déterminer',
         scoreA:   null,
         scoreB:   null,
-        status:   'upcoming',
-        restTeams: '',
-        referee:  '',
-        ref1:     '',
-        ref2:     '',
+        status:      'upcoming',
+        restTeams:   '',
+        referee:     '',
+        ref1:        '',
+        ref2:        '',
+        coordinator: '',
       });
       continue;
     }
@@ -233,9 +234,10 @@ function parseMatches(ws) {
       scoreB,
       status:    (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
       restTeams: row[10] ? row[10].toString().trim() : '',
-      referee:   row[11] ? row[11].toString().trim() : '',
-      ref1:      row[12] ? row[12].toString().trim() : '',
-      ref2:      row[13] ? row[13].toString().trim() : '',
+      referee:     row[11] ? row[11].toString().trim() : '',
+      ref1:        row[12] ? row[12].toString().trim() : '',
+      ref2:        row[13] ? row[13].toString().trim() : '',
+      coordinator: row[14] ? row[14].toString().trim() : '',
     });
   }
 

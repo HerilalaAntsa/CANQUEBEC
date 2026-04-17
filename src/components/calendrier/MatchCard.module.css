@@ -74,3 +74,29 @@
   font-size: var(--text-xs);
   color: var(--color-text-muted);
 }
+
+.arbitres {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.arbChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--color-overlay);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.arbRole {
+  font-weight: 700;
+  color: var(--color-accent);
+  font-size: 10px;
+  text-transform: uppercase;
+}
