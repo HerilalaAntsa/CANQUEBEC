@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DataProvider, useLeagueData } from './services/dataStore';
+import { AuthProvider } from './hooks/useAuth.jsx';
+import ProtectedRoute from './components/admin/ProtectedRoute';
 import AppShell from './components/layout/AppShell';
 import HomePage from './pages/HomePage';
 import QualificationPage from './pages/QualificationPage';
@@ -9,6 +11,9 @@ import ClassementPage from './pages/ClassementPage';
 import StatsPage from './pages/StatsPage';
 import EquipePage from './pages/EquipePage';
 import EquipesPage from './pages/EquipesPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminMatchEditPage from './pages/admin/AdminMatchEditPage';
 
 const EXCEL_HORAIRE_URL   = '/data/HORAIRE_2026.xlsx';
 const EXCEL_PLAYERS_A_URL = '/data/LISTE_GROUPE_A.xlsx';
@@ -31,19 +36,32 @@ function DataLoader({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <DataProvider>
-        <DataLoader>
-          <AppShell>
+      <AuthProvider>
+        <DataProvider>
+          <DataLoader>
             <Routes>
-              <Route path="/"               element={<HomePage />} />
-              <Route path="/qualification"  element={<QualificationPage />} />
-              <Route path="/finale"         element={<FinalePage />} />
-              <Route path="/classement"     element={<ClassementPage />} />
-              <Route path="/stats"          element={<StatsPage />} />
-              <Route path="/equipes"        element={<EquipesPage />} />
-              <Route path="/equipe/:slug"   element={<EquipePage />} />
-              {/* Ancienne URL redirigée */}
-              <Route path="/calendrier"     element={<Navigate to="/qualification" replace />} />
+              {/* ── Pages publiques ── */}
+              <Route element={<AppShell />}>
+                <Route path="/"               element={<HomePage />} />
+                <Route path="/qualification"  element={<QualificationPage />} />
+                <Route path="/finale"         element={<FinalePage />} />
+                <Route path="/classement"     element={<ClassementPage />} />
+                <Route path="/stats"          element={<StatsPage />} />
+                <Route path="/equipes"        element={<EquipesPage />} />
+                <Route path="/equipe/:slug"   element={<EquipePage />} />
+                <Route path="/calendrier"     element={<Navigate to="/qualification" replace />} />
+              </Route>
+
+              {/* ── Admin ── */}
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route path="/admin" element={
+                <ProtectedRoute><AdminDashboardPage /></ProtectedRoute>
+              } />
+              <Route path="/admin/match/:id" element={
+                <ProtectedRoute><AdminMatchEditPage /></ProtectedRoute>
+              } />
+
+              {/* ── 404 ── */}
               <Route path="*" element={
                 <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
                   <h2>404 — Page introuvable</h2>
@@ -51,9 +69,10 @@ export default function App() {
                 </div>
               } />
             </Routes>
-          </AppShell>
-        </DataLoader>
-      </DataProvider>
+          </DataLoader>
+        </DataProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
+

@@ -1,0 +1,212 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg, #0f0f1a);
+  color: var(--color-text, #f0f0f0);
+  padding-bottom: 4rem;
+}
+
+.loading, .error {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted, #888);
+}
+.error { color: #ff7070; }
+
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--color-surface, #1a1a2e);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-wrap: wrap;
+}
+
+.back {
+  color: var(--color-text-muted, #aaa);
+  text-decoration: none;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.back:hover { color: var(--color-accent, #e2b04a); }
+
+.matchTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.metaBadge {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #888);
+  font-weight: 400;
+}
+
+.section {
+  margin: 1.5rem 1rem 0;
+  background: var(--color-surface, #1a1a2e);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #888);
+  margin: 0 0 1rem;
+}
+
+/* Score */
+.scoreForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.teamLabel {
+  font-size: 0.95rem;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.scoreInput {
+  width: 64px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 8px;
+  color: var(--color-accent, #e2b04a);
+  padding: 0.4rem;
+}
+.scoreInput:focus { outline: none; border-color: var(--color-accent, #e2b04a); }
+
+.dash {
+  font-size: 1.4rem;
+  color: var(--color-text-muted, #888);
+}
+
+.saveBtn {
+  background: var(--color-accent, #e2b04a);
+  color: #0f0f1a;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.saveBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.savedMsg {
+  font-size: 0.85rem;
+  color: #4cde8a;
+  margin: 0;
+}
+
+/* Event form */
+.evtForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.evtRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.select, .input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  color: var(--color-text, #f0f0f0);
+  font-size: 0.88rem;
+}
+.select:focus, .input:focus { outline: none; border-color: var(--color-accent, #e2b04a); }
+.input { flex: 1; min-width: 100px; }
+
+.subLabel {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #888);
+  white-space: nowrap;
+}
+
+.addBtn {
+  align-self: flex-start;
+  background: rgba(226,176,74,0.12);
+  border: 1px solid rgba(226,176,74,0.3);
+  color: var(--color-accent, #e2b04a);
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.addBtn:hover { background: rgba(226,176,74,0.2); }
+.addBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Events list */
+.empty {
+  color: var(--color-text-muted, #888);
+  font-size: 0.88rem;
+}
+
+.eventList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.eventRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+}
+.eventRow.offline { border-color: rgba(255,160,0,0.3); }
+
+.evtIcon { font-size: 1rem; }
+.evtTeam { font-weight: 600; color: var(--color-accent, #e2b04a); }
+.evtPlayer { flex: 1; min-width: 60px; }
+.evtMin { color: var(--color-text-muted, #888); font-size: 0.82rem; }
+
+.offlineBadge {
+  font-size: 0.72rem;
+  background: rgba(255,160,0,0.15);
+  color: #ffb347;
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+}
+
+.deleteBtn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: rgba(255,80,80,0.6);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.1rem 0.3rem;
+}
+.deleteBtn:hover { color: #ff7070; }
