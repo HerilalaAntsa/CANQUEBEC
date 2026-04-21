@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import JourneeSection from '../components/calendrier/JourneeSection';
 import CalendrierFilters from '../components/calendrier/CalendrierFilters';
@@ -6,8 +6,14 @@ import { normalizeTeamName } from '../config/teams';
 import styles from './QualificationPage.module.css';
 
 export default function QualificationPage() {
-  const { matches, teams } = useLeagueData();
+  const { matches, teams, loadSupabaseScores } = useLeagueData();
   const [filters, setFilters] = useState({ team: '', group: '', venue: '', status: '' });
+
+  // Rafraîchir les scores/statuts toutes les 30s
+  useEffect(() => {
+    const id = setInterval(() => loadSupabaseScores(), 30_000);
+    return () => clearInterval(id);
+  }, [loadSupabaseScores]);
 
   const groupMatches = useMemo(() => matches.filter(m => m.journee !== null), [matches]);
 

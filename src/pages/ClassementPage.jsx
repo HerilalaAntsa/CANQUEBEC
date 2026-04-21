@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import { useNavigate } from 'react-router-dom';
 import SortableTable from '../components/shared/SortableTable';
@@ -32,15 +32,34 @@ const COLUMNS = [
 ];
 
 export default function ClassementPage() {
-  const { standings, liveStandings, teams } = useLeagueData();
+  const { standings, liveStandings, teams, loadSupabaseScores } = useLeagueData();
   const navigate = useNavigate();
 
-  // Utiliser liveStandings (Supabase) si disponible, sinon fallback Excel
-  const source = liveStandings?.length > 0 ? liveStandings : standings;
+  // Rafraîchir les scores toutes les 30s
+  useEffect(() => {
+    const id = setInterval(() => loadSupabaseScores(), 30_000);
+    return () => clearInterval(id);
+  }, [loadSupabaseScores]);
+
   const isLive = liveStandings?.length > 0;
 
   const tableData = useMemo(() => {
-    return source
+    // Base : standings Excel (toutes les équipes avec stats initiales)
+    const base = {};
+    for (const s of standings) {
+      base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
+    }
+
+    // Override avec les données live Supabase pour les équipes qui ont joué
+    for (const s of (liveStandings ?? [])) {
+      if (base[s.team]) {
+        base[s.team] = { ...base[s.team], ...s };
+      } else {
+        base[s.team] = s;
+      }
+    }
+
+    return Object.values(base)
       .map(s => {
         const t = teams.find(x => x.name === s.team);
         return { ...s, group: t?.group ?? '', id: s.team };
@@ -52,7 +71,7 @@ export default function ClassementPage() {
         b.goalsFor - a.goalsFor
       )
       .map((s, i) => ({ ...s, pos: i + 1 }));
-  }, [source, teams]);
+  }, [standings, liveStandings, teams]);
 
   const getRowClass = (row) => {
     if (row.pos <= 8)  return styles.zoneGreen;
@@ -69,6 +88,7 @@ export default function ClassementPage() {
           <p className={styles.sub}>
             {tableData.length} équipes · Groupes A &amp; B combinés
             {isLive && <span className={styles.liveBadge}>🔴 En temps réel</span>}
+            <button className={styles.refreshBtn} onClick={() => loadSupabaseScores()} title="Actualiser">↻</button>
           </p>
         </div>
 
