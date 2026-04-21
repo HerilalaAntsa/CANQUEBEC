@@ -20,8 +20,8 @@ export default function AdminMatchEditPage() {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
   const [saving,    setSaving]    = useState(false);
-  const [scoreA,    setScoreA]    = useState('');
-  const [scoreB,    setScoreB]    = useState('');
+  const [scoreA,    setScoreA]    = useState('0');
+  const [scoreB,    setScoreB]    = useState('0');
   const [savedMsg,  setSavedMsg]  = useState('');
 
   // New event form
@@ -41,8 +41,8 @@ export default function AdminMatchEditPage() {
       const { match: m, events: ev } = await getMatchWithEvents(id);
       setMatch(m);
       setEvents(ev);
-      setScoreA(m.score_a ?? '');
-      setScoreB(m.score_b ?? '');
+      setScoreA(m.score_a ?? 0);
+      setScoreB(m.score_b ?? 0);
       setEvtTeam(m.team_a);
     } catch (e) {
       setError('Impossible de charger ce match : ' + e.message);
