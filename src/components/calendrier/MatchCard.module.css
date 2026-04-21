@@ -113,3 +113,21 @@
   font-size: 10px;
   text-transform: uppercase;
 }
+
+.scorer {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scorerRight {
+  text-align: right;
+}
+
+.scorerMin {
+  color: var(--color-accent);
+  font-weight: 700;
+}

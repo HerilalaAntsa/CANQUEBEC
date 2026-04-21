@@ -62,10 +62,22 @@ export default function MatchCard({ match }) {
       <div className={styles.matchup}>
         <div className={styles.teamWrap}>
           <FlagBadge team={match.teamA} link={!isTBD} size="md" />
+          {match.goals?.filter(g => g.team === match.teamA).map((g, i) => (
+            <div key={i} className={styles.scorer}>
+              ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}
+              {g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+            </div>
+          ))}
         </div>
         <ScoreBadge scoreA={match.scoreA} scoreB={match.scoreB} size="md" />
         <div className={`${styles.teamWrap} ${styles.right}`}>
           <FlagBadge team={match.teamB} link={!isTBD} size="md" />
+          {match.goals?.filter(g => g.team === match.teamB).map((g, i) => (
+            <div key={i} className={`${styles.scorer} ${styles.scorerRight}`}>
+              ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}
+              {g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+            </div>
+          ))}
         </div>
       </div>
 

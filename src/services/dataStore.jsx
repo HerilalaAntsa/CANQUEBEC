@@ -145,6 +145,7 @@ function applySupabaseScores(matches, supabaseScores) {
       scoreA:     live.scoreA ?? m.scoreA,
       scoreB:     live.scoreB ?? m.scoreB,
       status:     live.status,
+      goals:      live.goals ?? [],
     };
   });
 }
@@ -180,23 +181,32 @@ export function DataProvider({ children }) {
     if (!isSupabaseEnabled) return;
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
-      const { data, error } = await supabase
-        .from('matches')
-        .select('id, journee, team_a, team_b, score_a, score_b, status');
-      if (error) throw error;
+      const [matchesRes, eventsRes] = await Promise.all([
+        supabase.from('matches').select('id, journee, team_a, team_b, score_a, score_b, status'),
+        supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
+      ]);
+      if (matchesRes.error) throw matchesRes.error;
+
+      // Regrouper les buts par match_id
+      const goalsByMatch = {};
+      for (const ev of eventsRes.data ?? []) {
+        if (!goalsByMatch[ev.match_id]) goalsByMatch[ev.match_id] = [];
+        goalsByMatch[ev.match_id].push(ev);
+      }
 
       const scores = {};
-      for (const row of data ?? []) {
+      for (const row of matchesRes.data ?? []) {
         const key = `${row.journee}:${row.team_a}:${row.team_b}`;
         scores[key] = {
           id:     row.id,
           scoreA: row.score_a,
           scoreB: row.score_b,
           status: row.status,
+          goals:  goalsByMatch[row.id] ?? [],
         };
       }
       dispatch({ type: 'SUPABASE_SCORES_LOADED', scores });
-      log.info('SUPABASE_SCORES_LOADED', { count: data?.length });
+      log.info('SUPABASE_SCORES_LOADED', { count: matchesRes.data?.length });
     } catch (err) {
       log.warn('SUPABASE_SCORES_ERROR', { error: err.message });
       dispatch({ type: 'SUPABASE_SCORES_ERROR' });
