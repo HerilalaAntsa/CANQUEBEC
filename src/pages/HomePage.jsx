@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLeagueData } from '../services/dataStore';
 import MatchCard from '../components/calendrier/MatchCard';
@@ -43,11 +43,25 @@ function MiniStandings({ standings, teams }) {
 }
 
 export default function HomePage() {
-  const { matches, standings, teams, loading, error, fileInfo } = useLeagueData();
+  const { matches, standings, liveStandings, teams, loading, error, fileInfo, loadSupabaseScores } = useLeagueData();
+
+  // Rafraîchir les scores/statuts toutes les 30s
+  useEffect(() => {
+    const id = setInterval(() => loadSupabaseScores(), 30_000);
+    return () => clearInterval(id);
+  }, [loadSupabaseScores]);
+
+  // Standings: live (Supabase) merged sur Excel pour avoir toutes les équipes
+  const mergedStandings = useMemo(() => {
+    const base = {};
+    for (const s of standings) base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
+    for (const s of (liveStandings ?? [])) base[s.team] = { ...(base[s.team] ?? {}), ...s };
+    return Object.values(base);
+  }, [standings, liveStandings]);
 
   const upcoming = useMemo(() =>
     matches
-      .filter(m => m.status === 'upcoming')
+      .filter(m => m.status === 'upcoming' || m.status === 'live')
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(0, 3),
     [matches]
@@ -164,7 +178,7 @@ export default function HomePage() {
                 Barragistes
               </span>
             </div>
-            <MiniStandings standings={standings} teams={teams} />
+            <MiniStandings standings={mergedStandings} teams={teams} />
           </section>
 
         </div>
