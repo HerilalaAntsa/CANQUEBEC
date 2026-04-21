@@ -152,22 +152,27 @@ export async function deleteEvent(eventId) {
 export async function importMatchesFromExcel(parsedMatches) {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
 
-  const rows = parsedMatches.map((m) => ({
-    journee:    m.journee,
-    date:       m.date ? new Date(m.date).toISOString().split('T')[0] : null,
-    time:       m.time,
-    venue:      m.venue,
-    group_name: m.group,
-    team_a:     m.teamA,
-    team_b:     m.teamB,
-    score_a:    m.scoreA ?? null,
-    score_b:    m.scoreB ?? null,
-    referee:    m.referee ?? null,
-    ref1:       m.ref1 ?? null,
-    ref2:       m.ref2 ?? null,
-    coordinator: m.coordinator ?? null,
-    status:     (m.scoreA !== null && m.scoreB !== null) ? 'played' : 'upcoming',
-  }));
+  const rows = parsedMatches
+    .map((m) => ({
+      journee:     m.journee ?? m.Journee ?? m.journée ?? null,
+      date:        m.date ? new Date(m.date).toISOString().split('T')[0] : null,
+      time:        m.time,
+      venue:       m.venue,
+      group_name:  m.group,
+      team_a:      m.teamA,
+      team_b:      m.teamB,
+      score_a:     m.scoreA ?? null,
+      score_b:     m.scoreB ?? null,
+      referee:     m.referee ?? null,
+      ref1:        m.ref1 ?? null,
+      ref2:        m.ref2 ?? null,
+      coordinator: m.coordinator ?? null,
+      status:      (m.scoreA !== null && m.scoreB !== null) ? 'played' : 'upcoming',
+    }))
+    // Exclure les lignes sans journee ou sans équipes (séparateurs, finales sans code)
+    .filter((r) => r.journee !== null && r.team_a && r.team_b);
+
+  if (rows.length === 0) throw new Error('Aucun match valide à importer (journee null ou équipes manquantes)');
 
   const { error } = await supabase
     .from('matches')
