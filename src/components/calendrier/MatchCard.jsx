@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styles from './MatchCard.module.css';
 import FlagBadge from '../shared/FlagBadge';
 import ScoreBadge from '../shared/ScoreBadge';
@@ -45,10 +46,10 @@ export default function MatchCard({ match }) {
   if (!match) return null;
 
   const venue = VENUE_LABELS[match.venue?.trim()] ?? match.venue;
-  const isTBD = match.phase != null;  // match de phase finale avec équipes inconnues
+  const isTBD = match.phase != null;
 
-  return (
-    <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''}`}>
+  const card = (
+    <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${match.supabaseId ? styles.clickable : ''}`}>
       <div className={styles.meta}>
         <span className={styles.date}>{formatDate(match.date, match.dateRaw)}</span>
         {match.time && <><span className={styles.dot}>·</span><span className={styles.time}>{match.time}</span></>}
@@ -62,9 +63,7 @@ export default function MatchCard({ match }) {
         <div className={styles.teamWrap}>
           <FlagBadge team={match.teamA} link={!isTBD} size="md" />
         </div>
-
         <ScoreBadge scoreA={match.scoreA} scoreB={match.scoreB} size="md" />
-
         <div className={`${styles.teamWrap} ${styles.right}`}>
           <FlagBadge team={match.teamB} link={!isTBD} size="md" />
         </div>
@@ -76,4 +75,13 @@ export default function MatchCard({ match }) {
       </div>
     </article>
   );
+
+  if (match.supabaseId) {
+    return (
+      <Link to={`/match/${match.supabaseId}`} className={styles.cardLink}>
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }

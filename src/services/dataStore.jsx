@@ -141,9 +141,10 @@ function applySupabaseScores(matches, supabaseScores) {
     if (!live) return m;
     return {
       ...m,
-      scoreA: live.scoreA,
-      scoreB: live.scoreB,
-      status: live.status,
+      supabaseId: live.id,
+      scoreA:     live.scoreA ?? m.scoreA,
+      scoreB:     live.scoreB ?? m.scoreB,
+      status:     live.status,
     };
   });
 }
@@ -181,14 +182,14 @@ export function DataProvider({ children }) {
     try {
       const { data, error } = await supabase
         .from('matches')
-        .select('journee, team_a, team_b, score_a, score_b, status')
-        .not('score_a', 'is', null);
+        .select('id, journee, team_a, team_b, score_a, score_b, status');
       if (error) throw error;
 
       const scores = {};
       for (const row of data ?? []) {
         const key = `${row.journee}:${row.team_a}:${row.team_b}`;
         scores[key] = {
+          id:     row.id,
           scoreA: row.score_a,
           scoreB: row.score_b,
           status: row.status,

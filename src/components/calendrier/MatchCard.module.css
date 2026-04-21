@@ -1,4 +1,10 @@
 /* MatchCard.module.css */
+.cardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -20,6 +26,13 @@
 .card:hover {
   border-color: var(--color-primary-light);
   box-shadow: var(--shadow);
+}
+
+.clickable {
+  cursor: pointer;
+}
+.clickable:hover {
+  border-color: var(--color-accent);
 }
 
 .meta {
