@@ -9,6 +9,7 @@ import {
   tryLoadPlayersFromFile,
   resolvePlayerNames,
 } from './excelService';
+import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { log } from './logger';
 
 // ─────────────────────────────────────────────
@@ -17,18 +18,22 @@ import { log } from './logger';
 
 const initialState = {
   // Données
-  matches:    [],
-  teams:      [],
-  standings:  [],
-  scorers:    [],
-  assisters:  [],
-  players:    [],
-  teamMeta:   [],   // métadonnées équipes (coach, capitaine, email...)
+  matches:       [],
+  teams:         [],
+  standings:     [],
+  scorers:       [],
+  assisters:     [],
+  players:       [],
+  teamMeta:      [],   // métadonnées équipes (coach, capitaine, email...)
+
+  // Scores live depuis Supabase (clé: `${journee}:${teamA}:${teamB}`)
+  supabaseScores: {},
 
   // État de chargement
-  loading:    false,
+  loading:        false,
   loadingPlayers: false,
-  error:      null,
+  loadingScores:  false,
+  error:          null,
 
   // Info sur les fichiers chargés
   fileInfo: {
@@ -60,7 +65,7 @@ function reducer(state, action) {
         ...state,
         loading:    false,
         error:      null,
-        matches:    data.matches,
+        matches:    applySupabaseScores(data.matches, state.supabaseScores),
         teams:      data.teams,
         standings:  data.standings,
         scorers,
@@ -103,9 +108,44 @@ function reducer(state, action) {
     case 'PLAYERS_LOAD_DONE':
       return { ...state, loadingPlayers: false };
 
+    case 'SUPABASE_SCORES_START':
+      return { ...state, loadingScores: true };
+
+    case 'SUPABASE_SCORES_LOADED': {
+      const scores = action.scores; // { [key]: { scoreA, scoreB, status } }
+      return {
+        ...state,
+        loadingScores:  false,
+        supabaseScores: scores,
+        matches:        applySupabaseScores(state.matches, scores),
+      };
+    }
+
+    case 'SUPABASE_SCORES_ERROR':
+      return { ...state, loadingScores: false };
+
     default:
       return state;
   }
+}
+
+/**
+ * Applique les scores Supabase sur les matchs Excel.
+ * Clé de matching : journee + teamA + teamB
+ */
+function applySupabaseScores(matches, supabaseScores) {
+  if (!supabaseScores || Object.keys(supabaseScores).length === 0) return matches;
+  return matches.map((m) => {
+    const key = `${m.journee}:${m.teamA}:${m.teamB}`;
+    const live = supabaseScores[key];
+    if (!live) return m;
+    return {
+      ...m,
+      scoreA: live.scoreA,
+      scoreB: live.scoreB,
+      status: live.status,
+    };
+  });
 }
 
 /**
@@ -134,6 +174,34 @@ const DataContext = createContext(null);
 export function DataProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  // ── Charge les scores live depuis Supabase
+  const loadSupabaseScores = useCallback(async () => {
+    if (!isSupabaseEnabled) return;
+    dispatch({ type: 'SUPABASE_SCORES_START' });
+    try {
+      const { data, error } = await supabase
+        .from('matches')
+        .select('journee, team_a, team_b, score_a, score_b, status')
+        .not('score_a', 'is', null);
+      if (error) throw error;
+
+      const scores = {};
+      for (const row of data ?? []) {
+        const key = `${row.journee}:${row.team_a}:${row.team_b}`;
+        scores[key] = {
+          scoreA: row.score_a,
+          scoreB: row.score_b,
+          status: row.status,
+        };
+      }
+      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores });
+      log.info('SUPABASE_SCORES_LOADED', { count: data?.length });
+    } catch (err) {
+      log.warn('SUPABASE_SCORES_ERROR', { error: err.message });
+      dispatch({ type: 'SUPABASE_SCORES_ERROR' });
+    }
+  }, []);
+
   // ── Charge le fichier horaire depuis URL
   const loadHoraire = useCallback(async (url) => {
     dispatch({ type: 'HORAIRE_LOAD_START' });
@@ -144,10 +212,12 @@ export function DataProvider({ children }) {
         data,
         fileInfo: { name: url.split('/').pop(), loadedAt: new Date() },
       });
+      // Charge les scores Supabase en parallèle
+      loadSupabaseScores();
     } catch (err) {
       dispatch({ type: 'HORAIRE_LOAD_ERROR', error: err.message });
     }
-  }, []);
+  }, [loadSupabaseScores]);
 
   // ── Charge le fichier horaire depuis un File (upload)
   const loadHoraireFile = useCallback(async (file) => {
@@ -159,10 +229,12 @@ export function DataProvider({ children }) {
         data,
         fileInfo: { name: file.name, loadedAt: new Date() },
       });
+      // Charge les scores Supabase en parallèle
+      loadSupabaseScores();
     } catch (err) {
       dispatch({ type: 'HORAIRE_LOAD_ERROR', error: err.message });
     }
-  }, []);
+  }, [loadSupabaseScores]);
 
   // ── Charge les fichiers listes joueurs (A et B) depuis URLs — ne rejette pas
   const loadPlayers = useCallback(async (urlA, urlB) => {
@@ -203,6 +275,7 @@ export function DataProvider({ children }) {
     loadHoraireFile,
     loadPlayers,
     loadPlayersFiles,
+    loadSupabaseScores,
   };
 
   return (
