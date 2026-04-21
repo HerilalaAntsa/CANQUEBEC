@@ -53,7 +53,30 @@
 }
 .teamBlock.right {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.scorersList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--space-2);
+}
+
+.scorersList.right {
+  align-items: flex-end;
+}
+
+.scorerItem {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.scorerMin {
+  color: var(--color-accent);
+  font-weight: 700;
 }
 
 .scoreBlock {

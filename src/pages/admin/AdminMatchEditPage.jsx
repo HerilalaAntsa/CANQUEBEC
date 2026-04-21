@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getMatchWithEvents, updateScore, addEvent, deleteEvent } from '../../services/adminService';
+import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
 const EVENT_TYPES = [
@@ -14,6 +15,7 @@ const EVENT_TYPES = [
 export default function AdminMatchEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { players } = useLeagueData();
 
   const [match,     setMatch]     = useState(null);
   const [events,    setEvents]    = useState([]);
@@ -102,6 +104,27 @@ export default function AdminMatchEditPage() {
 
   const eventsByType = (type) => events.filter(ev => ev.type === type);
 
+  /** Cherche un joueur par numéro + équipe dans la liste Excel */
+  const lookupPlayer = useCallback((num, team) => {
+    if (!num || !team || !players?.length) return null;
+    return players.find(p =>
+      String(p.number) === String(num) &&
+      p.team?.toLowerCase().trim() === team?.toLowerCase().trim()
+    ) ?? null;
+  }, [players]);
+
+  function handlePlayerNumChange(num) {
+    setEvtPlayerNum(num);
+    const found = lookupPlayer(num, evtTeam);
+    if (found) setEvtPlayerName(found.name ?? '');
+  }
+
+  function handleSecNumChange(num) {
+    setEvtSecNum(num);
+    const found = lookupPlayer(num, evtTeam);
+    if (found) setEvtSecName(found.name ?? '');
+  }
+
   if (loading) return <div className={styles.loading}>Chargement...</div>;
   if (error)   return <div className={styles.error}>{error}</div>;
 
@@ -151,17 +174,23 @@ export default function AdminMatchEditPage() {
             <select value={evtType} onChange={e => setEvtType(e.target.value)} className={styles.select}>
               {EVENT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
-            <select value={evtTeam} onChange={e => setEvtTeam(e.target.value)} className={styles.select}>
+            <select value={evtTeam} onChange={e => {
+                setEvtTeam(e.target.value);
+                if (evtPlayerNum) {
+                  const found = lookupPlayer(evtPlayerNum, e.target.value);
+                  if (found) setEvtPlayerName(found.name ?? '');
+                }
+              }} className={styles.select}>
               <option value={match.team_a}>{match.team_a}</option>
               <option value={match.team_b}>{match.team_b}</option>
             </select>
             <input
               type="number" placeholder="N° maillot"
               className={styles.input} style={{ width: '90px' }}
-              value={evtPlayerNum} onChange={e => setEvtPlayerNum(e.target.value)}
+              value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)}
             />
             <input
-              type="text" placeholder="Nom (optionnel)"
+              type="text" placeholder="Nom (auto ou manuel)"
               className={styles.input}
               value={evtPlayerName} onChange={e => setEvtPlayerName(e.target.value)}
             />
@@ -175,8 +204,8 @@ export default function AdminMatchEditPage() {
             <div className={styles.evtRow}>
               <span className={styles.subLabel}>Joueur sortant :</span>
               <input type="number" placeholder="N° maillot" className={styles.input} style={{ width: '90px' }}
-                value={evtSecNum} onChange={e => setEvtSecNum(e.target.value)} />
-              <input type="text" placeholder="Nom (optionnel)" className={styles.input}
+                value={evtSecNum} onChange={e => handleSecNumChange(e.target.value)} />
+              <input type="text" placeholder="Nom (auto ou manuel)" className={styles.input}
                 value={evtSecName} onChange={e => setEvtSecName(e.target.value)} />
             </div>
           )}

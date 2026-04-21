@@ -69,8 +69,10 @@ export default function MatchPage() {
   const played  = match.status === 'played';
 
   // Séparer les événements par équipe
-  const eventsA = events.filter(e => e.team === match.team_a);
-  const eventsB = events.filter(e => e.team === match.team_b);
+  const eventsA  = events.filter(e => e.team === match.team_a);
+  const eventsB  = events.filter(e => e.team === match.team_b);
+  const scorersA = events.filter(e => e.type === 'goal' && e.team === match.team_a);
+  const scorersB = events.filter(e => e.type === 'goal' && e.team === match.team_b);
 
   const ARB_ROLES = [
     { key: 'referee',     label: 'Arbitre central' },
@@ -98,6 +100,16 @@ export default function MatchPage() {
         <div className={styles.scoreRow}>
           <div className={styles.teamBlock}>
             <FlagBadge team={match.team_a} size="lg" />
+            {scorersA.length > 0 && (
+              <div className={styles.scorersList}>
+                {scorersA.map(ev => (
+                  <span key={ev.id} className={styles.scorerItem}>
+                    ⚽ {ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}
+                    {ev.minute ? <span className={styles.scorerMin}> {ev.minute}'</span> : ''}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className={styles.scoreBlock}>
@@ -113,6 +125,16 @@ export default function MatchPage() {
 
           <div className={`${styles.teamBlock} ${styles.right}`}>
             <FlagBadge team={match.team_b} size="lg" />
+            {scorersB.length > 0 && (
+              <div className={`${styles.scorersList} ${styles.right}`}>
+                {scorersB.map(ev => (
+                  <span key={ev.id} className={styles.scorerItem}>
+                    ⚽ {ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}
+                    {ev.minute ? <span className={styles.scorerMin}> {ev.minute}'</span> : ''}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
