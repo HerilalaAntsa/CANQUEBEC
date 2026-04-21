@@ -5,6 +5,44 @@
   padding-bottom: 4rem;
 }
 
+/* ── Statut ── */
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.statusBadge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.status_upcoming { background: rgba(99,102,241,0.15); color: #818cf8; border-color: rgba(99,102,241,0.3); }
+.status_live     { background: rgba(239,68,68,0.15);  color: #ef4444; border-color: rgba(239,68,68,0.4); animation: pulse 1.2s ease infinite; }
+.status_played   { background: rgba(34,197,94,0.15);  color: #22c55e; border-color: rgba(34,197,94,0.3); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+
+.liveBtn, .endBtn, .reopenBtn {
+  padding: 6px 16px;
+  border-radius: var(--radius-md, 8px);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+}
+.liveBtn:disabled, .endBtn:disabled, .reopenBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.liveBtn   { background: #ef4444; color: #fff; }
+.endBtn    { background: #22c55e; color: #fff; }
+.reopenBtn { background: rgba(255,255,255,0.1); color: var(--color-text-muted, #aaa); }
+
 .loading, .error {
   padding: 3rem 1.5rem;
   text-align: center;

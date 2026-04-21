@@ -89,11 +89,7 @@ export async function getMatchWithEvents(matchId) {
 async function _updateScore(matchId, scoreA, scoreB) {
   const { error } = await supabase
     .from('matches')
-    .update({
-      score_a: scoreA,
-      score_b: scoreB,
-      status: 'played',
-    })
+    .update({ score_a: scoreA, score_b: scoreB })
     .eq('id', matchId);
   if (error) throw error;
 }
@@ -105,6 +101,16 @@ export async function updateScore(matchId, scoreA, scoreB) {
     enqueueOffline({ type: 'updateScore', matchId, scoreA, scoreB });
     throw e;
   }
+}
+
+/** Change le statut d'un match : 'upcoming' | 'live' | 'played' */
+export async function setMatchStatus(matchId, status) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase
+    .from('matches')
+    .update({ status })
+    .eq('id', matchId);
+  if (error) throw error;
 }
 
 // ─── Events (buteurs, passeurs, cartons, remplacements) ───────────────────────

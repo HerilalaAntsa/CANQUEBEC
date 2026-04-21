@@ -17,6 +17,9 @@ export default function StatusPill({ match }) {
   if (match.status === 'played') {
     variant = 'played';
     label   = 'Terminé';
+  } else if (match.status === 'live') {
+    variant = 'live';
+    label   = '🔴 En cours';
   } else if (matchDay.getTime() === TODAY.getTime()) {
     variant = 'today';
     label   = "Aujourd'hui";

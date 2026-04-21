@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS matches (
   ref1         TEXT,
   ref2         TEXT,
   coordinator  TEXT,
-  status       TEXT NOT NULL DEFAULT 'upcoming', -- 'upcoming' | 'played'
+  status       TEXT NOT NULL DEFAULT 'upcoming', -- 'upcoming' | 'live' | 'played'
   created_at   TIMESTAMPTZ DEFAULT NOW(),
   updated_at   TIMESTAMPTZ DEFAULT NOW(),
 

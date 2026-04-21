@@ -10,6 +10,13 @@
   white-space: nowrap;
 }
 
+.live {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  animation: pulse 1.2s ease infinite;
+}
+
 .played {
   background: rgba(46, 160, 67, 0.15);
   color: var(--color-success);

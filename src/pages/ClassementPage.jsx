@@ -32,11 +32,15 @@ const COLUMNS = [
 ];
 
 export default function ClassementPage() {
-  const { standings, teams } = useLeagueData();
+  const { standings, liveStandings, teams } = useLeagueData();
   const navigate = useNavigate();
 
+  // Utiliser liveStandings (Supabase) si disponible, sinon fallback Excel
+  const source = liveStandings?.length > 0 ? liveStandings : standings;
+  const isLive = liveStandings?.length > 0;
+
   const tableData = useMemo(() => {
-    return standings
+    return source
       .map(s => {
         const t = teams.find(x => x.name === s.team);
         return { ...s, group: t?.group ?? '', id: s.team };
@@ -48,7 +52,7 @@ export default function ClassementPage() {
         b.goalsFor - a.goalsFor
       )
       .map((s, i) => ({ ...s, pos: i + 1 }));
-  }, [standings, teams]);
+  }, [source, teams]);
 
   const getRowClass = (row) => {
     if (row.pos <= 8)  return styles.zoneGreen;
@@ -62,7 +66,10 @@ export default function ClassementPage() {
         <div className={styles.pageHeader}>
           <div className={styles.badge}>Saison 2026</div>
           <h1 className={styles.title}>Classement Général</h1>
-          <p className={styles.sub}>{tableData.length} équipes · Groupes A &amp; B combinés</p>
+          <p className={styles.sub}>
+            {tableData.length} équipes · Groupes A &amp; B combinés
+            {isLive && <span className={styles.liveBadge}>🔴 En temps réel</span>}
+          </p>
         </div>
 
         <div className={styles.legend}>

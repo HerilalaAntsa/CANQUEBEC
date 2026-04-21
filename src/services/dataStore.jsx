@@ -20,7 +20,8 @@ const initialState = {
   // Données
   matches:       [],
   teams:         [],
-  standings:     [],
+  standings:     [],   // standings statiques depuis Excel
+  liveStandings: [],   // standings calculés depuis Supabase (prioritaires)
   scorers:       [],
   assisters:     [],
   players:       [],
@@ -68,6 +69,7 @@ function reducer(state, action) {
         matches:    applySupabaseScores(data.matches, state.supabaseScores),
         teams:      data.teams,
         standings:  data.standings,
+        liveStandings: computeLiveStandings(data.matches, state.supabaseScores, data.teams),
         scorers,
         assisters,
         players,
@@ -112,12 +114,13 @@ function reducer(state, action) {
       return { ...state, loadingScores: true };
 
     case 'SUPABASE_SCORES_LOADED': {
-      const scores = action.scores; // { [key]: { scoreA, scoreB, status } }
+      const scores = action.scores; // { [key]: { id, scoreA, scoreB, status, goals } }
       return {
         ...state,
         loadingScores:  false,
         supabaseScores: scores,
         matches:        applySupabaseScores(state.matches, scores),
+        liveStandings:  computeLiveStandings(state.matches, scores, state.teams),
       };
     }
 
@@ -127,6 +130,53 @@ function reducer(state, action) {
     default:
       return state;
   }
+}
+
+/**
+ * Calcule le classement live depuis les scores Supabase.
+ * Victoire = +3, Nul = +1 chaque, Défaite = 0
+ */
+function computeLiveStandings(matches, supabaseScores, teams) {
+  if (!supabaseScores || Object.keys(supabaseScores).length === 0) return [];
+
+  const table = {}; // { teamName: { played, won, drawn, lost, goalsFor, goalsAgainst, points } }
+
+  const ensure = (name) => {
+    if (!table[name]) table[name] = { team: name, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
+  };
+
+  for (const row of Object.values(supabaseScores)) {
+    if (row.status !== 'played' && row.status !== 'live') continue;
+    if (row.scoreA === null || row.scoreB === null) continue;
+
+    const a = row.teamA;
+    const b = row.teamB;
+    if (!a || !b) continue;
+
+    ensure(a); ensure(b);
+    table[a].played++;
+    table[b].played++;
+    table[a].goalsFor     += row.scoreA;
+    table[a].goalsAgainst += row.scoreB;
+    table[b].goalsFor     += row.scoreB;
+    table[b].goalsAgainst += row.scoreA;
+
+    if (row.scoreA > row.scoreB) {
+      table[a].won++; table[a].points += 3;
+      table[b].lost++;
+    } else if (row.scoreA < row.scoreB) {
+      table[b].won++; table[b].points += 3;
+      table[a].lost++;
+    } else {
+      table[a].drawn++; table[a].points += 1;
+      table[b].drawn++; table[b].points += 1;
+    }
+  }
+
+  return Object.values(table).map(r => ({
+    ...r,
+    goalDiff: r.goalsFor - r.goalsAgainst,
+  }));
 }
 
 /**
@@ -199,6 +249,8 @@ export function DataProvider({ children }) {
         const key = `${row.journee}:${row.team_a}:${row.team_b}`;
         scores[key] = {
           id:     row.id,
+          teamA:  row.team_a,
+          teamB:  row.team_b,
           scoreA: row.score_a,
           scoreB: row.score_b,
           status: row.status,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, addEvent, deleteEvent, setMatchStatus } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
@@ -22,6 +22,7 @@ export default function AdminMatchEditPage() {
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
   const [saving,    setSaving]    = useState(false);
+  const [statusBusy, setStatusBusy] = useState(false);
   const [scoreA,    setScoreA]    = useState('0');
   const [scoreB,    setScoreB]    = useState('0');
   const [savedMsg,  setSavedMsg]  = useState('');
@@ -50,6 +51,24 @@ export default function AdminMatchEditPage() {
       setError('Impossible de charger ce match : ' + e.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleStatus(newStatus) {
+    setStatusBusy(true);
+    try {
+      await setMatchStatus(id, newStatus);
+      setMatch(prev => ({ ...prev, status: newStatus }));
+      setSavedMsg(
+        newStatus === 'live'   ? '🔴 Match démarré' :
+        newStatus === 'played' ? '✅ Match terminé' : 'Statut mis à jour'
+      );
+      setTimeout(() => setSavedMsg(''), 3000);
+    } catch (e) {
+      setSavedMsg('⚠️ Erreur : ' + e.message);
+      setTimeout(() => setSavedMsg(''), 4000);
+    } finally {
+      setStatusBusy(false);
     }
   }
 
@@ -138,6 +157,33 @@ export default function AdminMatchEditPage() {
         </span>
       </div>
 
+      {/* Statut du match */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Statut du match</h2>
+        <div className={styles.statusRow}>
+          <span className={`${styles.statusBadge} ${styles[`status_${match.status}`]}`}>
+            {match.status === 'live'   ? '🔴 En cours' :
+             match.status === 'played' ? '✅ Terminé'  : '⏳ À venir'}
+          </span>
+          {match.status === 'upcoming' && (
+            <button className={styles.liveBtn} disabled={statusBusy} onClick={() => handleStatus('live')}>
+              ▶ Démarrer le match
+            </button>
+          )}
+          {match.status === 'live' && (
+            <button className={styles.endBtn} disabled={statusBusy} onClick={() => handleStatus('played')}>
+              ✅ Terminer le match
+            </button>
+          )}
+          {match.status === 'played' && (
+            <button className={styles.reopenBtn} disabled={statusBusy} onClick={() => handleStatus('live')}>
+              🔄 Rouvrir
+            </button>
+          )}
+        </div>
+        {savedMsg && <p className={styles.savedMsg}>{savedMsg}</p>}
+      </section>
+
       {/* Score */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Score</h2>
@@ -162,7 +208,6 @@ export default function AdminMatchEditPage() {
           <button type="submit" className={styles.saveBtn} disabled={saving}>
             {saving ? 'Sauvegarde...' : 'Enregistrer le score'}
           </button>
-          {savedMsg && <p className={styles.savedMsg}>{savedMsg}</p>}
         </form>
       </section>
 
