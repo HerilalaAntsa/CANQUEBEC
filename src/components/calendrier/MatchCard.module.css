@@ -66,12 +66,14 @@
 .teamWrap {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
   overflow: hidden;
 }
 
 .teamWrap.right {
-  text-align: right;
-  display: flex;
   justify-content: flex-end;
 }
 
@@ -117,14 +119,11 @@
 .scorer {
   font-size: 11px;
   color: var(--color-text-muted);
-  margin-top: 2px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .scorerRight {
-  text-align: right;
+  /* déjà aligné à droite par justify-content: flex-end du parent */
 }
 
 .scorerMin {
