@@ -66,14 +66,12 @@
 .teamWrap {
   flex: 1;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-1);
   overflow: hidden;
 }
 
 .teamWrap.right {
+  text-align: right;
+  display: flex;
   justify-content: flex-end;
 }
 
@@ -116,14 +114,37 @@
   text-transform: uppercase;
 }
 
-.scorer {
+.scorers {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
   font-size: 11px;
   color: var(--color-text-muted);
-  white-space: nowrap;
 }
 
-.scorerRight {
-  /* déjà aligné à droite par justify-content: flex-end du parent */
+.scorersCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scorersRight {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.scorersSep {
+  width: 1px;
+  background: var(--color-border);
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.scorer {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scorerMin {

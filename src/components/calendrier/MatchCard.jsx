@@ -62,22 +62,32 @@ export default function MatchCard({ match }) {
       <div className={styles.matchup}>
         <div className={styles.teamWrap}>
           <FlagBadge team={match.teamA} link={!isTBD} size="md" />
-          {match.goals?.filter(g => g.team === match.teamA).map((g, i) => (
-            <span key={i} className={styles.scorer}>
-              ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
-            </span>
-          ))}
         </div>
         <ScoreBadge scoreA={match.scoreA} scoreB={match.scoreB} size="md" />
         <div className={`${styles.teamWrap} ${styles.right}`}>
-          {match.goals?.filter(g => g.team === match.teamB).map((g, i) => (
-            <span key={i} className={`${styles.scorer} ${styles.scorerRight}`}>
-              ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
-            </span>
-          ))}
           <FlagBadge team={match.teamB} link={!isTBD} size="md" />
         </div>
       </div>
+
+      {match.goals?.length > 0 && (
+        <div className={styles.scorers}>
+          <div className={styles.scorersCol}>
+            {match.goals.filter(g => g.team === match.teamA).map((g, i) => (
+              <span key={i} className={styles.scorer}>
+                ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+              </span>
+            ))}
+          </div>
+          <div className={styles.scorersSep} />
+          <div className={`${styles.scorersCol} ${styles.scorersRight}`}>
+            {match.goals.filter(g => g.team === match.teamB).map((g, i) => (
+              <span key={i} className={styles.scorer}>
+                ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className={styles.footer}>
         <StatusPill match={match} />
