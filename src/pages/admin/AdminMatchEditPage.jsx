@@ -42,6 +42,15 @@ export default function AdminMatchEditPage() {
   const [savingEvt,     setSavingEvt]     = useState(false);
   const [mismatchModal, setMismatchModal] = useState(null); // { goalsA, goalsB } | null
 
+  // Modal "qui a marqué ?" quand on augmente le score manuellement
+  const [goalModal, setGoalModal] = useState(null); // { team, newScoreA, newScoreB }
+  const [goalModalNum,    setGoalModalNum]    = useState('');
+  const [goalModalName,   setGoalModalName]   = useState('');
+  const [goalModalPDNum,  setGoalModalPDNum]  = useState('');
+  const [goalModalPDName, setGoalModalPDName] = useState('');
+  const [goalModalMin,    setGoalModalMin]    = useState('');
+  const [goalModalSaving, setGoalModalSaving] = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       const { match: m, events: ev } = await getMatchWithEvents(id);
@@ -218,6 +227,24 @@ export default function AdminMatchEditPage() {
     ) ?? null;
   }, [players]);
 
+  function handleScoreChange(team, newVal) {
+    const prev = team === 'A' ? Number(scoreA) : Number(scoreB);
+    const next = Number(newVal);
+    if (next > prev) {
+      const defaultMin = events.reduce((max, ev) => ev.minute != null && ev.minute > max ? ev.minute : max, 0) || 1;
+      setGoalModalMin(String(defaultMin));
+      setGoalModalNum(''); setGoalModalName('');
+      setGoalModalPDNum(''); setGoalModalPDName('');
+      setGoalModal({
+        team: team === 'A' ? match.team_a : match.team_b,
+        newScoreA: team === 'A' ? next : Number(scoreA),
+        newScoreB: team === 'B' ? next : Number(scoreB),
+      });
+    }
+    if (team === 'A') setScoreA(newVal);
+    else setScoreB(newVal);
+  }
+
   function handlePlayerNumChange(num) {
     if (num !== '' && (Number(num) < 1 || Number(num) > 26)) return;
     setEvtPlayerNum(num);
@@ -230,6 +257,73 @@ export default function AdminMatchEditPage() {
     setEvtSecNum(num);
     const found = lookupPlayer(num, evtTeam);
     if (found) setEvtSecName(found.name ?? '');
+  }
+
+  function handleGoalModalNumChange(num) {
+    setGoalModalNum(num);
+    if (num !== '' && goalModal?.team) {
+      const found = lookupPlayer(num, goalModal.team);
+      if (found) setGoalModalName(found.name ?? '');
+    }
+  }
+  function handleGoalModalPDNumChange(num) {
+    setGoalModalPDNum(num);
+    if (num !== '' && goalModal?.team) {
+      const found = lookupPlayer(num, goalModal.team);
+      if (found) setGoalModalPDName(found.name ?? '');
+    }
+  }
+
+  async function handleGoalModalSubmit(e) {
+    e.preventDefault();
+    if (!goalModal) return;
+    setGoalModalSaving(true);
+    try {
+      const minute = goalModalMin ? Number(goalModalMin) : null;
+      const goalEvt = {
+        match_id:    Number(id),
+        type:        'goal',
+        team:        goalModal.team,
+        player_num:  goalModalNum  ? Number(goalModalNum)  : null,
+        player_name: goalModalName || null,
+        minute,
+        secondary_player_num:  null,
+        secondary_player_name: null,
+      };
+      await addEvent(goalEvt);
+      setEvents(prev => [...prev, { ...goalEvt, id: Date.now() }]);
+      if (goalModalPDNum || goalModalPDName) {
+        const pdEvt = {
+          match_id:    Number(id),
+          type:        'assist',
+          team:        goalModal.team,
+          player_num:  goalModalPDNum  ? Number(goalModalPDNum)  : null,
+          player_name: goalModalPDName || null,
+          minute,
+          secondary_player_num:  null,
+          secondary_player_name: null,
+        };
+        await addEvent(pdEvt);
+        setEvents(prev => [...prev, { ...pdEvt, id: Date.now() + 1 }]);
+      }
+      await updateScore(id, goalModal.newScoreA, goalModal.newScoreB);
+      setScoreA(String(goalModal.newScoreA));
+      setScoreB(String(goalModal.newScoreB));
+      setSavedMsg('⚽ But + score enregistrés ✅');
+      setTimeout(() => setSavedMsg(''), 3000);
+      setGoalModal(null);
+    } catch (err) {
+      setSavedMsg('⚠️ Erreur : ' + err.message);
+    } finally {
+      setGoalModalSaving(false);
+    }
+  }
+
+  function handleGoalModalSkip() {
+    updateScore(id, goalModal.newScoreA, goalModal.newScoreB).catch(() => {});
+    setSavedMsg('Score mis à jour');
+    setTimeout(() => setSavedMsg(''), 3000);
+    setGoalModal(null);
   }
 
   if (loading) return <div className={styles.loading}>Chargement...</div>;
@@ -330,14 +424,14 @@ export default function AdminMatchEditPage() {
               type="number" min="0" max="99"
               className={styles.scoreInput}
               value={scoreA}
-              onChange={e => setScoreA(e.target.value)}
+              onChange={e => handleScoreChange('A', e.target.value)}
             />
             <span className={styles.dash}>—</span>
             <input
               type="number" min="0" max="99"
               className={styles.scoreInput}
               value={scoreB}
-              onChange={e => setScoreB(e.target.value)}
+              onChange={e => handleScoreChange('B', e.target.value)}
             />
             <span className={styles.teamLabel}>{match.team_b}</span>
           </div>
@@ -367,7 +461,7 @@ export default function AdminMatchEditPage() {
             </select>
             {evtType !== 'sub' && (<>
               <input
-                type="number" placeholder="N° maillot" min="1" max="26"
+                type="number" placeholder="N° maillot" min="1" max="26" required
                 className={styles.input} style={{ width: '90px' }}
                 value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)}
               />
@@ -485,6 +579,98 @@ export default function AdminMatchEditPage() {
           )
         }
       </section>
+
+      {/* Modal buteur — quand score augmenté manuellement */}
+      {goalModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
+            <p className={styles.modalBody} style={{ marginBottom: '0.75rem' }}>
+              Score : <strong>{goalModal.newScoreA}–{goalModal.newScoreB}</strong>
+              &nbsp;— Renseignez le buteur (facultatif)
+            </p>
+            <form onSubmit={handleGoalModalSubmit} className={styles.goalModalForm}>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>⚽ Buteur</label>
+                <input type="number" placeholder="N° maillot" min="1" max="26"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalNum} onChange={e => handleGoalModalNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom" className={styles.goalModalInput}
+                  value={goalModalName} onChange={e => setGoalModalName(e.target.value)} />
+              </div>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>🎯 PD</label>
+                <input type="number" placeholder="N° maillot" min="1" max="26"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalPDNum} onChange={e => handleGoalModalPDNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom" className={styles.goalModalInput}
+                  value={goalModalPDName} onChange={e => setGoalModalPDName(e.target.value)} />
+              </div>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>⏱ Minute</label>
+                <input type="number" placeholder="Min." min="0" max="120"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalMin} onChange={e => setGoalModalMin(e.target.value)} />
+              </div>
+              <div className={styles.modalBtns}>
+                <button type="submit" className={styles.modalConfirm} disabled={goalModalSaving}>
+                  {goalModalSaving ? 'Enregistrement...' : '✅ Enregistrer le but'}
+                </button>
+                <button type="button" className={styles.modalCancel} onClick={handleGoalModalSkip}>
+                  Passer (sans buteur)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal buteur — quand score augmenté manuellement */}
+      {goalModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
+            <p className={styles.modalBody} style={{ marginBottom: '0.75rem' }}>
+              Score : <strong>{goalModal.newScoreA}–{goalModal.newScoreB}</strong>
+              &nbsp;— Renseignez le buteur (facultatif)
+            </p>
+            <form onSubmit={handleGoalModalSubmit} className={styles.goalModalForm}>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>⚽ Buteur</label>
+                <input type="number" placeholder="N° maillot" min="1" max="26"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalNum} onChange={e => handleGoalModalNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom"
+                  className={styles.goalModalInput}
+                  value={goalModalName} onChange={e => setGoalModalName(e.target.value)} />
+              </div>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>🎯 PD</label>
+                <input type="number" placeholder="N° maillot" min="1" max="26"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalPDNum} onChange={e => handleGoalModalPDNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom"
+                  className={styles.goalModalInput}
+                  value={goalModalPDName} onChange={e => setGoalModalPDName(e.target.value)} />
+              </div>
+              <div className={styles.goalModalRow}>
+                <label className={styles.goalModalLabel}>⏱ Minute</label>
+                <input type="number" placeholder="Min." min="0" max="120"
+                  className={styles.goalModalInput} style={{ width: '80px' }}
+                  value={goalModalMin} onChange={e => setGoalModalMin(e.target.value)} />
+              </div>
+              <div className={styles.modalBtns}>
+                <button type="submit" className={styles.modalConfirm} disabled={goalModalSaving}>
+                  {goalModalSaving ? 'Enregistrement...' : '✅ Enregistrer le but'}
+                </button>
+                <button type="button" className={styles.modalCancel} onClick={handleGoalModalSkip}>
+                  Passer (sans buteur)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Modal avertissement score ≠ buts */}
       {mismatchModal && (

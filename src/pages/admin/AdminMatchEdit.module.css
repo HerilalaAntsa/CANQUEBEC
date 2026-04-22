@@ -522,3 +522,38 @@
   text-align: center;
 }
 .modalCancel:hover { color: #f0f0f0; }
+
+/* ── Modal buteur (goal quick entry) ─────────────────── */
+.goalModalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.goalModalRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.goalModalLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #aaa);
+  min-width: 52px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.goalModalInput {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  color: var(--color-text, #f0f0f0);
+  font-size: 0.88rem;
+  flex: 1;
+  min-width: 80px;
+}
+.goalModalInput:focus { outline: none; border-color: var(--color-accent, #e2b04a); }
