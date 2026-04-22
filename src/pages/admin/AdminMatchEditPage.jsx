@@ -363,16 +363,18 @@ export default function AdminMatchEditPage() {
               <option value={match.team_a}>{match.team_a}</option>
               <option value={match.team_b}>{match.team_b}</option>
             </select>
-            <input
-              type="number" placeholder="N° maillot"
-              className={styles.input} style={{ width: '90px' }}
-              value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)}
-            />
-            <input
-              type="text" placeholder="Nom (auto ou manuel)"
-              className={styles.input}
-              value={evtPlayerName} onChange={e => setEvtPlayerName(e.target.value)}
-            />
+            {evtType !== 'sub' && (<>
+              <input
+                type="number" placeholder="N° maillot"
+                className={styles.input} style={{ width: '90px' }}
+                value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)}
+              />
+              <input
+                type="text" placeholder="Nom (auto ou manuel)"
+                className={styles.input}
+                value={evtPlayerName} onChange={e => setEvtPlayerName(e.target.value)}
+              />
+            </>)}
             <input
               type="number" placeholder="Min." min="0" max="120"
               className={styles.input} style={{ width: '70px' }}
@@ -380,12 +382,27 @@ export default function AdminMatchEditPage() {
             />
           </div>
           {evtType === 'sub' && (
-            <div className={styles.evtRow}>
-              <span className={styles.subLabel}>Joueur sortant :</span>
-              <input type="number" placeholder="N° maillot" className={styles.input} style={{ width: '90px' }}
-                value={evtSecNum} onChange={e => handleSecNumChange(e.target.value)} />
-              <input type="text" placeholder="Nom (auto ou manuel)" className={styles.input}
-                value={evtSecName} onChange={e => setEvtSecName(e.target.value)} />
+            <div className={styles.subFormGrid}>
+              {/* Sortant */}
+              <div className={styles.subFormOut}>
+                <div className={styles.subFormLabel}>
+                  <span className={styles.subArrowOut}>↓</span> Joueur sortant
+                </div>
+                <input type="number" placeholder="N° maillot" className={styles.subFormInput}
+                  value={evtSecNum} onChange={e => handleSecNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom" className={styles.subFormInput}
+                  value={evtSecName} onChange={e => setEvtSecName(e.target.value)} />
+              </div>
+              {/* Entrant */}
+              <div className={styles.subFormIn}>
+                <div className={styles.subFormLabel}>
+                  <span className={styles.subArrowIn}>↑</span> Joueur entrant
+                </div>
+                <input type="number" placeholder="N° maillot" className={styles.subFormInput}
+                  value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)} />
+                <input type="text" placeholder="Nom" className={styles.subFormInput}
+                  value={evtPlayerName} onChange={e => setEvtPlayerName(e.target.value)} />
+              </div>
             </div>
           )}
           <button type="submit" className={styles.addBtn} disabled={addingEvt}>

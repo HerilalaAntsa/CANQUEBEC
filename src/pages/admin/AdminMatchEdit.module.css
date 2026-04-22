@@ -402,6 +402,56 @@
   flex-shrink: 0;
 }
 
+/* ── Formulaire remplacement ─────────────────────────── */
+.subFormGrid {
+  display: flex;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.subFormOut,
+.subFormIn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+}
+
+.subFormOut {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.subFormIn {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.subFormLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--color-text-muted, #aaa);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.subFormInput {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  padding: 0.4rem 0.6rem;
+  color: var(--color-text, #f0f0f0);
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+.subFormInput:focus { outline: none; border-color: rgba(255, 255, 255, 0.3); }
+
 /* ── Modal avertissement score ──────────────────────── */
 .modalOverlay {
   position: fixed;
