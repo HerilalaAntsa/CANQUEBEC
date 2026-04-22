@@ -219,12 +219,14 @@ export default function AdminMatchEditPage() {
   }, [players]);
 
   function handlePlayerNumChange(num) {
+    if (num !== '' && (Number(num) < 1 || Number(num) > 26)) return;
     setEvtPlayerNum(num);
     const found = lookupPlayer(num, evtTeam);
     if (found) setEvtPlayerName(found.name ?? '');
   }
 
   function handleSecNumChange(num) {
+    if (num !== '' && (Number(num) < 1 || Number(num) > 26)) return;
     setEvtSecNum(num);
     const found = lookupPlayer(num, evtTeam);
     if (found) setEvtSecName(found.name ?? '');
@@ -365,7 +367,7 @@ export default function AdminMatchEditPage() {
             </select>
             {evtType !== 'sub' && (<>
               <input
-                type="number" placeholder="N° maillot"
+                type="number" placeholder="N° maillot" min="1" max="26"
                 className={styles.input} style={{ width: '90px' }}
                 value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)}
               />
@@ -388,7 +390,7 @@ export default function AdminMatchEditPage() {
                 <div className={styles.subFormLabel}>
                   <span className={styles.subArrowOut}>↓</span> Joueur sortant
                 </div>
-                <input type="number" placeholder="N° maillot" className={styles.subFormInput}
+                <input type="number" placeholder="N° maillot" min="1" max="26" className={styles.subFormInput}
                   value={evtSecNum} onChange={e => handleSecNumChange(e.target.value)} />
                 <input type="text" placeholder="Nom" className={styles.subFormInput}
                   value={evtSecName} onChange={e => setEvtSecName(e.target.value)} />
@@ -398,7 +400,7 @@ export default function AdminMatchEditPage() {
                 <div className={styles.subFormLabel}>
                   <span className={styles.subArrowIn}>↑</span> Joueur entrant
                 </div>
-                <input type="number" placeholder="N° maillot" className={styles.subFormInput}
+                <input type="number" placeholder="N° maillot" min="1" max="26" className={styles.subFormInput}
                   value={evtPlayerNum} onChange={e => handlePlayerNumChange(e.target.value)} />
                 <input type="text" placeholder="Nom" className={styles.subFormInput}
                   value={evtPlayerName} onChange={e => setEvtPlayerName(e.target.value)} />
