@@ -31,3 +31,10 @@
 
 .badge.xl .flag { font-size: 2em; }
 .badge.xl .name { font-size: var(--text-2xl); font-family: var(--font-display); font-weight: 700; }
+
+/* Équipe non encore déterminée */
+.tbd .name {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-weight: 400;
+}

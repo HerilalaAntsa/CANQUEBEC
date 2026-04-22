@@ -6,7 +6,8 @@
 -- ── Matches ──────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS matches (
   id           SERIAL PRIMARY KEY,
-  journee      INTEGER NOT NULL,
+  journee      INTEGER,               -- NULL pour les matchs de phase finale
+  phase        TEXT,                  -- '1/8e de finale' | 'Quarts de finale' | 'Demi-finales' | 'Finale'
   date         DATE,
   time         TEXT,
   venue        TEXT,
@@ -21,10 +22,17 @@ CREATE TABLE IF NOT EXISTS matches (
   coordinator  TEXT,
   status       TEXT NOT NULL DEFAULT 'upcoming', -- 'upcoming' | 'live' | 'played'
   created_at   TIMESTAMPTZ DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ DEFAULT NOW(),
-
-  UNIQUE (journee, team_a, team_b)  -- permet upsert sans doublon
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Index uniques partiels (NULL != NULL en SQL, donc 2 index selon le contexte)
+CREATE UNIQUE INDEX IF NOT EXISTS matches_journee_teams
+  ON matches (journee, team_a, team_b)
+  WHERE journee IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS matches_phase_teams
+  ON matches (phase, team_a, team_b)
+  WHERE phase IS NOT NULL;
 
 -- ── Match events ──────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS match_events (

@@ -5,6 +5,7 @@
  * sont mises en queue dans localStorage et synchronisées au retour.
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
+import { loadHoraireFromUrl } from './excelService';
 
 const OFFLINE_QUEUE_KEY = 'cnq_admin_offline_queue';
 
@@ -140,6 +141,16 @@ async function _deleteEvent(eventId) {
   if (error) throw error;
 }
 
+/** Met à jour un événement existant */
+export async function updateEvent(eventId, fields) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase
+    .from('match_events')
+    .update(fields)
+    .eq('id', eventId);
+  if (error) throw error;
+}
+
 export async function deleteEvent(eventId) {
   try {
     await _deleteEvent(eventId);
@@ -147,6 +158,22 @@ export async function deleteEvent(eventId) {
     enqueueOffline({ type: 'deleteEvent', eventId });
     throw e;
   }
+}
+
+// ─── Sync depuis Google Sheets ───────────────────────────────────────────────
+
+const GSHEET_ID = '1Yvz1nlHWeQ9ua4uSh9tD9Aoq83F3h1vGiOMwGdCp5oA';
+const GSHEET_EXPORT_URL = `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/export?format=xlsx`;
+
+/**
+ * Télécharge le Google Sheet en XLSX, parse les matchs, les importe dans Supabase.
+ * Retourne le nombre de matchs importés.
+ */
+export async function syncFromGoogleSheets() {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const data = await loadHoraireFromUrl(GSHEET_EXPORT_URL);
+  const count = await importMatchesFromExcel(data.matches);
+  return { count, teams: data.teams.length };
 }
 
 // ─── Import Excel → Supabase ──────────────────────────────────────────────────
@@ -158,9 +185,10 @@ export async function deleteEvent(eventId) {
 export async function importMatchesFromExcel(parsedMatches) {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
 
-  const rows = parsedMatches
+  const allRows = parsedMatches
     .map((m) => ({
-      journee:     m.journee ?? m.Journee ?? m.journée ?? null,
+      journee:     m.journee ?? null,
+      phase:       m.phase   ?? null,
       date:        m.date ? new Date(m.date).toISOString().split('T')[0] : null,
       time:        m.time,
       venue:       m.venue,
@@ -175,15 +203,69 @@ export async function importMatchesFromExcel(parsedMatches) {
       coordinator: m.coordinator ?? null,
       status:      (m.scoreA !== null && m.scoreB !== null) ? 'played' : 'upcoming',
     }))
-    // Exclure les lignes sans journee ou sans équipes (séparateurs, finales sans code)
-    .filter((r) => r.journee !== null && r.team_a && r.team_b);
+    .filter((r) => r.team_a && r.team_b && r.team_a !== 'À déterminer');
 
-  if (rows.length === 0) throw new Error('Aucun match valide à importer (journee null ou équipes manquantes)');
+  if (allRows.length === 0) throw new Error('Aucun match valide à importer');
 
-  const { error } = await supabase
+  const groupRows  = allRows.filter(r => r.journee !== null);
+
+  // Dédupliquer les finaleRows (même phase+teamA+teamB possible dans l'Excel)
+  const _finaleRaw = allRows.filter(r => r.journee === null && r.phase !== null);
+  const _seenPhase = new Set();
+  const finaleRows = _finaleRaw.filter(r => {
+    const k = `${r.phase}:${r.team_a}:${r.team_b}`;
+    if (_seenPhase.has(k)) return false;
+    _seenPhase.add(k);
+    return true;
+  });
+
+  // Fetch tous les matchs existants pour faire un upsert manuel (évite les problèmes d'index partiels)
+  const { data: existing, error: fetchErr } = await supabase
     .from('matches')
-    .upsert(rows, { onConflict: 'journee,team_a,team_b' });
+    .select('id, journee, phase, team_a, team_b, score_a, score_b, status');
+  if (fetchErr) throw fetchErr;
 
-  if (error) throw error;
-  return rows.length;
+  const byJourneeKey = {};
+  const byPhaseKey = {};
+  for (const row of existing ?? []) {
+    if (row.journee !== null) byJourneeKey[`${row.journee}:${row.team_a}:${row.team_b}`] = row;
+    else if (row.phase)       byPhaseKey[`${row.phase}:${row.team_a}:${row.team_b}`]     = row;
+  }
+
+  const toInsert = [];
+  const toUpdate = [];
+
+  for (const row of groupRows) {
+    const key = `${row.journee}:${row.team_a}:${row.team_b}`;
+    const ex  = byJourneeKey[key];
+    if (ex) {
+      // Préserver les scores/statut déjà saisis via admin
+      toUpdate.push({ id: ex.id, ...row, score_a: ex.score_a, score_b: ex.score_b, status: ex.status });
+    } else {
+      toInsert.push(row);
+    }
+  }
+
+  for (const row of finaleRows) {
+    const key = `${row.phase}:${row.team_a}:${row.team_b}`;
+    const ex  = byPhaseKey[key];
+    if (ex) {
+      toUpdate.push({ id: ex.id, ...row, score_a: ex.score_a, score_b: ex.score_b, status: ex.status });
+    } else {
+      toInsert.push(row);
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from('matches').insert(toInsert);
+    if (error) throw error;
+  }
+
+  for (const row of toUpdate) {
+    const { id, ...fields } = row;
+    const { error } = await supabase.from('matches').update(fields).eq('id', id);
+    if (error) throw error;
+  }
+
+  return toInsert.length + toUpdate.length;
 }

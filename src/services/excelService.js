@@ -185,6 +185,16 @@ function parseMatches(ws) {
         ? rawDate
         : parseStringDate(rawDate);
 
+      // Lire les équipes depuis col 5 et 7 (même structure que groupes)
+      // Si vide → étiquette positionnelle (ex: "1er Gr. A") ou placeholder
+      const rawTeamA = row[5] ? row[5].toString().trim() : '';
+      const rawTeamB = row[7] ? row[7].toString().trim() : '';
+      const teamA = rawTeamA || (row[6] ? row[6].toString().trim() : '') || 'À déterminer';
+      const teamB = rawTeamB || (row[8] ? row[8].toString().trim() : '') || 'À déterminer';
+
+      const scoreA = typeof row[9]  === 'number' ? row[9]  : null;
+      const scoreB = typeof row[10] === 'number' ? row[10] : null;
+
       matches.push({
         id:       null,
         journee:  null,
@@ -194,16 +204,16 @@ function parseMatches(ws) {
         venue:    row[2] ? row[2].toString().trim() : '',
         time:     row[3] ? row[3].toString().trim() : '',
         group:    row[4] ? row[4].toString().trim().toUpperCase() : '',
-        teamA:    'À déterminer',
-        teamB:    'À déterminer',
-        scoreA:   null,
-        scoreB:   null,
-        status:      'upcoming',
+        teamA,
+        teamB,
+        scoreA,
+        scoreB,
+        status:      (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
         restTeams:   '',
-        referee:     '',
-        ref1:        '',
-        ref2:        '',
-        coordinator: '',
+        referee:     row[11] ? row[11].toString().trim() : '',
+        ref1:        row[12] ? row[12].toString().trim() : '',
+        ref2:        row[13] ? row[13].toString().trim() : '',
+        coordinator: row[14] ? row[14].toString().trim() : '',
       });
       continue;
     }

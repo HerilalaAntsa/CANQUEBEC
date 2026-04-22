@@ -5,7 +5,19 @@ import { useLeagueData } from '../services/dataStore';
 import { generateSlug, normalizeTeamName } from '../config/teams';
 
 export function useTeam(slug) {
-  const { teams, matches, standings, players, scorers, assisters, teamMeta } = useLeagueData();
+  const { teams, matches, standings, liveStandings, players, scorers, assisters, teamMeta } = useLeagueData();
+
+  const mergedStandings = useMemo(() => {
+    const base = {};
+    for (const s of standings) {
+      base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
+    }
+    for (const s of (liveStandings ?? [])) {
+      if (base[s.team]) base[s.team] = { ...base[s.team], ...s };
+      else base[s.team] = s;
+    }
+    return Object.values(base);
+  }, [standings, liveStandings]);
 
   return useMemo(() => {
     if (!slug || !teams.length) return null;
@@ -20,7 +32,7 @@ export function useTeam(slug) {
       m => normalizeTeamName(m.teamA) === name || normalizeTeamName(m.teamB) === name
     );
 
-    const standing = standings.find(s => normalizeTeamName(s.team) === name) ?? null;
+    const standing = mergedStandings.find(s => normalizeTeamName(s.team) === name) ?? null;
 
     const roster = players
       .filter(p => normalizeTeamName(p.team) === name)
@@ -37,5 +49,5 @@ export function useTeam(slug) {
     const meta = teamMeta.find(m => normalizeTeamName(m.name) === name) ?? null;
 
     return { team, name, standing, teamMatches, roster, topScorers, topAssisters, meta };
-  }, [slug, teams, matches, standings, players, scorers, assisters, teamMeta]);
+  }, [slug, teams, matches, mergedStandings, players, scorers, assisters, teamMeta]);
 }

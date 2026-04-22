@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import MatchCard from '../components/calendrier/MatchCard';
 import styles from './FinalePage.module.css';
@@ -13,7 +13,13 @@ const ROUND_ICONS = {
 };
 
 export default function FinalePage() {
-  const { matches } = useLeagueData();
+  const { matches, loadSupabaseScores } = useLeagueData();
+
+  // Rafraîchir les scores/statuts toutes les 30s
+  useEffect(() => {
+    const id = setInterval(() => loadSupabaseScores(), 30_000);
+    return () => clearInterval(id);
+  }, [loadSupabaseScores]);
 
   const byRound = useMemo(() => {
     const map = new Map();

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent, setMatchStatus } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
@@ -36,6 +36,8 @@ export default function AdminMatchEditPage() {
   const [evtSecNum,     setEvtSecNum]     = useState(''); // remplacement sortant
   const [evtSecName,    setEvtSecName]    = useState('');
   const [addingEvt,     setAddingEvt]     = useState(false);
+  const [editingEvt,    setEditingEvt]    = useState(null); // { id, player_num, player_name, minute }
+  const [savingEvt,     setSavingEvt]     = useState(false);
 
   useEffect(() => { loadData(); }, [id]);
 
@@ -58,6 +60,13 @@ export default function AdminMatchEditPage() {
     setStatusBusy(true);
     try {
       await setMatchStatus(id, newStatus);
+      // Si on démarre le match et que le score est encore null → forcer 0-0
+      if (newStatus === 'live' && (match.score_a === null || match.score_b === null)) {
+        await updateScore(id, 0, 0);
+        setScoreA('0');
+        setScoreB('0');
+        setMatch(prev => ({ ...prev, score_a: 0, score_b: 0 }));
+      }
       setMatch(prev => ({ ...prev, status: newStatus }));
       setSavedMsg(
         newStatus === 'live'   ? '🔴 Match démarré' :
@@ -119,6 +128,36 @@ export default function AdminMatchEditPage() {
       await deleteEvent(evtId);
     } catch { /* queued offline */ }
     setEvents(prev => prev.filter(ev => ev.id !== evtId));
+  }
+
+  function handleStartEdit(ev) {
+    setEditingEvt({
+      id:          ev.id,
+      player_num:  ev.player_num  ?? '',
+      player_name: ev.player_name ?? '',
+      minute:      ev.minute      ?? '',
+    });
+  }
+
+  async function handleSaveEdit() {
+    if (!editingEvt) return;
+    setSavingEvt(true);
+    try {
+      const fields = {
+        player_num:  editingEvt.player_num  ? Number(editingEvt.player_num)  : null,
+        player_name: editingEvt.player_name || null,
+        minute:      editingEvt.minute      ? Number(editingEvt.minute)      : null,
+      };
+      await updateEvent(editingEvt.id, fields);
+      setEvents(prev => prev.map(ev =>
+        ev.id === editingEvt.id ? { ...ev, ...fields } : ev
+      ));
+      setEditingEvt(null);
+    } catch (e) {
+      alert('Erreur : ' + e.message);
+    } finally {
+      setSavingEvt(false);
+    }
   }
 
   const eventsByType = (type) => events.filter(ev => ev.type === type);
@@ -269,16 +308,47 @@ export default function AdminMatchEditPage() {
             <div className={styles.eventList}>
               {events.map(ev => {
                 const typeDef = EVENT_TYPES.find(t => t.value === ev.type);
+                const isEditing = editingEvt?.id === ev.id;
                 return (
-                  <div key={ev.id} className={`${styles.eventRow} ${ev._offline ? styles.offline : ''}`}>
+                  <div key={ev.id} className={`${styles.eventRow} ${ev._offline ? styles.offline : ''} ${isEditing ? styles.editingRow : ''}`}>
                     <span className={styles.evtIcon}>{typeDef?.label.split(' ')[0]}</span>
                     <span className={styles.evtTeam}>{ev.team}</span>
-                    <span className={styles.evtPlayer}>
-                      {ev.player_num ? `#${ev.player_num}` : ''} {ev.player_name || ''}
-                    </span>
-                    {ev.minute != null && <span className={styles.evtMin}>{ev.minute}&apos;</span>}
-                    {ev._offline && <span className={styles.offlineBadge}>hors ligne</span>}
-                    <button onClick={() => handleDeleteEvent(ev.id)} className={styles.deleteBtn}>✕</button>
+
+                    {isEditing ? (
+                      <>
+                        <input
+                          type="number" placeholder="N°" className={styles.editInput}
+                          style={{ width: '60px' }}
+                          value={editingEvt.player_num}
+                          onChange={e => setEditingEvt(prev => ({ ...prev, player_num: e.target.value }))}
+                        />
+                        <input
+                          type="text" placeholder="Nom" className={styles.editInput}
+                          value={editingEvt.player_name}
+                          onChange={e => setEditingEvt(prev => ({ ...prev, player_name: e.target.value }))}
+                        />
+                        <input
+                          type="number" placeholder="Min." className={styles.editInput}
+                          style={{ width: '55px' }}
+                          value={editingEvt.minute}
+                          onChange={e => setEditingEvt(prev => ({ ...prev, minute: e.target.value }))}
+                        />
+                        <button onClick={handleSaveEdit} disabled={savingEvt} className={styles.saveEditBtn}>
+                          {savingEvt ? '…' : '✓'}
+                        </button>
+                        <button onClick={() => setEditingEvt(null)} className={styles.cancelEditBtn}>✕</button>
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.evtPlayer}>
+                          {ev.player_num ? `#${ev.player_num}` : ''} {ev.player_name || ''}
+                        </span>
+                        {ev.minute != null && <span className={styles.evtMin}>{ev.minute}&apos;</span>}
+                        {ev._offline && <span className={styles.offlineBadge}>hors ligne</span>}
+                        <button onClick={() => handleStartEdit(ev)} className={styles.editBtn}>✏️</button>
+                        <button onClick={() => handleDeleteEvent(ev.id)} className={styles.deleteBtn}>✕</button>
+                      </>
+                    )}
                   </div>
                 );
               })}

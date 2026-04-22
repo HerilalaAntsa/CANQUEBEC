@@ -12,16 +12,21 @@ export default function FlagBadge({ team, size = 'md', link = false, className =
   if (!team) return null;
 
   const flag = getFlag(team);
-  const slug = generateSlug(team);
+
+  // Équipe non encore déterminée (phase finale)
+  const isTBD = !flag || team === 'À déterminer';
 
   const content = (
-    <span className={`${styles.badge} ${styles[size]} ${className}`}>
-      <span className={styles.flag} role="img" aria-label={team}>{flag}</span>
+    <span className={`${styles.badge} ${styles[size]} ${isTBD ? styles.tbd : ''} ${className}`}>
+      <span className={styles.flag} role="img" aria-label={team}>
+        {isTBD ? '❓' : flag}
+      </span>
       <span className={styles.name}>{team}</span>
     </span>
   );
 
-  if (link) {
+  if (link && !isTBD) {
+    const slug = generateSlug(team);
     return (
       <Link to={`/equipe/${slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         {content}

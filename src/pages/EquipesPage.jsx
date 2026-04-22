@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import { Link } from 'react-router-dom';
 import FlagBadge from '../components/shared/FlagBadge';
@@ -5,9 +6,21 @@ import { generateSlug } from '../config/teams';
 import styles from './EquipesPage.module.css';
 
 export default function EquipesPage() {
-  const { teams, standings } = useLeagueData();
+  const { teams, standings, liveStandings } = useLeagueData();
 
-  const standingMap = Object.fromEntries(standings.map(s => [s.team, s]));
+  const mergedStandings = useMemo(() => {
+    const base = {};
+    for (const s of standings) {
+      base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
+    }
+    for (const s of (liveStandings ?? [])) {
+      if (base[s.team]) base[s.team] = { ...base[s.team], ...s };
+      else base[s.team] = s;
+    }
+    return Object.values(base);
+  }, [standings, liveStandings]);
+
+  const standingMap = Object.fromEntries(mergedStandings.map(s => [s.team, s]));
 
   const groupA = teams.filter(t => t.group === 'A');
   const groupB = teams.filter(t => t.group === 'B');

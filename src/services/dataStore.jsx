@@ -186,7 +186,10 @@ function computeLiveStandings(matches, supabaseScores, teams) {
 function applySupabaseScores(matches, supabaseScores) {
   if (!supabaseScores || Object.keys(supabaseScores).length === 0) return matches;
   return matches.map((m) => {
-    const key = `${m.journee}:${m.teamA}:${m.teamB}`;
+    // Phase finale → clé "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
+    const key = m.phase
+      ? `phase:${m.phase}:${m.teamA}:${m.teamB}`
+      : `${m.journee}:${m.teamA}:${m.teamB}`;
     const live = supabaseScores[key];
     if (!live) return m;
     return {
@@ -232,7 +235,7 @@ export function DataProvider({ children }) {
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
       const [matchesRes, eventsRes] = await Promise.all([
-        supabase.from('matches').select('id, journee, team_a, team_b, score_a, score_b, status'),
+        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
       ]);
       if (matchesRes.error) throw matchesRes.error;
@@ -246,7 +249,10 @@ export function DataProvider({ children }) {
 
       const scores = {};
       for (const row of matchesRes.data ?? []) {
-        const key = `${row.journee}:${row.team_a}:${row.team_b}`;
+        // Clé : phase finale → "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
+        const key = row.phase
+          ? `phase:${row.phase}:${row.team_a}:${row.team_b}`
+          : `${row.journee}:${row.team_a}:${row.team_b}`;
         scores[key] = {
           id:     row.id,
           teamA:  row.team_a,

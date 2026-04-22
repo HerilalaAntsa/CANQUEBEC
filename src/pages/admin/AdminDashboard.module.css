@@ -83,6 +83,14 @@
   font-size: 0.85rem;
 }
 
+.syncMsgError {
+  background: rgba(239,68,68,0.1);
+  border-bottom: 1px solid rgba(239,68,68,0.2);
+  color: #ff7070;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.85rem;
+}
+
 .actions {
   display: flex;
   justify-content: space-between;
@@ -91,6 +99,19 @@
   gap: 1rem;
   flex-wrap: wrap;
 }
+
+.gsheetsBtn {
+  background: #1a7340;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.gsheetsBtn:hover:not(:disabled) { background: #218a4f; }
+.gsheetsBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .importBtn {
   background: var(--color-accent, #e2b04a);
@@ -103,6 +124,19 @@
   cursor: pointer;
 }
 .importBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.exportBtn {
+  background: #1a4a8a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.exportBtn:hover:not(:disabled) { background: #1f5bad; }
+.exportBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .filters {
   display: flex;

@@ -248,3 +248,51 @@
   padding: 0.1rem 0.3rem;
 }
 .deleteBtn:hover { color: #ff7070; }
+
+.editBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.1rem 0.3rem;
+}
+.editBtn:hover { color: var(--color-accent, #e2b04a); }
+
+.editingRow {
+  border-color: rgba(226,176,74,0.3);
+  background: rgba(226,176,74,0.04);
+}
+
+.editInput {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(226,176,74,0.4);
+  border-radius: 5px;
+  padding: 0.3rem 0.5rem;
+  color: var(--color-text, #f0f0f0);
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 80px;
+}
+.editInput:focus { outline: none; border-color: var(--color-accent, #e2b04a); }
+
+.saveEditBtn {
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.35);
+  color: #22c55e;
+  border-radius: 5px;
+  padding: 0.25rem 0.6rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.saveEditBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cancelEditBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255,80,80,0.6);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.1rem 0.3rem;
+}
+.cancelEditBtn:hover { color: #ff7070; }
