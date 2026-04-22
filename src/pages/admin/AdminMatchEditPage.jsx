@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
@@ -14,7 +14,6 @@ const EVENT_TYPES = [
 
 export default function AdminMatchEditPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { players } = useLeagueData();
 
   const [match,     setMatch]     = useState(null);
@@ -39,9 +38,7 @@ export default function AdminMatchEditPage() {
   const [editingEvt,    setEditingEvt]    = useState(null); // { id, player_num, player_name, minute }
   const [savingEvt,     setSavingEvt]     = useState(false);
 
-  useEffect(() => { loadData(); }, [id]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     try {
       const { match: m, events: ev } = await getMatchWithEvents(id);
       setMatch(m);
@@ -54,7 +51,9 @@ export default function AdminMatchEditPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [id]);
+
+  useEffect(() => { loadData(); }, [loadData]);
 
   async function handleStatus(newStatus) {
     setStatusBusy(true);
@@ -159,8 +158,6 @@ export default function AdminMatchEditPage() {
       setSavingEvt(false);
     }
   }
-
-  const eventsByType = (type) => events.filter(ev => ev.type === type);
 
   /** Cherche un joueur par numéro + équipe dans la liste Excel */
   const lookupPlayer = useCallback((num, team) => {

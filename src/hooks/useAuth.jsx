@@ -4,15 +4,11 @@ import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [session, setSession]   = useState(undefined); // undefined = loading
-  const [loading, setLoading]   = useState(true);
+  const [session, setSession]   = useState(() => isSupabaseEnabled ? undefined : null);
+  const [loading, setLoading]   = useState(() => !isSupabaseEnabled ? false : true);
 
   useEffect(() => {
-    if (!isSupabaseEnabled) {
-      setSession(null);
-      setLoading(false);
-      return;
-    }
+    if (!isSupabaseEnabled) return;
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
@@ -44,6 +40,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth doit être dans un AuthProvider');

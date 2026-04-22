@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import JourneeSection from '../components/calendrier/JourneeSection';
 import CalendrierFilters from '../components/calendrier/CalendrierFilters';
@@ -16,7 +16,7 @@ export default function CalendrierPage() {
     team: '', group: '', venue: '', status: '',
   });
 
-  const applyFilters = (list) => list.filter(m => {
+  const applyFilters = useCallback((list) => list.filter(m => {
     if (filters.team) {
       const t = normalizeTeamName(filters.team);
       if (normalizeTeamName(m.teamA) !== t && normalizeTeamName(m.teamB) !== t) return false;
@@ -25,7 +25,7 @@ export default function CalendrierPage() {
     if (filters.venue && m.venue?.trim() !== filters.venue) return false;
     if (filters.status && m.status !== filters.status) return false;
     return true;
-  });
+  }), [filters]);
 
   // Phase de groupes
   const byJournee = useMemo(() => {
@@ -37,7 +37,7 @@ export default function CalendrierPage() {
       map.get(j).push(m);
     }
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
-  }, [matches, filters]);
+  }, [matches, applyFilters]);
 
   // Phase finale
   const byRound = useMemo(() => {
@@ -52,7 +52,7 @@ export default function CalendrierPage() {
       const ib = ROUND_ORDER.indexOf(b[0]);
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     });
-  }, [matches, filters]);
+  }, [matches, applyFilters]);
 
   const totalGroupes     = matches.filter(m => m.journee !== null).length;
   const totalPhaseFinale = matches.filter(m => m.phase).length;

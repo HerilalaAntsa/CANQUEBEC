@@ -38,15 +38,11 @@ export default function MatchPage() {
   const { id } = useParams();
   const [match, setMatch] = useState(null);
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(!isSupabaseEnabled ? false : true);
+  const [error, setError] = useState(isSupabaseEnabled ? null : 'Données live non disponibles');
 
   useEffect(() => {
-    if (!isSupabaseEnabled) {
-      setError('Données live non disponibles');
-      setLoading(false);
-      return;
-    }
+    if (!isSupabaseEnabled) return;
     async function fetchData() {
       setLoading(true);
       const [matchRes, eventsRes] = await Promise.all([

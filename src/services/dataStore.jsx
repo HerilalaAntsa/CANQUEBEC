@@ -69,7 +69,7 @@ function reducer(state, action) {
         matches:    applySupabaseScores(data.matches, state.supabaseScores),
         teams:      data.teams,
         standings:  data.standings,
-        liveStandings: computeLiveStandings(data.matches, state.supabaseScores, data.teams),
+        liveStandings: computeLiveStandings(data.matches, state.supabaseScores),
         scorers,
         assisters,
         players,
@@ -120,7 +120,7 @@ function reducer(state, action) {
         loadingScores:  false,
         supabaseScores: scores,
         matches:        applySupabaseScores(state.matches, scores),
-        liveStandings:  computeLiveStandings(state.matches, scores, state.teams),
+        liveStandings:  computeLiveStandings(state.matches, scores),
       };
     }
 
@@ -136,7 +136,7 @@ function reducer(state, action) {
  * Calcule le classement live depuis les scores Supabase.
  * Victoire = +3, Nul = +1 chaque, Défaite = 0
  */
-function computeLiveStandings(matches, supabaseScores, teams) {
+function computeLiveStandings(matches, supabaseScores) {
   if (!supabaseScores || Object.keys(supabaseScores).length === 0) return [];
 
   const table = {}; // { teamName: { played, won, drawn, lost, goalsFor, goalsAgainst, points } }
@@ -358,6 +358,7 @@ export function DataProvider({ children }) {
 // HOOKS D'ACCÈS
 // ─────────────────────────────────────────────
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLeagueData() {
   const ctx = useContext(DataContext);
   if (!ctx) throw new Error('useLeagueData must be used within DataProvider');

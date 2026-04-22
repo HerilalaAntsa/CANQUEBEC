@@ -19,7 +19,7 @@ export async function loadHoraireFromUrl(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status} — ${url}`);
     const buffer = await res.arrayBuffer();
-    const data = parseHoraire(buffer, corrId);
+    const data = parseHoraire(buffer);
     log.info('HORAIRE_LOAD_SUCCESS', { corrId, matches: data.matches.length, teams: data.teams.length });
     return data;
   } catch (err) {
@@ -38,7 +38,7 @@ export function loadHoraireFromFile(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = parseHoraire(e.target.result, corrId);
+        const data = parseHoraire(e.target.result);
         log.info('HORAIRE_LOAD_SUCCESS', { corrId, matches: data.matches.length });
         resolve(data);
       } catch (err) {
@@ -97,7 +97,7 @@ export function tryLoadPlayersFromFile(file) {
 // PARSERS INTERNES
 // ─────────────────────────────────────────────
 
-function parseHoraire(buffer, corrId) {
+function parseHoraire(buffer) {
   const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
 
   const players = parseJoueursSheet(wb.Sheets['JOUEURS']);
@@ -376,7 +376,7 @@ function parsePlayersFile(buffer, corrId) {
   for (const sheetName of wb.SheetNames) {
     const teamName = SHEET_TO_TEAM[sheetName] ?? normalizeTeamName(sheetName);
     const ws = wb.Sheets[sheetName];
-    const { players, teamMeta } = parseTeamSheet(ws, teamName, corrId);
+    const { players, teamMeta } = parseTeamSheet(ws, teamName);
     allPlayers.push(...players);
     if (teamMeta) allTeamMeta.push(teamMeta);
   }
@@ -388,7 +388,7 @@ function parsePlayersFile(buffer, corrId) {
 /**
  * Parser une feuille d'équipe avec détection dynamique des colonnes
  */
-function parseTeamSheet(ws, teamName, corrId) {
+function parseTeamSheet(ws, teamName) {
   const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
   if (!rows || rows.length < 8) return { players: [], teamMeta: null };
 

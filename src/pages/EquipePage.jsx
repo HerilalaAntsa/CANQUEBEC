@@ -54,7 +54,7 @@ export default function EquipePage() {
     );
   }
 
-  const { team, name, standing, teamMatches, roster, topScorers, meta } = teamData;
+  const { team, name, standing, teamMatches, roster, topScorers: _topScorers, meta } = teamData;
   const played   = teamMatches.filter(m => m.status === 'played');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 

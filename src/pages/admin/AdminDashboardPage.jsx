@@ -136,13 +136,11 @@ export default function AdminDashboardPage() {
       for (const [ref, val] of Object.entries(cellUpdates)) {
         // Regex : trouve <c r="REF" ...> ... <v>ANCIEN</v> ... </c>
         // On remplace seulement le contenu de <v>
-        const re = new RegExp(
-          `(<c\\s[^>]*r="${ref}"[^>]*>(?:(?!<\/c>)[\\s\\S])*?<v>)[^<]*(</v>)`,
-          'g'
-        );
+        const reStr = `(<c\\s[^>]*r="${ref}"[^>]*>(?:(?!<[/]c>)[\\s\\S])*?<v>)[^<]*(</v>)`;
+        const re = new RegExp(reStr, 'g');
         if (re.test(newXml)) {
           newXml = newXml.replace(
-            new RegExp(`(<c\\s[^>]*r="${ref}"[^>]*>(?:(?!<\/c>)[\\s\\S])*?<v>)[^<]*(</v>)`, 'g'),
+            new RegExp(reStr, 'g'),
             `$1${val}$2`
           );
         } else {
