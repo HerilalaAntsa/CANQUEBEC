@@ -8,11 +8,11 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
+  align-items: flex-start;
+  padding: 1rem;
   background: var(--color-surface, #1a1a2e);
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -93,11 +93,9 @@
 
 .actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  padding: 1rem;
+  gap: 0.6rem;
 }
 
 .gsheetsBtn {
@@ -105,23 +103,27 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.55rem 1.1rem;
-  font-size: 0.88rem;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
 }
 .gsheetsBtn:hover:not(:disabled) { background: #218a4f; }
 .gsheetsBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .importBtn {
-  background: var(--color-accent, #e2b04a);
-  color: #0f0f1a;
+  background: #c0392b;
+  color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.55rem 1.1rem;
-  font-size: 0.88rem;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
 }
 .importBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -130,10 +132,12 @@
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 0.55rem 1.1rem;
-  font-size: 0.88rem;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   cursor: pointer;
+  width: 100%;
+  text-align: center;
 }
 .exportBtn:hover:not(:disabled) { background: #1f5bad; }
 .exportBtn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -141,6 +145,11 @@
 .filters {
   display: flex;
   gap: 0.4rem;
+  width: 100%;
+}
+.filters .filterBtn {
+  flex: 1;
+  text-align: center;
 }
 
 .filterBtn {
@@ -173,27 +182,25 @@
 
 .matchCard {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   background: var(--color-surface, #1a1a2e);
   border: 1px solid rgba(255,255,255,0.06);
   border-radius: 10px;
   padding: 0.85rem 1rem;
   text-decoration: none;
   color: inherit;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
   transition: border-color 0.15s;
 }
 .matchCard:hover { border-color: var(--color-accent, #e2b04a); }
 
 .matchMeta {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.5rem;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted, #888);
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .journee {
@@ -202,13 +209,15 @@
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .status {
   border-radius: 10px;
   padding: 0.1rem 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
+  flex-shrink: 0;
 }
 .status.played   { background: rgba(0,200,100,0.12); color: #4cde8a; }
 .status.upcoming { background: rgba(100,160,255,0.12); color: #6fa8ff; }
@@ -216,21 +225,20 @@
 .matchTeams {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  flex: 1;
-  justify-content: center;
-  min-width: 0;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .team {
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 700;
   flex: 1;
-  white-space: nowrap;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.team:last-of-type { text-align: right; }
 
 .score {
   font-size: 1rem;
@@ -238,10 +246,13 @@
   color: var(--color-accent, #e2b04a);
   white-space: nowrap;
   flex-shrink: 0;
+  text-align: center;
+  min-width: 2.5rem;
 }
 
 .editHint {
   font-size: 0.78rem;
   color: var(--color-text-muted, #888);
-  flex-shrink: 0;
+  text-align: right;
+  margin-top: 0.1rem;
 }
