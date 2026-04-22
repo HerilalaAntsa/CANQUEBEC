@@ -40,6 +40,7 @@ export default function AdminMatchEditPage() {
   const [addingEvt,     setAddingEvt]     = useState(false);
   const [editingEvt,    setEditingEvt]    = useState(null); // { id, player_num, player_name, minute }
   const [savingEvt,     setSavingEvt]     = useState(false);
+  const [mismatchModal, setMismatchModal] = useState(null); // { goalsA, goalsB } | null
 
   const loadData = useCallback(async () => {
     try {
@@ -108,8 +109,7 @@ export default function AdminMatchEditPage() {
     }
   }
 
-  async function handleSaveScore(e) {
-    e.preventDefault();
+  async function doSaveScore() {
     setSaving(true);
     try {
       await updateScore(id, Number(scoreA), Number(scoreB));
@@ -120,7 +120,19 @@ export default function AdminMatchEditPage() {
       setTimeout(() => setSavedMsg(''), 5000);
     } finally {
       setSaving(false);
+      setMismatchModal(null);
     }
+  }
+
+  async function handleSaveScore(e) {
+    e.preventDefault();
+    const goalsA = events.filter(ev => ev.type === 'goal' && ev.team === match.team_a).length;
+    const goalsB = events.filter(ev => ev.type === 'goal' && ev.team === match.team_b).length;
+    if (Number(scoreA) !== goalsA || Number(scoreB) !== goalsB) {
+      setMismatchModal({ goalsA, goalsB });
+      return;
+    }
+    await doSaveScore();
   }
 
   async function handleAddEvent(e) {
@@ -139,6 +151,16 @@ export default function AdminMatchEditPage() {
     try {
       await addEvent(event);
       setEvents(prev => [...prev, { ...event, id: Date.now() }]);
+      // Auto-incrément score si c'est un but
+      if (evtType === 'goal') {
+        const newA = evtTeam === match.team_a ? Number(scoreA) + 1 : Number(scoreA);
+        const newB = evtTeam === match.team_b ? Number(scoreB) + 1 : Number(scoreB);
+        setScoreA(String(newA));
+        setScoreB(String(newB));
+        await updateScore(id, newA, newB);
+        setSavedMsg('⚽ But enregistré — score mis à jour automatiquement');
+        setTimeout(() => setSavedMsg(''), 3000);
+      }
       setEvtPlayerNum(''); setEvtPlayerName(''); setEvtMinute('');
       setEvtSecNum(''); setEvtSecName('');
     } catch {
@@ -383,7 +405,7 @@ export default function AdminMatchEditPage() {
                 const typeDef = EVENT_TYPES.find(t => t.value === ev.type);
                 const isEditing = editingEvt?.id === ev.id;
                 return (
-                  <div key={ev.id} className={`${styles.eventRow} ${ev._offline ? styles.offline : ''} ${isEditing ? styles.editingRow : ''}`}>
+                  <div key={ev.id} className={`${styles.eventRow} ${ev._offline ? styles.offline : ''} ${isEditing ? styles.editingRow : ''} ${ev.type === 'sub' ? styles.subRow : ''}`}>
                     <span className={styles.evtIcon}>{typeDef?.label.split(' ')[0]}</span>
                     <span className={styles.evtTeam}>{ev.team}</span>
 
@@ -411,6 +433,21 @@ export default function AdminMatchEditPage() {
                         </button>
                         <button onClick={() => setEditingEvt(null)} className={styles.cancelEditBtn}>✕</button>
                       </>
+                    ) : ev.type === 'sub' ? (
+                      <>
+                        <div className={styles.subOut}>
+                          <span className={styles.subArrowOut}>↓</span>
+                          <span>{ev.secondary_player_num ? `#${ev.secondary_player_num}` : ''} {ev.secondary_player_name || '?'}</span>
+                        </div>
+                        <div className={styles.subIn}>
+                          <span className={styles.subArrowIn}>↑</span>
+                          <span>{ev.player_num ? `#${ev.player_num}` : ''} {ev.player_name || '?'}</span>
+                        </div>
+                        {ev.minute != null && <span className={styles.evtMin}>{ev.minute}&apos;</span>}
+                        {ev._offline && <span className={styles.offlineBadge}>hors ligne</span>}
+                        <button onClick={() => handleStartEdit(ev)} className={styles.editBtn}>✏️</button>
+                        <button onClick={() => handleDeleteEvent(ev.id)} className={styles.deleteBtn}>✕</button>
+                      </>
                     ) : (
                       <>
                         <span className={styles.evtPlayer}>
@@ -429,6 +466,26 @@ export default function AdminMatchEditPage() {
           )
         }
       </section>
+
+      {/* Modal avertissement score ≠ buts */}
+      {mismatchModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>⚠️ Attention — score incohérent</h3>
+            <p className={styles.modalBody}>
+              Vous êtes sur le point de sauvegarder <strong>{scoreA}–{scoreB}</strong> mais les buts enregistrés indiquent&nbsp;
+              <strong>{mismatchModal.goalsA}–{mismatchModal.goalsB}</strong>.
+            </p>
+            <p className={styles.modalBody}>Voulez-vous quand même sauvegarder ce score ?</p>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalConfirm} onClick={doSaveScore} disabled={saving}>
+                {saving ? 'Sauvegarde...' : 'Oui, sauvegarder quand même'}
+              </button>
+              <button className={styles.modalCancel} onClick={() => setMismatchModal(null)}>Annuler</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
