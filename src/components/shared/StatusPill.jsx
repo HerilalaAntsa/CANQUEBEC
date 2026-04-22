@@ -20,6 +20,9 @@ export default function StatusPill({ match }) {
   } else if (match.status === 'live') {
     variant = 'live';
     label   = '🔴 En cours';
+  } else if (match.status === 'postponed') {
+    variant = 'postponed';
+    label   = '⚠️ Reporté';
   } else if (matchDay.getTime() === TODAY.getTime()) {
     variant = 'today';
     label   = "Aujourd'hui";

@@ -50,6 +50,7 @@ export default function MatchCard({ match }) {
 
   const card = (
     <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${match.supabaseId ? styles.clickable : ''}`}>
+      <div className={styles.statusBadge}><StatusPill match={match} /></div>
       <div className={styles.meta}>
         <span className={styles.date}>{formatDate(match.date, match.dateRaw)}</span>
         {match.time && <><span className={styles.dot}>·</span><span className={styles.time}>{match.time}</span></>}
@@ -90,7 +91,6 @@ export default function MatchCard({ match }) {
       )}
 
       <div className={styles.footer}>
-        <StatusPill match={match} />
         <ArbitresRow match={match} />
       </div>
     </article>

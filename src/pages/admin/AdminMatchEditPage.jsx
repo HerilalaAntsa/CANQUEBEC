@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
@@ -22,6 +22,9 @@ export default function AdminMatchEditPage() {
   const [error,     setError]     = useState('');
   const [saving,    setSaving]    = useState(false);
   const [statusBusy, setStatusBusy] = useState(false);
+  const [postponeMode, setPostponeMode] = useState(false);
+  const [postponeDate, setPostponeDate] = useState('');
+  const [postponeTime, setPostponeTime] = useState('');
   const [scoreA,    setScoreA]    = useState('0');
   const [scoreB,    setScoreB]    = useState('0');
   const [savedMsg,  setSavedMsg]  = useState('');
@@ -74,6 +77,31 @@ export default function AdminMatchEditPage() {
       setTimeout(() => setSavedMsg(''), 3000);
     } catch (e) {
       setSavedMsg('⚠️ Erreur : ' + e.message);
+      setTimeout(() => setSavedMsg(''), 4000);
+    } finally {
+      setStatusBusy(false);
+    }
+  }
+
+  async function handlePostpone(e) {
+    e.preventDefault();
+    setStatusBusy(true);
+    try {
+      await setMatchStatus(id, 'postponed');
+      if (postponeDate || postponeTime) {
+        await updateMatchDateTime(id, postponeDate || undefined, postponeTime || undefined);
+      }
+      setMatch(prev => ({
+        ...prev,
+        status: 'postponed',
+        ...(postponeDate ? { date: postponeDate } : {}),
+        ...(postponeTime ? { time: postponeTime } : {}),
+      }));
+      setPostponeMode(false);
+      setSavedMsg('⚠️ Match reporté');
+      setTimeout(() => setSavedMsg(''), 3000);
+    } catch (err) {
+      setSavedMsg('⚠️ Erreur : ' + err.message);
       setTimeout(() => setSavedMsg(''), 4000);
     } finally {
       setStatusBusy(false);
@@ -198,10 +226,11 @@ export default function AdminMatchEditPage() {
         <h2 className={styles.sectionTitle}>Statut du match</h2>
         <div className={styles.statusRow}>
           <span className={`${styles.statusBadge} ${styles[`status_${match.status}`]}`}>
-            {match.status === 'live'   ? '🔴 En cours' :
-             match.status === 'played' ? '✅ Terminé'  : '⏳ À venir'}
+            {match.status === 'live'      ? '🔴 En cours'  :
+             match.status === 'played'   ? '✅ Terminé'    :
+             match.status === 'postponed'? '⚠️ Reporté'   : '⏳ À venir'}
           </span>
-          {match.status === 'upcoming' && (
+          {(match.status === 'upcoming' || match.status === 'postponed') && (
             <button className={styles.liveBtn} disabled={statusBusy} onClick={() => handleStatus('live')}>
               ▶ Démarrer le match
             </button>
@@ -216,7 +245,54 @@ export default function AdminMatchEditPage() {
               🔄 Rouvrir
             </button>
           )}
+          {match.status !== 'postponed' && match.status !== 'played' && (
+            <button
+              className={styles.postponeBtn}
+              disabled={statusBusy}
+              onClick={() => setPostponeMode(v => !v)}
+            >
+              🗓 Reporter
+            </button>
+          )}
+          {match.status === 'postponed' && (
+            <button
+              className={styles.postponeBtn}
+              disabled={statusBusy}
+              onClick={() => setPostponeMode(v => !v)}
+            >
+              ✏️ Modifier la date
+            </button>
+          )}
         </div>
+
+        {postponeMode && (
+          <form onSubmit={handlePostpone} className={styles.postponeForm}>
+            <p className={styles.postponeHint}>Nouvelle date (optionnel — peut être fixée plus tard)</p>
+            <div className={styles.postponeFields}>
+              <input
+                type="date"
+                className={styles.postponeInput}
+                value={postponeDate}
+                onChange={e => setPostponeDate(e.target.value)}
+              />
+              <input
+                type="time"
+                className={styles.postponeInput}
+                value={postponeTime}
+                onChange={e => setPostponeTime(e.target.value)}
+              />
+            </div>
+            <div className={styles.postponeBtns}>
+              <button type="submit" className={styles.postponeConfirm} disabled={statusBusy}>
+                {statusBusy ? '...' : (match.status === 'postponed' ? 'Mettre à jour' : 'Confirmer le report')}
+              </button>
+              <button type="button" className={styles.postponeCancel} onClick={() => setPostponeMode(false)}>
+                Annuler
+              </button>
+            </div>
+          </form>
+        )}
+
         {savedMsg && <p className={styles.savedMsg}>{savedMsg}</p>}
       </section>
 

@@ -43,6 +43,65 @@
 .endBtn    { background: #22c55e; color: #fff; }
 .reopenBtn { background: rgba(255,255,255,0.1); color: var(--color-text-muted, #aaa); }
 
+/* ── Reporté ──────────────────────────────────────────── */
+.postponeBtn {
+  background: transparent;
+  border: 1px solid rgba(156, 163, 175, 0.35);
+  color: #9ca3af;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.postponeBtn:hover:not(:disabled) { border-color: #9ca3af; color: #d1d5db; }
+.postponeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.postponeForm {
+  margin-top: 0.75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px dashed rgba(156,163,175,0.2);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.postponeHint { font-size: 0.8rem; color: #9ca3af; margin: 0; }
+.postponeFields { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.postponeInput {
+  background: var(--color-bg, #0f0f1a);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: var(--color-text, #f0f0f0);
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
+.postponeInput:focus { outline: none; border-color: #9ca3af; }
+.postponeBtns { display: flex; gap: 0.5rem; }
+.postponeConfirm {
+  background: rgba(156,163,175,0.15);
+  border: 1px solid rgba(156,163,175,0.3);
+  color: #d1d5db;
+  border-radius: 6px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.postponeConfirm:hover:not(:disabled) { background: rgba(156,163,175,0.25); }
+.postponeConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
+.postponeCancel {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #6b7280;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.postponeCancel:hover { color: #9ca3af; }
+
 .loading, .error {
   padding: 3rem 1.5rem;
   text-align: center;

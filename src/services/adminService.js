@@ -114,6 +114,18 @@ export async function setMatchStatus(matchId, status) {
   if (error) throw error;
 }
 
+export async function updateMatchDateTime(matchId, date, time) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const fields = {};
+  if (date) fields.date = date;
+  if (time) fields.time = time;
+  const { error } = await supabase
+    .from('matches')
+    .update(fields)
+    .eq('id', matchId);
+  if (error) throw error;
+}
+
 // ─── Events (buteurs, passeurs, cartons, remplacements) ───────────────────────
 
 /**
