@@ -64,11 +64,14 @@ export default function MatchPage() {
   const venue   = VENUE_LABELS[match.venue?.trim()] ?? match.venue;
   const played  = match.status === 'played';
 
+  // Trier par minute (null → 1 en premier)
+  const sortedEvents = [...events].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1));
+
   // Séparer les événements par équipe
-  const eventsA  = events.filter(e => e.team === match.team_a);
-  const eventsB  = events.filter(e => e.team === match.team_b);
-  const scorersA = events.filter(e => e.type === 'goal' && e.team === match.team_a);
-  const scorersB = events.filter(e => e.type === 'goal' && e.team === match.team_b);
+  const eventsA  = sortedEvents.filter(e => e.team === match.team_a);
+  const eventsB  = sortedEvents.filter(e => e.team === match.team_b);
+  const scorersA = sortedEvents.filter(e => e.type === 'goal' && e.team === match.team_a);
+  const scorersB = sortedEvents.filter(e => e.type === 'goal' && e.team === match.team_b);
 
   const ARB_ROLES = [
     { key: 'referee',     label: 'Arbitre central' },
@@ -77,6 +80,52 @@ export default function MatchPage() {
     { key: 'coordinator', label: 'Coordonnateur' },
   ];
   const arbitres = ARB_ROLES.filter(r => match[r.key]);
+
+  const renderEvt = (ev) => {
+    const isSub = ev.type === 'sub';
+    return (
+      <div key={ev.id} className={styles.eventCard}>
+        <div className={styles.evtHeader}>
+          <span>{EVENT_ICONS[ev.type] ?? '•'}</span>
+          <span className={styles.evtHeaderLabel}>{EVENT_LABELS[ev.type] ?? ev.type}</span>
+          {ev.minute != null && <span className={styles.evtHeaderMin}>{ev.minute}&apos;</span>}
+        </div>
+        {isSub ? (
+          <div className={styles.evtSubBody}>
+            {(ev.player_name || ev.player_num) && (
+              <div className={styles.evtSubRow}>
+                <span className={styles.evtSubLabelIn}>↑ ENTRÉE</span>
+                <div>
+                  <div className={styles.evtPlayerName}>{ev.player_name || `#${ev.player_num}`}</div>
+                  <div className={styles.evtPlayerMeta}>{ev.team}{ev.player_num ? ` · #${ev.player_num}` : ''}</div>
+                </div>
+              </div>
+            )}
+            {(ev.secondary_player_name || ev.secondary_player_num) && (
+              <div className={styles.evtSubRow}>
+                <span className={styles.evtSubLabelOut}>↓ SORTIE</span>
+                <div>
+                  <div className={styles.evtPlayerName}>{ev.secondary_player_name || `#${ev.secondary_player_num}`}</div>
+                  <div className={styles.evtPlayerMeta}>{ev.team}{ev.secondary_player_num ? ` · #${ev.secondary_player_num}` : ''}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className={styles.evtBody}>
+            <div className={styles.evtAvatar}>{ev.player_num ? `#${ev.player_num}` : '👤'}</div>
+            <div className={styles.evtDetails}>
+              <span className={styles.evtPlayerName}>{ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}</span>
+              <span className={styles.evtPlayerMeta}>{ev.team}{ev.player_num ? ` · #${ev.player_num}` : ''}</span>
+              {ev.secondary_player_name && (
+                <span className={styles.evtPD}>PD · {ev.secondary_player_name}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -136,47 +185,19 @@ export default function MatchPage() {
       </div>
 
       {/* Événements */}
-      {events.length > 0 && (
+      {sortedEvents.length > 0 && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Événements du match</h2>
           <div className={styles.eventsGrid}>
             {/* Colonne équipe A */}
             <div className={styles.eventsCol}>
-              {eventsA.map(ev => (
-                <div key={ev.id} className={`${styles.eventRow} ${styles.eventLeft}`}>
-                  <span className={styles.eventIcon}>{EVENT_ICONS[ev.type] ?? '•'}</span>
-                  <div className={styles.eventInfo}>
-                    <span className={styles.eventType}>{EVENT_LABELS[ev.type] ?? ev.type}</span>
-                    {ev.player_name && <span className={styles.eventPlayer}>{ev.player_name}</span>}
-                    {!ev.player_name && ev.player_num && <span className={styles.eventPlayer}>#{ev.player_num}</span>}
-                    {ev.type === 'sub' && ev.secondary_player_name && (
-                      <span className={styles.eventSub}>↑ {ev.secondary_player_name}</span>
-                    )}
-                  </div>
-                  {ev.minute && <span className={styles.eventMin}>{ev.minute}'</span>}
-                </div>
-              ))}
+              {eventsA.map(ev => renderEvt(ev))}
             </div>
-
             {/* Séparateur */}
             <div className={styles.eventsDiv} />
-
             {/* Colonne équipe B */}
             <div className={styles.eventsCol}>
-              {eventsB.map(ev => (
-                <div key={ev.id} className={`${styles.eventRow} ${styles.eventRight}`}>
-                  {ev.minute && <span className={styles.eventMin}>{ev.minute}'</span>}
-                  <div className={styles.eventInfo}>
-                    <span className={styles.eventType}>{EVENT_LABELS[ev.type] ?? ev.type}</span>
-                    {ev.player_name && <span className={styles.eventPlayer}>{ev.player_name}</span>}
-                    {!ev.player_name && ev.player_num && <span className={styles.eventPlayer}>#{ev.player_num}</span>}
-                    {ev.type === 'sub' && ev.secondary_player_name && (
-                      <span className={styles.eventSub}>↑ {ev.secondary_player_name}</span>
-                    )}
-                  </div>
-                  <span className={styles.eventIcon}>{EVENT_ICONS[ev.type] ?? '•'}</span>
-                </div>
-              ))}
+              {eventsB.map(ev => renderEvt(ev))}
             </div>
           </div>
         </section>

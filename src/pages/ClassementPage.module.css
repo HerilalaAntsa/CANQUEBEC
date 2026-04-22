@@ -111,11 +111,11 @@
   box-shadow: inset 4px 0 0 var(--color-zone-green);
 }
 
-.zoneOrange td {
-  background: rgba(212, 117, 0, 0.06) !important;
+.zoneNeutral td {
+  background: transparent !important;
 }
-.zoneOrange td:first-child {
-  box-shadow: inset 4px 0 0 var(--color-zone-orange);
+.zoneNeutral td:first-child {
+  box-shadow: none;
 }
 
 .zoneRed td {
@@ -130,7 +130,9 @@
   .tableWrap :global(th:nth-child(8)),
   .tableWrap :global(td:nth-child(8)),
   .tableWrap :global(th:nth-child(9)),
-  .tableWrap :global(td:nth-child(9)) {
+  .tableWrap :global(td:nth-child(9)),
+  .tableWrap :global(th:nth-child(11)),
+  .tableWrap :global(td:nth-child(11)) {
     display: none;
   }
 }

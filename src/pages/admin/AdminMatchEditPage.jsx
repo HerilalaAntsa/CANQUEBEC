@@ -420,7 +420,7 @@ export default function AdminMatchEditPage() {
           ? <p className={styles.empty}>Aucun événement enregistré.</p>
           : (
             <div className={styles.eventList}>
-              {events.map(ev => {
+              {[...events].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1)).map(ev => {
                 const typeDef = EVENT_TYPES.find(t => t.value === ev.type);
                 const isEditing = editingEvt?.id === ev.id;
                 return (

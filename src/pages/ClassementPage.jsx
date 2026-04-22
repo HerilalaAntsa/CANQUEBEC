@@ -29,10 +29,27 @@ const COLUMNS = [
     }
   },
   { key: 'points', label: 'Pts', sortable: true, align: 'right', highlight: true },
+  { key: 'last5', label: '5 derniers', sortable: false, align: 'center',
+    render: (v) => (
+      <div style={{ display: 'flex', gap: '3px', alignItems: 'center', justifyContent: 'center' }}>
+        {(v ?? []).map((r, i) => (
+          <span key={i} style={{
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            width: '18px', height: '18px', borderRadius: '50%',
+            fontSize: '10px', fontWeight: '700',
+            background: r === 'W' ? 'rgba(34,197,94,0.2)' : r === 'L' ? 'rgba(239,68,68,0.2)' : 'rgba(150,150,150,0.12)',
+            color: r === 'W' ? '#22c55e' : r === 'L' ? '#ef4444' : '#9ca3af',
+          }}>
+            {r === 'W' ? '✓' : r === 'L' ? '✗' : '—'}
+          </span>
+        ))}
+      </div>
+    )
+  },
 ];
 
 export default function ClassementPage() {
-  const { standings, liveStandings, teams, loadSupabaseScores } = useLeagueData();
+  const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores } = useLeagueData();
   const navigate = useNavigate();
 
   // Rafraîchir les scores toutes les 30s
@@ -42,6 +59,27 @@ export default function ClassementPage() {
   }, [loadSupabaseScores]);
 
   const isLive = liveStandings?.length > 0;
+
+  const last5Map = useMemo(() => {
+    const map = {};
+    for (const [key, m] of Object.entries(supabaseScores ?? {})) {
+      if (m.status !== 'played') continue;
+      const parts = key.split(':');
+      const journee = parseInt(parts[0]) || 0;
+      const { teamA, teamB, scoreA, scoreB } = m;
+      const rA = scoreA > scoreB ? 'W' : scoreA < scoreB ? 'L' : 'D';
+      const rB = scoreB > scoreA ? 'W' : scoreB < scoreA ? 'L' : 'D';
+      if (!map[teamA]) map[teamA] = [];
+      map[teamA].push({ journee, result: rA });
+      if (!map[teamB]) map[teamB] = [];
+      map[teamB].push({ journee, result: rB });
+    }
+    const out = {};
+    for (const [team, arr] of Object.entries(map)) {
+      out[team] = arr.sort((a, b) => b.journee - a.journee).slice(0, 5).map(r => r.result);
+    }
+    return out;
+  }, [supabaseScores]);
 
   const tableData = useMemo(() => {
     // Base : standings Excel (toutes les équipes avec stats initiales)
@@ -70,12 +108,12 @@ export default function ClassementPage() {
         b.goalDiff - a.goalDiff ||
         b.goalsFor - a.goalsFor
       )
-      .map((s, i) => ({ ...s, pos: i + 1 }));
-  }, [standings, liveStandings, teams]);
+      .map((s, i) => ({ ...s, pos: i + 1, last5: last5Map[s.team] ?? [] }));
+  }, [standings, liveStandings, teams, last5Map]);
 
   const getRowClass = (row) => {
     if (row.pos <= 8)  return styles.zoneGreen;
-    if (row.pos <= 14) return styles.zoneOrange;
+    if (row.pos <= 14) return styles.zoneNeutral;
     return styles.zoneRed;
   };
 
@@ -95,11 +133,11 @@ export default function ClassementPage() {
         <div className={styles.legend}>
           <span className={styles.legendItem}>
             <span className={styles.dot} style={{ background: 'var(--color-zone-green)' }} />
-            Top 8 — Qualifiés phase finale
+            Top 8 — Qualifiés phase finale (direct)
           </span>
           <span className={styles.legendItem}>
-            <span className={styles.dot} style={{ background: 'var(--color-zone-orange)' }} />
-            9e–14e — Milieu de tableau
+            <span className={styles.dot} style={{ background: 'rgba(180,180,180,0.3)' }} />
+            9e–14e — Qualifiés
           </span>
           <span className={styles.legendItem}>
             <span className={styles.dot} style={{ background: 'var(--color-zone-red)' }} />
