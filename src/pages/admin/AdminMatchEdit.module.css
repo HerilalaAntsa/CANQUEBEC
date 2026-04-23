@@ -511,6 +511,21 @@
 .modalConfirm:hover:not(:disabled) { background: rgba(255, 160, 0, 0.25); }
 .modalConfirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.modalConfirmRed {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #f87171;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: center;
+}
+.modalConfirmRed:hover { background: rgba(239, 68, 68, 0.28); }
+
+.textDanger { color: #f87171; }
+
 .modalCancel {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -576,3 +591,60 @@
   min-width: 80px;
 }
 .goalModalInput:focus { outline: none; border-color: var(--color-accent, #e2b04a); }
+
+/* ── Responsive mobile (≤ 520px) ────────────────────── */
+@media (max-width: 520px) {
+  /* Formulaire remplacement : stack vertical */
+  .subFormGrid {
+    flex-direction: column;
+  }
+
+  /* Liste événements — remplacement : stack vertical */
+  .subRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .subOut, .subIn {
+    width: 100%;
+    flex: unset;
+  }
+
+  /* Ligne événement générale */
+  .eventRow {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  /* Score row */
+  .scoreRow {
+    gap: 0.5rem;
+  }
+  .teamLabel {
+    min-width: 60px;
+    font-size: 0.85rem;
+  }
+
+  /* Formulaire événement */
+  .evtRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .evtRow .select,
+  .evtRow .input {
+    width: 100%;
+  }
+
+  /* Modal buteur : champs empilés */
+  .goalModalRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
+  .goalModalLabel {
+    min-width: unset;
+  }
+  .goalModalInput {
+    width: 100% !important;
+    flex: unset;
+  }
+}

@@ -54,6 +54,9 @@ export default function AdminMatchEditPage() {
   // Modal confirmation suppression but (quand score diminue)
   const [removeGoalModal, setRemoveGoalModal] = useState(null); // { team, prevScoreA, prevScoreB, newScoreA, newScoreB, lastGoal }
 
+  // Modal 2ème carton jaune → rouge
+  const [doubleYellowModal, setDoubleYellowModal] = useState(null); // { playerNum, playerName, team, minute }
+
   const loadData = useCallback(async () => {
     try {
       const { match: m, events: ev } = await getMatchWithEvents(id);
@@ -149,6 +152,18 @@ export default function AdminMatchEditPage() {
 
   async function handleAddEvent(e) {
     e.preventDefault();
+    // Détection 2ème carton jaune pour le même joueur
+    if (evtType === 'yellow' && evtPlayerNum) {
+      const hasYellow = events.some(ev =>
+        ev.type === 'yellow' &&
+        ev.team === evtTeam &&
+        String(ev.player_num) === String(evtPlayerNum)
+      );
+      if (hasYellow) {
+        setDoubleYellowModal({ playerNum: evtPlayerNum, playerName: evtPlayerName, team: evtTeam, minute: evtMinute });
+        return;
+      }
+    }
     setAddingEvt(true);
     const event = {
       match_id:              Number(id),
@@ -386,6 +401,59 @@ export default function AdminMatchEditPage() {
       setScoreB(String(removeGoalModal.prevScoreB));
     }
     setRemoveGoalModal(null);
+  }
+
+  // Confirmer 2ème jaune → enregistre jaune + rouge
+  async function handleDoubleYellowConfirm() {
+    if (!doubleYellowModal) return;
+    const { playerNum, playerName, team, minute } = doubleYellowModal;
+    setDoubleYellowModal(null);
+    setAddingEvt(true);
+    const base = {
+      match_id: Number(id), team,
+      player_num: playerNum ? Number(playerNum) : null,
+      player_name: playerName || null,
+      minute: minute ? Number(minute) : null,
+      secondary_player_num: null, secondary_player_name: null,
+    };
+    try {
+      const yellowEvt = { ...base, type: 'yellow' };
+      const redEvt    = { ...base, type: 'red' };
+      await addEvent(yellowEvt);
+      setEvents(prev => [...prev, { ...yellowEvt, id: Date.now() }]);
+      await addEvent(redEvt);
+      setEvents(prev => [...prev, { ...redEvt, id: Date.now() + 1 }]);
+      setEvtPlayerNum(''); setEvtPlayerName(''); setEvtMinute('');
+      setSavedMsg('🟨🟥 2ème jaune → carton rouge enregistré');
+      setTimeout(() => setSavedMsg(''), 3000);
+    } catch {
+      setSavedMsg('⚠️ Erreur lors de l\'enregistrement');
+    } finally {
+      setAddingEvt(false);
+    }
+  }
+
+  // 2ème jaune — enregistrer le jaune seul, sans rouge
+  async function handleYellowOnlyConfirm() {
+    if (!doubleYellowModal) return;
+    setDoubleYellowModal(null);
+    setAddingEvt(true);
+    const event = {
+      match_id: Number(id), type: 'yellow', team: doubleYellowModal.team,
+      player_num: doubleYellowModal.playerNum ? Number(doubleYellowModal.playerNum) : null,
+      player_name: doubleYellowModal.playerName || null,
+      minute: doubleYellowModal.minute ? Number(doubleYellowModal.minute) : null,
+      secondary_player_num: null, secondary_player_name: null,
+    };
+    try {
+      await addEvent(event);
+      setEvents(prev => [...prev, { ...event, id: Date.now() }]);
+      setEvtPlayerNum(''); setEvtPlayerName(''); setEvtMinute('');
+    } catch {
+      setEvents(prev => [...prev, { ...event, id: Date.now(), _offline: true }]);
+    } finally {
+      setAddingEvt(false);
+    }
   }
 
   if (loading) return <div className={styles.loading}>Chargement...</div>;
@@ -646,51 +714,6 @@ export default function AdminMatchEditPage() {
       {goalModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
-            <p className={styles.modalBody} style={{ marginBottom: '0.75rem' }}>
-              Score : <strong>{goalModal.newScoreA}–{goalModal.newScoreB}</strong>
-              &nbsp;— Renseignez le buteur (facultatif)
-            </p>
-            <form onSubmit={handleGoalModalSubmit} className={styles.goalModalForm}>
-              <div className={styles.goalModalRow}>
-                <label className={styles.goalModalLabel}>⚽ Buteur</label>
-                <input type="number" placeholder="N° maillot" min="1" max="26"
-                  className={styles.goalModalInput} style={{ width: '80px' }}
-                  value={goalModalNum} onChange={e => handleGoalModalNumChange(e.target.value)} />
-                <input type="text" placeholder="Nom" className={styles.goalModalInput}
-                  value={goalModalName} onChange={e => setGoalModalName(e.target.value)} />
-              </div>
-              <div className={styles.goalModalRow}>
-                <label className={styles.goalModalLabel}>🎯 PD</label>
-                <input type="number" placeholder="N° maillot" min="1" max="26"
-                  className={styles.goalModalInput} style={{ width: '80px' }}
-                  value={goalModalPDNum} onChange={e => handleGoalModalPDNumChange(e.target.value)} />
-                <input type="text" placeholder="Nom" className={styles.goalModalInput}
-                  value={goalModalPDName} onChange={e => setGoalModalPDName(e.target.value)} />
-              </div>
-              <div className={styles.goalModalRow}>
-                <label className={styles.goalModalLabel}>⏱ Minute</label>
-                <input type="number" placeholder="Min." min="0" max="120"
-                  className={styles.goalModalInput} style={{ width: '80px' }}
-                  value={goalModalMin} onChange={e => setGoalModalMin(e.target.value)} />
-              </div>
-              <div className={styles.modalBtns}>
-                <button type="submit" className={styles.modalConfirm} disabled={goalModalSaving}>
-                  {goalModalSaving ? 'Enregistrement...' : '✅ Enregistrer le but'}
-                </button>
-                <button type="button" className={styles.modalCancel} onClick={handleGoalModalSkip}>
-                  Passer (sans buteur)
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Modal buteur — quand score augmenté manuellement */}
-      {goalModal && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
             <div className={styles.modalCloseRow}>
               <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
               <button className={styles.modalCloseBtn} onClick={handleGoalModalCancel} title="Annuler">✕</button>
@@ -774,6 +797,35 @@ export default function AdminMatchEditPage() {
               )}
               <button className={styles.modalCancel} onClick={handleRemoveGoalCancel}>
                 Annuler (ne pas changer le score)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2ème carton jaune → rouge */}
+      {doubleYellowModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalCloseRow}>
+              <h3 className={styles.modalTitle}>🟨🟥 Double avertissement</h3>
+              <button className={styles.modalCloseBtn} onClick={() => setDoubleYellowModal(null)} title="Annuler">✕</button>
+            </div>
+            <p className={styles.modalBody}>
+              <strong>
+                {doubleYellowModal.playerName || (doubleYellowModal.playerNum ? `#${doubleYellowModal.playerNum}` : 'Ce joueur')}
+              </strong> a déjà un carton jaune.<br />
+              Confirmer que ce 2ème jaune entraîne une <strong className={styles.textDanger}>expulsion (rouge)</strong> ?
+            </p>
+            <div className={styles.modalBtns}>
+              <button className={styles.modalConfirmRed} onClick={handleDoubleYellowConfirm}>
+                🟨🟥 Confirmer — Jaune + Rouge
+              </button>
+              <button className={styles.modalConfirm} onClick={handleYellowOnlyConfirm}>
+                🟨 Jaune seulement (sans rouge)
+              </button>
+              <button className={styles.modalCancel} onClick={() => setDoubleYellowModal(null)}>
+                Annuler
               </button>
             </div>
           </div>
