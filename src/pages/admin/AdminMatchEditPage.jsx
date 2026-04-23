@@ -51,6 +51,9 @@ export default function AdminMatchEditPage() {
   const [goalModalMin,    setGoalModalMin]    = useState('');
   const [goalModalSaving, setGoalModalSaving] = useState(false);
 
+  // Modal confirmation suppression but (quand score diminue)
+  const [removeGoalModal, setRemoveGoalModal] = useState(null); // { team, prevScoreA, prevScoreB, newScoreA, newScoreB, lastGoal }
+
   const loadData = useCallback(async () => {
     try {
       const { match: m, events: ev } = await getMatchWithEvents(id);
@@ -237,9 +240,30 @@ export default function AdminMatchEditPage() {
       setGoalModalPDNum(''); setGoalModalPDName('');
       setGoalModal({
         team: team === 'A' ? match.team_a : match.team_b,
+        prevScoreA: Number(scoreA),
+        prevScoreB: Number(scoreB),
         newScoreA: team === 'A' ? next : Number(scoreA),
         newScoreB: team === 'B' ? next : Number(scoreB),
       });
+      // ne pas changer le score tout de suite — le modal s'en charge
+      return;
+    }
+    if (next < prev) {
+      const teamName = team === 'A' ? match.team_a : match.team_b;
+      // Dernier but de cette équipe
+      const teamGoals = [...events]
+        .filter(ev => ev.type === 'goal' && ev.team === teamName)
+        .sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0));
+      const lastGoal = teamGoals[0] ?? null;
+      setRemoveGoalModal({
+        team: teamName,
+        prevScoreA: Number(scoreA),
+        prevScoreB: Number(scoreB),
+        newScoreA: team === 'A' ? next : Number(scoreA),
+        newScoreB: team === 'B' ? next : Number(scoreB),
+        lastGoal,
+      });
+      return;
     }
     if (team === 'A') setScoreA(newVal);
     else setScoreB(newVal);
@@ -324,6 +348,44 @@ export default function AdminMatchEditPage() {
     setSavedMsg('Score mis à jour');
     setTimeout(() => setSavedMsg(''), 3000);
     setGoalModal(null);
+  }
+
+  // Annuler le modal buteur → remettre l'ancien score
+  function handleGoalModalCancel() {
+    if (goalModal) {
+      setScoreA(String(goalModal.prevScoreA ?? scoreA));
+      setScoreB(String(goalModal.prevScoreB ?? scoreB));
+    }
+    setGoalModal(null);
+  }
+
+  // Supprimer le dernier but + sauvegarder le nouveau score
+  async function handleRemoveGoalConfirm() {
+    if (!removeGoalModal) return;
+    try {
+      if (removeGoalModal.lastGoal?.id) {
+        await deleteEvent(removeGoalModal.lastGoal.id);
+        setEvents(prev => prev.filter(ev => ev.id !== removeGoalModal.lastGoal.id));
+      }
+      await updateScore(id, removeGoalModal.newScoreA, removeGoalModal.newScoreB);
+      setScoreA(String(removeGoalModal.newScoreA));
+      setScoreB(String(removeGoalModal.newScoreB));
+      setSavedMsg('🗑️ But supprimé — score mis à jour');
+      setTimeout(() => setSavedMsg(''), 3000);
+    } catch (err) {
+      setSavedMsg('⚠️ Erreur : ' + err.message);
+    } finally {
+      setRemoveGoalModal(null);
+    }
+  }
+
+  // Annuler la baisse → remettre l'ancien score
+  function handleRemoveGoalCancel() {
+    if (removeGoalModal) {
+      setScoreA(String(removeGoalModal.prevScoreA));
+      setScoreB(String(removeGoalModal.prevScoreB));
+    }
+    setRemoveGoalModal(null);
   }
 
   if (loading) return <div className={styles.loading}>Chargement...</div>;
@@ -629,7 +691,10 @@ export default function AdminMatchEditPage() {
       {goalModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
-            <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
+            <div className={styles.modalCloseRow}>
+              <h3 className={styles.modalTitle}>⚽ But pour {goalModal.team}</h3>
+              <button className={styles.modalCloseBtn} onClick={handleGoalModalCancel} title="Annuler">✕</button>
+            </div>
             <p className={styles.modalBody} style={{ marginBottom: '0.75rem' }}>
               Score : <strong>{goalModal.newScoreA}–{goalModal.newScoreB}</strong>
               &nbsp;— Renseignez le buteur (facultatif)
@@ -668,6 +733,49 @@ export default function AdminMatchEditPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal confirmation suppression but */}
+      {removeGoalModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalCloseRow}>
+              <h3 className={styles.modalTitle}>🗑️ Annuler un but ?</h3>
+              <button className={styles.modalCloseBtn} onClick={handleRemoveGoalCancel} title="Annuler">✕</button>
+            </div>
+            <p className={styles.modalBody}>
+              Vous diminuez le score de <strong>{removeGoalModal.team}</strong>.
+              {removeGoalModal.lastGoal ? (
+                <> Le dernier but enregistré est&nbsp;
+                  <strong>
+                    {removeGoalModal.lastGoal.player_name || (removeGoalModal.lastGoal.player_num ? `#${removeGoalModal.lastGoal.player_num}` : 'inconnu')}
+                    {removeGoalModal.lastGoal.minute ? ` (${removeGoalModal.lastGoal.minute}')` : ''}
+                  </strong>.
+                </>
+              ) : ' Aucun but enregistré pour cette équipe.'}
+            </p>
+            <div className={styles.modalBtns}>
+              {removeGoalModal.lastGoal && (
+                <button className={styles.modalConfirm} onClick={handleRemoveGoalConfirm}>
+                  🗑️ Supprimer ce but + mettre à jour le score
+                </button>
+              )}
+              {!removeGoalModal.lastGoal && (
+                <button className={styles.modalConfirm} onClick={async () => {
+                  await updateScore(id, removeGoalModal.newScoreA, removeGoalModal.newScoreB);
+                  setScoreA(String(removeGoalModal.newScoreA));
+                  setScoreB(String(removeGoalModal.newScoreB));
+                  setRemoveGoalModal(null);
+                }}>
+                  Mettre à jour le score seulement
+                </button>
+              )}
+              <button className={styles.modalCancel} onClick={handleRemoveGoalCancel}>
+                Annuler (ne pas changer le score)
+              </button>
+            </div>
           </div>
         </div>
       )}

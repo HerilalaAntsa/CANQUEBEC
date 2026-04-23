@@ -225,6 +225,21 @@
 }
 .zoneOrange:hover { background: rgba(212, 117, 0, 0.12) !important; }
 
+.zoneNeutral {
+  box-shadow: none;
+  background: transparent;
+}
+.zoneNeutral:hover { background: rgba(255,255,255,0.04) !important; }
+
+.miniEllipsis {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--color-text-muted, #888);
+  padding: 0.3rem 0;
+  letter-spacing: 0.2em;
+  user-select: none;
+}
+
 .zoneRed {
   box-shadow: inset 3px 0 0 var(--color-zone-red);
   background: rgba(192, 57, 43, 0.06);

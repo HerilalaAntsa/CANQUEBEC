@@ -18,26 +18,37 @@ function MiniStandings({ standings, teams }) {
 
   if (!enriched.length) return <p className={styles.empty}>À venir</p>;
 
+  const total = enriched.length;
+  const top4  = enriched.slice(0, 4);
+  const bot4  = enriched.slice(Math.max(4, total - 4));
+  const showEllipsis = total > 8;
+
   const getZone = (pos) => {
     if (pos <= 8)  return styles.zoneGreen;
-    if (pos <= 14) return styles.zoneOrange;
+    if (pos <= 14) return styles.zoneNeutral;
     return styles.zoneRed;
   };
 
+  const renderRow = (s) => (
+    <Link
+      key={s.team}
+      to={'/equipe/' + generateSlug(s.team)}
+      className={styles.miniRow + ' ' + getZone(s.pos)}
+    >
+      <span className={styles.miniPos}>{s.pos}</span>
+      <span className={styles.miniGr}>{s.group}</span>
+      <span className={styles.miniTeam}><FlagBadge team={s.team} size="sm" /></span>
+      <span className={styles.miniPts}>{s.points} pts</span>
+    </Link>
+  );
+
   return (
     <div className={styles.miniTable}>
-      {enriched.map(s => (
-        <Link
-          key={s.team}
-          to={'/equipe/' + generateSlug(s.team)}
-          className={styles.miniRow + ' ' + getZone(s.pos)}
-        >
-          <span className={styles.miniPos}>{s.pos}</span>
-          <span className={styles.miniGr}>{s.group}</span>
-          <span className={styles.miniTeam}><FlagBadge team={s.team} size="sm" /></span>
-          <span className={styles.miniPts}>{s.points} pts</span>
-        </Link>
-      ))}
+      {top4.map(renderRow)}
+      {showEllipsis && (
+        <div className={styles.miniEllipsis}>···</div>
+      )}
+      {bot4.map(renderRow)}
     </div>
   );
 }
@@ -169,7 +180,7 @@ export default function HomePage() {
               </span>
               <span>
                 <span className={styles.legendDot}
-                  style={{ background: 'var(--color-zone-orange)' }} />
+                  style={{ background: 'rgba(180,180,180,0.3)' }} />
                 9e–14e
               </span>
               <span>

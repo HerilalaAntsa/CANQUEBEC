@@ -523,6 +523,25 @@
 }
 .modalCancel:hover { color: #f0f0f0; }
 
+.modalCloseRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.modalCloseRow .modalTitle { margin: 0; }
+.modalCloseBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted, #aaa);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+.modalCloseBtn:hover { color: #f0f0f0; background: rgba(255,255,255,0.08); }
+
 /* ── Modal buteur (goal quick entry) ─────────────────── */
 .goalModalForm {
   display: flex;
