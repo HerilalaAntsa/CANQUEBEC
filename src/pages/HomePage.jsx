@@ -54,13 +54,27 @@ function MiniStandings({ standings, teams }) {
 }
 
 export default function HomePage() {
-  const { matches, standings, liveStandings, teams, loading, error, fileInfo, loadSupabaseScores } = useLeagueData();
+  const { matches, standings, liveStandings, teams, loading, error, fileInfo, loadSupabaseScores, supabaseScores } = useLeagueData();
 
   // Rafraîchir les scores/statuts toutes les 30s
   useEffect(() => {
     const id = setInterval(() => loadSupabaseScores(), 30_000);
     return () => clearInterval(id);
   }, [loadSupabaseScores]);
+
+  // Top buteurs — agrégés depuis supabaseScores
+  const topScorers = useMemo(() => {
+    const map = {};
+    for (const match of Object.values(supabaseScores ?? {})) {
+      for (const g of match.goals ?? []) {
+        if (!g.player_name && !g.player_num) continue;
+        const key = `${g.team}__${g.player_num ?? ''}__${g.player_name ?? ''}`;
+        if (!map[key]) map[key] = { team: g.team, playerNum: g.player_num, playerName: g.player_name || `#${g.player_num}`, goals: 0 };
+        map[key].goals++;
+      }
+    }
+    return Object.values(map).sort((a, b) => b.goals - a.goals).slice(0, 5);
+  }, [supabaseScores]);
 
   // Standings: live (Supabase) merged sur Excel pour avoir toutes les équipes
   const mergedStandings = useMemo(() => {
@@ -165,6 +179,32 @@ export default function HomePage() {
               <p className={styles.empty}>Saison pas encore commencée.</p>
             )}
           </section>
+
+          {/* Top buteurs */}
+          {topScorers.length > 0 && (
+            <section className={styles.widget + ' ' + styles.widgetFull}>
+              <div className={styles.widgetHeader}>
+                <h2 className={styles.widgetTitle}>⚽ Top Buteurs</h2>
+                <Link to="/stats" className={styles.widgetLink}>Voir tout →</Link>
+              </div>
+              <div className={styles.scorerList}>
+                {topScorers.map((s, i) => (
+                  <Link key={`${s.team}__${s.playerNum}__${s.playerName}`}
+                    to={`/equipe/${generateSlug(s.team)}`}
+                    className={styles.scorerRow}
+                  >
+                    <span className={styles.scorerRank}>{i + 1}</span>
+                    <span className={styles.scorerTeam}><FlagBadge team={s.team} size="sm" /></span>
+                    <span className={styles.scorerName}>
+                      {s.playerNum && <span className={styles.scorerNum}>#{s.playerNum}</span>}
+                      {s.playerName}
+                    </span>
+                    <span className={styles.scorerGoals}>{s.goals} ⚽</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Classement général */}
           <section className={styles.widget + ' ' + styles.widgetFull}>

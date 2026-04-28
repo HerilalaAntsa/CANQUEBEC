@@ -315,3 +315,60 @@
   font-size: var(--text-xs);
   color: var(--color-text-faint);
 }
+
+/* ── Top Buteurs widget ─────────────────────────── */
+.scorerList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.scorerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-1);
+  border-bottom: 1px solid var(--color-border-light);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: background 0.1s;
+  border-radius: 6px;
+}
+.scorerRow:last-child { border-bottom: none; }
+.scorerRow:hover { background: var(--color-surface-alt); }
+
+.scorerRank {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-faint);
+  min-width: 1.25rem;
+  text-align: center;
+}
+
+.scorerTeam { flex-shrink: 0; }
+
+.scorerName {
+  flex: 1;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+.scorerNum {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  background: var(--color-surface-alt);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  flex-shrink: 0;
+}
+
+.scorerGoals {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}

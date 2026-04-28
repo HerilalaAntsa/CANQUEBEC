@@ -184,10 +184,13 @@ export default function AdminDashboardPage() {
   }
 
   const filtered = matches.filter(m => {
+    if (filter === 'live')     return m.status === 'live';
     if (filter === 'upcoming') return m.status === 'upcoming';
     if (filter === 'played')   return m.status === 'played';
     return true;
   });
+
+  const liveCount = matches.filter(m => m.status === 'live').length;
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-CA', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
 
@@ -226,13 +229,15 @@ export default function AdminDashboardPage() {
           {exporting ? '⏳ Export en cours...' : '📤 Exporter XLSX'}
         </button>
         <div className={styles.filters}>
-          {['upcoming', 'played', 'all'].map(f => (
+          {['live', 'upcoming', 'played', 'all'].map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`${styles.filterBtn} ${filter === f ? styles.active : ''}`}
+              className={`${styles.filterBtn} ${filter === f ? styles.active : ''} ${f === 'live' ? styles.filterLive : ''}`}
             >
-              {f === 'upcoming' ? 'À venir' : f === 'played' ? 'Joués' : 'Tous'}
+              {f === 'live'     ? `🔴 En cours${liveCount > 0 ? ` (${liveCount})` : ''}` :
+               f === 'upcoming' ? 'À venir' :
+               f === 'played'   ? 'Joués' : 'Tous'}
             </button>
           ))}
         </div>
@@ -253,7 +258,8 @@ export default function AdminDashboardPage() {
               <span className={styles.date}>{formatDate(m.date)}</span>
               <span className={styles.venue}>{m.venue}</span>
               <span className={`${styles.status} ${styles[m.status]}`}>
-                {m.status === 'played' ? 'Joué' : 'À venir'}
+                {m.status === 'live'   ? '🔴 LIVE' :
+                 m.status === 'played' ? 'Joué' : 'À venir'}
               </span>
             </div>
             <div className={styles.matchTeams}>
