@@ -192,7 +192,12 @@ export default function AdminDashboardPage() {
 
   const liveCount = matches.filter(m => m.status === 'live').length;
 
-  const formatDate = (d) => d ? new Date(d).toLocaleDateString('fr-CA', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
+  const formatDate = (d) => {
+    if (!d) return '—';
+    // Forcer parsing local pour éviter le décalage UTC (ex: "2026-05-15" → veille en EST)
+    const [y, m, day] = String(d).split('T')[0].split('-').map(Number);
+    return new Date(y, m - 1, day).toLocaleDateString('fr-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   return (
     <div className={styles.page}>
