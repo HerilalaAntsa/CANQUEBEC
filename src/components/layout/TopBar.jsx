@@ -1,13 +1,15 @@
 import { NavLink } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHouse, faCalendarDays, faTrophy, faChartBar, faShield } from '@fortawesome/free-solid-svg-icons';
 import styles from './TopBar.module.css';
 import SearchBar from '../shared/SearchBar';
 
 const NAV_ITEMS = [
-  { to: '/',               label: 'Accueil'          },
-  { to: '/qualification',  label: '📅 Qualification'  },
-  { to: '/finale',         label: '🏆 Phase Finale'   },
-  { to: '/classement',     label: '📊 Classement'     },
-  { to: '/equipes',        label: '🛡️ Équipes'         },
+  { to: '/',              icon: faHouse,        label: 'Accueil'       },
+  { to: '/qualification', icon: faCalendarDays, label: 'Qualification'  },
+  { to: '/finale',        icon: faTrophy,       label: 'Phase Finale'   },
+  { to: '/classement',    icon: faChartBar,     label: 'Classement'     },
+  { to: '/equipes',       icon: faShield,       label: 'Équipes'        },
 ];
 
 export default function TopBar() {
@@ -27,7 +29,7 @@ export default function TopBar() {
       </NavLink>
 
       <nav className={styles.desktopNav}>
-        {NAV_ITEMS.map(({ to, label }) => (
+        {NAV_ITEMS.map(({ to, icon, label }) => (
           <NavLink
             key={to}
             to={to}
@@ -36,6 +38,7 @@ export default function TopBar() {
               `${styles.navLink}${isActive ? ` ${styles.active}` : ''}`
             }
           >
+            <FontAwesomeIcon icon={icon} style={{ marginRight: '6px' }} />
             {label}
           </NavLink>
         ))}
