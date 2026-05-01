@@ -11,10 +11,7 @@
   overflow: hidden;
 }
 
-/* Équipe droite : drapeau à droite, nom tronqué à gauche */
-.reverse {
-  flex-direction: row-reverse;
-}
+
 
 .flag {
   font-size: 1.2em;

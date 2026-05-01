@@ -13,22 +13,23 @@
 }
 
 .badge.md {
-  font-size: var(--text-lg);
-  min-width: 52px;
-  padding: var(--space-2) var(--space-1);
+  font-size: var(--text-base);
+  min-width: 44px;
+  padding: var(--space-1) var(--space-1);
 }
 
-@media (min-width: 400px) {
+@media (min-width: 380px) {
   .badge.md {
-    min-width: 68px;
-    padding: var(--space-2) var(--space-2);
+    font-size: var(--text-lg);
+    min-width: 52px;
+    padding: var(--space-2) var(--space-1);
   }
 }
 
 @media (min-width: 480px) {
   .badge.md {
-    min-width: 80px;
-    padding: var(--space-2) var(--space-3);
+    min-width: 68px;
+    padding: var(--space-2) var(--space-2);
   }
 }
 
