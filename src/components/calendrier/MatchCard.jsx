@@ -5,8 +5,8 @@ import ScoreBadge from '../shared/ScoreBadge';
 import StatusPill from '../shared/StatusPill';
 
 const VENUE_LABELS = {
-  'VANIER':     '📍 Vanier',
-  'NEUFCHATEL': '📍 Neufchâtel',
+  'VANIER':     '📍 École Vanier',
+  'NEUFCHATEL': '📍 École Neufchâtel',
   'CHAUVEAU':   '📍 Chauveau',
 };
 
@@ -14,7 +14,6 @@ const ARB_ROLES = [
   { key: 'referee',     label: 'C'  },
   { key: 'ref1',        label: 'T1' },
   { key: 'ref2',        label: 'T2' },
-  { key: 'coordinator', label: 'Co' },
 ];
 
 function ArbitresRow({ match }) {
