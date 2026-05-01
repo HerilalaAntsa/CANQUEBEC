@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import styles from './AppShell.module.css';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
+import ReglementsModal from '../shared/ReglementsModal';
 
 const YEAR = new Date().getFullYear();
 
@@ -27,6 +28,7 @@ export default function AppShell({ children }) {
         </div>
       </footer>
       <BottomNav />
+      <ReglementsModal />
     </div>
   );
 }

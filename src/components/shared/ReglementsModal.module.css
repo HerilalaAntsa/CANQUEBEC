@@ -1,0 +1,164 @@
+/* ReglementsModal.module.css */
+
+/* ── Bouton flottant ── */
+.fab {
+  position: fixed;
+  bottom: calc(64px + var(--space-4)); /* au-dessus de la BottomNav */
+  right: var(--space-4);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+  transition: background var(--transition), transform var(--transition);
+}
+.fab:hover {
+  background: var(--color-primary-light);
+  transform: translateY(-2px);
+}
+
+.fabLabel {
+  display: none;
+}
+@media (min-width: 480px) {
+  .fabLabel { display: inline; }
+}
+
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+}
+
+/* ── Modal ── */
+.modal {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 860px;
+  height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.title {
+  font-weight: 700;
+  font-size: var(--text-base);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.btnAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  background: var(--color-overlay);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: var(--text-base);
+  transition: background var(--transition);
+}
+.btnAction:hover { background: var(--color-border); }
+
+.btnClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--text-lg);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+.btnClose:hover {
+  color: var(--color-accent);
+  background: var(--color-overlay);
+}
+
+/* ── Body ── */
+.body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+/* Fallback visible seulement si l'iframe ne charge pas (mobile Safari etc.) */
+.mobileFallback {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  text-align: center;
+  padding: var(--space-6);
+  color: var(--color-text-muted);
+}
+
+/* Sur petits écrans, si iframe ne marche pas, on montre le fallback */
+@media (max-width: 480px) {
+  .iframe { display: none; }
+  .mobileFallback { display: flex; }
+}
+
+.btnDownload {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-primary);
+  color: #fff;
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius);
+  text-decoration: none;
+  font-weight: 700;
+}
