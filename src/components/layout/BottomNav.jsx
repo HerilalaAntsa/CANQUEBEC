@@ -1,12 +1,14 @@
 import { NavLink } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHouse, faCalendarDays, faTrophy, faChartBar, faShield } from '@fortawesome/free-solid-svg-icons';
 import styles from './BottomNav.module.css';
 
 const NAV_ITEMS = [
-  { to: '/',              icon: '🏠', label: 'Accueil'      },
-  { to: '/qualification', icon: '📅', label: 'Qualification' },
-  { to: '/finale',        icon: '🏆', label: 'Finale'        },
-  { to: '/classement',    icon: '📊', label: 'Classement'    },
-  { to: '/equipes',       icon: '🛡️', label: 'Équipes'       },
+  { to: '/',              icon: faHouse,        label: 'Accueil'      },
+  { to: '/qualification', icon: faCalendarDays, label: 'Qualification' },
+  { to: '/finale',        icon: faTrophy,       label: 'Finale'        },
+  { to: '/classement',    icon: faChartBar,     label: 'Classement'    },
+  { to: '/equipes',       icon: faShield,       label: 'Équipes'       },
 ];
 
 export default function BottomNav() {
@@ -21,7 +23,9 @@ export default function BottomNav() {
             `${styles.link}${isActive ? ` ${styles.active}` : ''}`
           }
         >
-          <span className={styles.icon}>{icon}</span>
+          <span className={styles.icon}>
+            <FontAwesomeIcon icon={icon} />
+          </span>
           <span className={styles.label}>{label}</span>
         </NavLink>
       ))}
