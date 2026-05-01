@@ -39,6 +39,7 @@
   text-transform: capitalize;
 }
 .dot { color: var(--color-text-faint); }
+.venue { font-weight: 700; }
 
 .scoreRow {
   display: flex;

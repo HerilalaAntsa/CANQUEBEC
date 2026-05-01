@@ -5,8 +5,8 @@ import FlagBadge from '../components/shared/FlagBadge';
 import styles from './MatchPage.module.css';
 
 const VENUE_LABELS = {
-  'VANIER':     '📍 Vanier',
-  'NEUFCHATEL': '📍 Neufchâtel',
+  'VANIER':     '📍 École Vanier',
+  'NEUFCHATEL': '📍 École Neufchâtel',
   'CHAUVEAU':   '📍 Chauveau',
 };
 
@@ -136,7 +136,7 @@ export default function MatchPage() {
         <div className={styles.metaRow}>
           {match.date && <span>{formatDate(match.date)}</span>}
           {match.time && <><span className={styles.dot}>·</span><span>{match.time}</span></>}
-          {venue       && <><span className={styles.dot}>·</span><span>{venue}</span></>}
+          {venue       && <><span className={styles.dot}>·</span><span className={styles.venue}>{venue}</span></>}
           {match.group_name && <><span className={styles.dot}>·</span><span>Groupe {match.group_name}</span></>}
           {match.journee && <><span className={styles.dot}>·</span><span>Journée {match.journee}</span></>}
         </div>

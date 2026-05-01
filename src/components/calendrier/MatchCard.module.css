@@ -55,7 +55,7 @@
 .dot { color: var(--color-text-faint); }
 .date { font-weight: 600; text-transform: capitalize; }
 .time { color: var(--color-accent); font-weight: 600; }
-.venue { font-size: var(--text-sm); font-weight: 500; color: var(--color-text); }
+.venue { font-size: var(--text-sm); font-weight: 700; color: var(--color-text); }
 .group {
   background: var(--color-overlay);
   padding: 1px 6px;
