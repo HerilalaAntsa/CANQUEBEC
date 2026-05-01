@@ -8,7 +8,7 @@ import styles from './FlagBadge.module.css';
  * @param {'sm'|'md'|'lg'|'xl'} size
  * @param {boolean} link - Si true, wrap dans un Link vers la fiche équipe
  */
-export default function FlagBadge({ team, size = 'md', link = false, reverse = false, className = '' }) {
+export default function FlagBadge({ team, size = 'md', link = false, className = '' }) {
   if (!team) return null;
 
   const flag = getFlag(team);
@@ -16,25 +16,12 @@ export default function FlagBadge({ team, size = 'md', link = false, reverse = f
   // Équipe non encore déterminée (phase finale)
   const isTBD = !flag || team === 'À déterminer';
 
-  const flagEl = (
-    <span className={styles.flag} role="img" aria-label={team}>
-      {isTBD ? '❓' : flag}
-    </span>
-  );
-
   const content = (
     <span className={`${styles.badge} ${styles[size]} ${isTBD ? styles.tbd : ''} ${className}`}>
-      {reverse ? (
-        <>
-          <span className={styles.name}>{team}</span>
-          {flagEl}
-        </>
-      ) : (
-        <>
-          {flagEl}
-          <span className={styles.name}>{team}</span>
-        </>
-      )}
+      <span className={styles.flag} role="img" aria-label={team}>
+        {isTBD ? '❓' : flag}
+      </span>
+      <span className={styles.name}>{team}</span>
     </span>
   );
 

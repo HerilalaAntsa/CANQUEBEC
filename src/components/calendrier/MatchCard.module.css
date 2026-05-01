@@ -90,7 +90,7 @@
 
 .teamWrap.right {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
 }
 
 .footer {

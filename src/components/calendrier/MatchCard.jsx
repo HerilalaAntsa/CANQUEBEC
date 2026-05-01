@@ -66,7 +66,7 @@ export default function MatchCard({ match }) {
         </div>
         <ScoreBadge scoreA={match.scoreA} scoreB={match.scoreB} size="md" />
         <div className={`${styles.teamWrap} ${styles.right}`}>
-          <FlagBadge team={match.teamB} link={!isTBD} size="md" reverse />
+          <FlagBadge team={match.teamB} link={!isTBD} size="md" />
         </div>
       </div>
 
