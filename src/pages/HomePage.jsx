@@ -133,9 +133,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className={styles.page}>
-
-        {/* Hero — full width */}
+    <>
+        {/* Hero — full width bord-à-bord */}
         <div className={styles.heroWrap}>
           <div className="container">
             <div className={styles.hero}>
@@ -151,6 +150,7 @@ export default function HomePage() {
           </div>
         </div>
 
+    <div className={styles.page}>
       <div className="container">
 
         <div className={styles.grid}>
@@ -248,5 +248,6 @@ export default function HomePage() {
 
       </div>
     </div>
+    </>
   );
 }
