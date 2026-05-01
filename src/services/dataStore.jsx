@@ -199,6 +199,10 @@ function applySupabaseScores(matches, supabaseScores) {
       scoreB:     live.scoreB ?? m.scoreB,
       status:     live.status,
       goals:      live.goals ?? [],
+      referee:    live.referee ?? m.referee,
+      ref1:       live.ref1    ?? m.ref1,
+      ref2:       live.ref2    ?? m.ref2,
+      coordinator: live.coordinator ?? m.coordinator,
     };
   });
 }
@@ -235,7 +239,7 @@ export function DataProvider({ children }) {
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
       const [matchesRes, eventsRes] = await Promise.all([
-        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status'),
+        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
       ]);
       if (matchesRes.error) throw matchesRes.error;
@@ -254,13 +258,17 @@ export function DataProvider({ children }) {
           ? `phase:${row.phase}:${row.team_a}:${row.team_b}`
           : `${row.journee}:${row.team_a}:${row.team_b}`;
         scores[key] = {
-          id:     row.id,
-          teamA:  row.team_a,
-          teamB:  row.team_b,
-          scoreA: row.score_a,
-          scoreB: row.score_b,
-          status: row.status,
-          goals:  goalsByMatch[row.id] ?? [],
+          id:          row.id,
+          teamA:       row.team_a,
+          teamB:       row.team_b,
+          scoreA:      row.score_a,
+          scoreB:      row.score_b,
+          status:      row.status,
+          goals:       goalsByMatch[row.id] ?? [],
+          referee:     row.referee     ?? null,
+          ref1:        row.ref1        ?? null,
+          ref2:        row.ref2        ?? null,
+          coordinator: row.coordinator ?? null,
         };
       }
       dispatch({ type: 'SUPABASE_SCORES_LOADED', scores });
