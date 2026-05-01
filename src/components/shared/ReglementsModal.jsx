@@ -4,6 +4,8 @@ import { faClipboardList, faXmark, faDownload, faUpRightFromSquare } from '@fort
 import styles from './ReglementsModal.module.css';
 
 const PDF_URL = '/reglements.pdf';
+const PDF_PUBLIC_URL = 'https://qcn.vercel.app/reglements.pdf';
+const VIEWER_URL = `https://docs.google.com/viewer?url=${encodeURIComponent(PDF_PUBLIC_URL)}&embedded=true`;
 
 export default function ReglementsModal() {
   const [open, setOpen] = useState(false);
@@ -54,7 +56,7 @@ export default function ReglementsModal() {
             </div>
             <div className={styles.body}>
               <iframe
-                src={PDF_URL}
+                src={VIEWER_URL}
                 title="Règlements QCN 2026"
                 className={styles.iframe}
               />
