@@ -90,6 +90,7 @@ export default function EquipePage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Effectif ({roster.length} joueurs)</h2>
             {roster.length > 0 ? (
+              <div className={styles.rosterWrap}>
               <SortableTable
                 columns={ROSTER_COLS}
                 data={roster.map(p => ({ ...p, id: `${p.number}-${p.team}` }))}
@@ -98,6 +99,7 @@ export default function EquipePage() {
                 rowKey="id"
                 emptyMessage="Aucun joueur enregistré."
               />
+              </div>
             ) : (
               <p className={styles.empty}>Effectif non disponible.</p>
             )}

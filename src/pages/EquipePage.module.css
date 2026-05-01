@@ -89,6 +89,12 @@
 
 .section {}
 
+.rosterWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-lg, 8px);
+}
+
 .sectionTitle {
   font-family: var(--font-display);
   font-size: var(--text-xl);
