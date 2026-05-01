@@ -32,6 +32,9 @@ const COLUMNS = [
   { key: 'won',          label: 'V',    sortable: true, align: 'right' },
   { key: 'drawn',        label: 'N',    sortable: true, align: 'right' },
   { key: 'lost',         label: 'D',    sortable: true, align: 'right' },
+  { key: 'points', label: 'Pts', sortable: true, align: 'right', highlight: true,
+    render: (v) => <strong style={{ fontSize: '1.05em' }}>{v}</strong>
+  },
   { key: 'goalsFor',     label: 'B+',   sortable: true, align: 'right' },
   { key: 'goalsAgainst', label: 'B-',   sortable: true, align: 'right' },
   { key: 'goalDiff',     label: 'Diff', sortable: true, align: 'right',
@@ -41,24 +44,6 @@ const COLUMNS = [
       if (n < 0) return <span style={{ color: 'var(--color-danger)' }}>{n}</span>;
       return <span>0</span>;
     }
-  },
-  { key: 'points', label: 'Pts', sortable: true, align: 'right', highlight: true },
-  { key: 'last5', label: '5 derniers', sortable: false, align: 'center',
-    render: (v) => (
-      <div style={{ display: 'flex', gap: '3px', alignItems: 'center', justifyContent: 'center' }}>
-        {(v ?? []).map((r, i) => (
-          <span key={i} style={{
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            width: '18px', height: '18px', borderRadius: '50%',
-            fontSize: '10px', fontWeight: '700',
-            background: r === 'W' ? 'rgba(34,197,94,0.2)' : r === 'L' ? 'rgba(239,68,68,0.2)' : 'rgba(150,150,150,0.12)',
-            color: r === 'W' ? '#22c55e' : r === 'L' ? '#ef4444' : '#9ca3af',
-          }}>
-            {r === 'W' ? '✓' : r === 'L' ? '✗' : '—'}
-          </span>
-        ))}
-      </div>
-    )
   },
 ];
 
