@@ -110,6 +110,11 @@ ul, ol {
   overflow-x: hidden;
 }
 
+/* Empêche tout débordement horizontal sur mobile */
+@media (max-width: 767px) {
+  * { max-width: 100%; }
+}
+
 /* Skeleton loading */
 .skeleton {
   background: linear-gradient(90deg,

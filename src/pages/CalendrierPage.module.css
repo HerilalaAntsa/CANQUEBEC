@@ -1,6 +1,8 @@
 /* CalendrierPage.module.css */
 .page {
   padding: var(--space-6) 0;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 .title {
