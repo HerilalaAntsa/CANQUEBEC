@@ -16,6 +16,8 @@
   gap: var(--space-3);
   transition: border-color var(--transition), box-shadow var(--transition);
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   position: relative;
 }
 
@@ -44,7 +46,8 @@
   gap: var(--space-1);
   font-size: var(--text-xs);
   color: var(--color-text-muted);
-  padding-right: 80px; /* espace pour le badge absolu */
+  padding-right: 72px; /* espace pour le badge absolu */
+  min-width: 0;
 }
 
 .dot { color: var(--color-text-faint); }
@@ -114,6 +117,9 @@
   border-radius: var(--radius-sm);
   padding: 1px 6px;
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .arbRole {
