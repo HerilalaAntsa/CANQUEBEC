@@ -19,7 +19,9 @@ export default function FlagBadge({ team, size = 'md', link = false, className =
   const content = (
     <span className={`${styles.badge} ${styles[size]} ${isTBD ? styles.tbd : ''} ${className}`}>
       <span className={styles.flag} role="img" aria-label={team}>
-        {isTBD ? '❓' : flag}
+        {isTBD ? '❓' : flag?.startsWith('/') ? (
+          <img src={flag} alt={team} className={styles.flagImg} />
+        ) : flag}
       </span>
       <span className={styles.name}>{team}</span>
     </span>

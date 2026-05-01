@@ -1,7 +1,7 @@
 // Config équipes : drapeaux, slugs, normalisation
 
 export const TEAM_FLAGS = {
-  'QUÉBEC':          '🏳️',
+  'QUÉBEC':          '/assets/flags/qc.svg',
   "CÔTE D'IVOIRE":   '🇨🇮',
   'GAMBIE':          '🇬🇲',
   'MADAGASCAR':      '🇲🇬',

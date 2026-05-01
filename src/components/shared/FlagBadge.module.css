@@ -16,6 +16,15 @@
   font-size: 1.2em;
   line-height: 1;
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.flagImg {
+  height: 1em;
+  width: auto;
+  border-radius: 2px;
+  display: block;
 }
 
 .name {
