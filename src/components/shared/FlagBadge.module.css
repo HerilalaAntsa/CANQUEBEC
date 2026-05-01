@@ -5,9 +5,15 @@
   gap: var(--space-2);
   font-weight: 600;
   white-space: nowrap;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   overflow: hidden;
+}
+
+/* Équipe droite : drapeau à droite, nom tronqué à gauche */
+.reverse {
+  flex-direction: row-reverse;
 }
 
 .flag {
