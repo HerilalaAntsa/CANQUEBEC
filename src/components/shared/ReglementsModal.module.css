@@ -131,24 +131,9 @@
   display: block;
 }
 
-/* Fallback visible seulement si l'iframe ne charge pas (mobile Safari etc.) */
+/* Fallback visible seulement si l'iframe ne charge pas */
 .mobileFallback {
   display: none;
-  position: absolute;
-  inset: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-4);
-  text-align: center;
-  padding: var(--space-6);
-  color: var(--color-text-muted);
-}
-
-/* Sur petits écrans, si iframe ne marche pas, on montre le fallback */
-@media (max-width: 480px) {
-  .iframe { display: none; }
-  .mobileFallback { display: flex; }
 }
 
 .btnDownload {
