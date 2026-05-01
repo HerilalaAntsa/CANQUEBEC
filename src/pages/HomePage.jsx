@@ -134,19 +134,24 @@ export default function HomePage() {
 
   return (
     <div className={styles.page}>
-      <div className="container">
 
-        {/* Hero */}
-        <div className={styles.hero}>
-          <img src="/assets/logo.jpg" alt="QCN" className={styles.heroLogo}
-            onError={(e) => { e.target.style.display = 'none'; }} />
-          <div>
-            <h1 className={styles.heroTitle}>Québec Coupe des Nations</h1>
-            <p className={styles.heroSub}>
-              Saison 2026 · Vanier &amp; Neufchâtel · {teams.length} équipes
-            </p>
+        {/* Hero — full width */}
+        <div className={styles.heroWrap}>
+          <div className="container">
+            <div className={styles.hero}>
+              <img src="/assets/logo.jpg" alt="QCN" className={styles.heroLogo}
+                onError={(e) => { e.target.style.display = 'none'; }} />
+              <div>
+                <h1 className={styles.heroTitle}>Québec Coupe des Nations</h1>
+                <p className={styles.heroSub}>
+                  Saison 2026 · Vanier &amp; Neufchâtel · {teams.length} équipes
+                </p>
+              </div>
+            </div>
           </div>
         </div>
+
+      <div className="container">
 
         <div className={styles.grid}>
 
