@@ -211,14 +211,10 @@
   box-shadow: inset 4px 0 0 var(--color-zone-red);
 }
 
-/* Mobile: masquer B+/B- et last5 */
+/* Mobile: masquer Diff seulement */
 @media (max-width: 599px) {
-  .tableWrap :global(th:nth-child(7)),
-  .tableWrap :global(td:nth-child(7)),
-  .tableWrap :global(th:nth-child(8)),
-  .tableWrap :global(td:nth-child(8)),
-  .tableWrap :global(th:nth-child(11)),
-  .tableWrap :global(td:nth-child(11)) {
+  .tableWrap :global(th:nth-child(9)),
+  .tableWrap :global(td:nth-child(9)) {
     display: none;
   }
 }
