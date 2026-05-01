@@ -30,8 +30,8 @@ export default function AdminLoginPage() {
     <div className={styles.page}>
       <div className={styles.card}>
         <div className={styles.header}>
-          <h1 className={styles.title}>CNQ Admin</h1>
-          <p className={styles.subtitle}>Coupe des Nations de Québec 2026</p>
+          <h1 className={styles.title}>QCN Admin</h1>
+          <p className={styles.subtitle}>Québec Coupe des Nations 2026</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>

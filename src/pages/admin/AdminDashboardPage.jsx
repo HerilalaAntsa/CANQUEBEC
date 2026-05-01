@@ -204,7 +204,7 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>CNQ Admin</h1>
+          <h1 className={styles.title}>QCN Admin</h1>
           <p className={styles.email}>{session?.user?.email}</p>
         </div>
         <div className={styles.headerActions}>
