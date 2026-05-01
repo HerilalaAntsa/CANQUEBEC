@@ -89,6 +89,92 @@
 
 .tableWrap { margin-top: var(--space-2); }
 
+/* Onglets */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: var(--space-4);
+  border-bottom: 2px solid var(--color-border);
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--color-text); }
+.tabActive {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.35rem;
+  background: var(--color-surface-alt);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.tabActive .tabCount {
+  background: rgba(0,48,135,0.1);
+  color: var(--color-primary);
+}
+
+/* Table buteurs */
+.scorerTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.scorerTable thead tr {
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+}
+.scorerTable th {
+  padding: var(--space-3) var(--space-4);
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+.thRank, .thStat { text-align: center; width: 3rem; }
+.scorerRow {
+  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.scorerRow:last-child { border-bottom: none; }
+.scorerRow:hover { background: var(--color-surface-alt); }
+.scorerTable td { padding: var(--space-3) var(--space-4); vertical-align: middle; }
+.tdRank { text-align: center; }
+.rankNum { font-size: var(--text-sm); font-weight: 700; color: var(--color-text-faint); }
+.tdPlayer { display: flex; align-items: center; gap: var(--space-2); }
+.jersey {
+  font-size: var(--text-xs); font-weight: 700; color: var(--color-text-faint);
+  background: var(--color-surface-alt); border-radius: 4px;
+  padding: 0.1rem 0.4rem; white-space: nowrap; flex-shrink: 0;
+}
+.playerName { font-weight: 600; color: var(--color-text); }
+.tdStat { text-align: center; font-size: var(--text-lg); font-weight: 700; color: var(--color-primary); }
+.noStat { padding: var(--space-8) var(--space-4); text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); }
+
 /* Badge groupe A/B */
 .groupBadge {
   display: inline-flex;
@@ -125,12 +211,12 @@
   box-shadow: inset 4px 0 0 var(--color-zone-red);
 }
 
-/* Mobile: masquer BP/BC */
+/* Mobile: masquer B+/B- et last5 */
 @media (max-width: 599px) {
+  .tableWrap :global(th:nth-child(7)),
+  .tableWrap :global(td:nth-child(7)),
   .tableWrap :global(th:nth-child(8)),
   .tableWrap :global(td:nth-child(8)),
-  .tableWrap :global(th:nth-child(9)),
-  .tableWrap :global(td:nth-child(9)),
   .tableWrap :global(th:nth-child(11)),
   .tableWrap :global(td:nth-child(11)) {
     display: none;

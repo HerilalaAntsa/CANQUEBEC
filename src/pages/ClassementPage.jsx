@@ -1,4 +1,5 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
+import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { useLeagueData } from '../services/dataStore';
 import { useNavigate } from 'react-router-dom';
 import SortableTable from '../components/shared/SortableTable';
@@ -6,11 +7,24 @@ import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './ClassementPage.module.css';
 
+function buildScorerList(supabaseScores) {
+  const map = {};
+  for (const match of Object.values(supabaseScores)) {
+    for (const g of match.goals ?? []) {
+      if (!g.player_name && !g.player_num) continue;
+      const key = `${g.team}__${g.player_num ?? ''}__${g.player_name ?? ''}`;
+      if (!map[key]) {
+        map[key] = { key, team: g.team, playerNum: g.player_num ?? null,
+          playerName: g.player_name || (g.player_num ? `#${g.player_num}` : '—'), goals: 0 };
+      }
+      map[key].goals++;
+    }
+  }
+  return Object.values(map).sort((a, b) => b.goals - a.goals);
+}
+
 const COLUMNS = [
   { key: 'pos',  label: '#',    sortable: false, align: 'center' },
-  { key: 'group', label: 'Gr',  sortable: false, align: 'center',
-    render: (v) => <span className={styles.groupBadge}>{v}</span>
-  },
   { key: 'team', label: 'Équipe', sortable: true,
     render: (v) => <FlagBadge team={v} link size="sm" />
   },
@@ -18,8 +32,8 @@ const COLUMNS = [
   { key: 'won',          label: 'V',    sortable: true, align: 'right' },
   { key: 'drawn',        label: 'N',    sortable: true, align: 'right' },
   { key: 'lost',         label: 'D',    sortable: true, align: 'right' },
-  { key: 'goalsFor',     label: 'BP',   sortable: true, align: 'right' },
-  { key: 'goalsAgainst', label: 'BC',   sortable: true, align: 'right' },
+  { key: 'goalsFor',     label: 'B+',   sortable: true, align: 'right' },
+  { key: 'goalsAgainst', label: 'B-',   sortable: true, align: 'right' },
   { key: 'goalDiff',     label: 'Diff', sortable: true, align: 'right',
     render: (v) => {
       const n = Number(v);
@@ -51,6 +65,7 @@ const COLUMNS = [
 export default function ClassementPage() {
   const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores } = useLeagueData();
   const navigate = useNavigate();
+  const [tab, setTab] = useState('classement');
 
   // Rafraîchir les scores toutes les 30s
   useEffect(() => {
@@ -59,6 +74,7 @@ export default function ClassementPage() {
   }, [loadSupabaseScores]);
 
   const isLive = liveStandings?.length > 0;
+  const scorers = useMemo(() => buildScorerList(supabaseScores), [supabaseScores]);
 
   const last5Map = useMemo(() => {
     const map = {};
@@ -130,6 +146,58 @@ export default function ClassementPage() {
           </p>
         </div>
 
+        {/* Onglets */}
+        <div className={styles.tabs}>
+          <button
+            className={`${styles.tab} ${tab === 'classement' ? styles.tabActive : ''}`}
+            onClick={() => setTab('classement')}
+          >
+            🏆 Classement
+          </button>
+          <button
+            className={`${styles.tab} ${tab === 'buteurs' ? styles.tabActive : ''}`}
+            onClick={() => setTab('buteurs')}
+          >
+            ⚽ Buteurs
+            {scorers.length > 0 && <span className={styles.tabCount}>{scorers.length}</span>}
+          </button>
+        </div>
+
+        {tab === 'buteurs' ? (
+          <div className={styles.tableWrap}>
+            {scorers.length === 0 ? (
+              <div className={styles.noStat}>Aucun buteur enregistré pour l'instant.</div>
+            ) : (
+              <table className={styles.scorerTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.thRank}>#</th>
+                    <th>Joueur</th>
+                    <th>Équipe</th>
+                    <th className={styles.thStat}>⚽</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scorers.map((s, i) => (
+                    <tr key={s.key} className={styles.scorerRow} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
+                      <td className={styles.tdRank}>
+                        {i === 0 ? <span>🥇</span> : i === 1 ? <span>🥈</span> : i === 2 ? <span>🥉</span> :
+                          <span className={styles.rankNum}>{i + 1}</span>}
+                      </td>
+                      <td className={styles.tdPlayer}>
+                        {s.playerNum && <span className={styles.jersey}>#{s.playerNum}</span>}
+                        <span className={styles.playerName}>{s.playerName}</span>
+                      </td>
+                      <td><FlagBadge team={s.team} size="sm" /></td>
+                      <td className={styles.tdStat}>{s.goals}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        ) : (
+          <>
         <div className={styles.legend}>
           <span className={styles.legendItem}>
             <span className={styles.dot} style={{ background: 'var(--color-zone-green)' }} />
@@ -157,6 +225,8 @@ export default function ClassementPage() {
             emptyMessage="Classement disponible dès le début de la saison."
           />
         </div>
+          </>
+        )}
       </div>
     </div>
   );
