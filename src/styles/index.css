@@ -112,7 +112,7 @@ ul, ol {
 
 /* Empêche tout débordement horizontal sur mobile */
 @media (max-width: 767px) {
-  * { max-width: 100%; }
+  .container, .page { overflow-x: hidden; }
 }
 
 /* Skeleton loading */
