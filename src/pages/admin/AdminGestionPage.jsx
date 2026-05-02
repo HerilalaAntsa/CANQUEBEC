@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
+import { useLeagueData } from '../../services/dataStore';
 import {
   getMatches, postponeMatch, restorePostponedMatch, getPostponedMatches,
   getSuspensions, createSuspension, updateSuspension, liftSuspension, decrementSuspension,
@@ -213,7 +214,12 @@ const TEAMS = [
   'NATIONS UNIES','QUÉBEC','SÉNÉGAL','TANZANIE','TOGO'
 ];
 
-function SuspensionsTab() {
+function SuspensionsTabWrapper() {
+  const { players } = useLeagueData();
+  return <SuspensionsTab players={players ?? []} />;
+}
+
+function SuspensionsTab({ players }) {
   const [suspensions,   setSuspensions]   = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [msg,           setMsg]           = useState('');
@@ -340,14 +346,33 @@ function SuspensionsTab() {
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Ajouter une suspension</h3>
             <label className={styles.label}>Équipe *</label>
-            <select className={styles.input} value={aTeam} onChange={e => setATeam(e.target.value)}>
+            <select className={styles.input} value={aTeam} onChange={e => { setATeam(e.target.value); setANum(''); setAName(''); }}>
               <option value="">— Choisir —</option>
               {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
             </select>
-            <label className={styles.label}>N° maillot</label>
-            <input className={styles.input} type="number" placeholder="#" value={aNum} onChange={e => setANum(e.target.value)} />
-            <label className={styles.label}>Nom du joueur</label>
-            <input className={styles.input} placeholder="Nom complet" value={aName} onChange={e => setAName(e.target.value)} />
+            <label className={styles.label}>Joueur *</label>
+            {(() => {
+              const teamPlayers = players
+                .filter(p => p.team?.trim().toUpperCase() === aTeam?.trim().toUpperCase())
+                .sort((a, b) => (a.number ?? 99) - (b.number ?? 99));
+              return teamPlayers.length > 0 ? (
+                <select className={styles.input} value={aNum} onChange={e => {
+                  const p = teamPlayers.find(x => String(x.number) === e.target.value);
+                  setANum(e.target.value);
+                  setAName(p?.name ?? '');
+                }} disabled={!aTeam}>
+                  <option value="">— Choisir un joueur —</option>
+                  {teamPlayers.map(p => (
+                    <option key={p.number} value={String(p.number)}>#{p.number} — {p.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <>
+                  <input className={styles.input} type="number" placeholder="N° maillot" value={aNum} onChange={e => setANum(e.target.value)} disabled={!aTeam} />
+                  <input className={styles.input} placeholder="Nom complet" value={aName} onChange={e => setAName(e.target.value)} disabled={!aTeam} />
+                </>
+              );
+            })()}
             <label className={styles.label}>Matchs suspendus</label>
             <input className={styles.input} type="number" min="1" max="99" value={aMatches} onChange={e => setAMatches(e.target.value)} />
             <label className={styles.label}>Raison</label>
@@ -467,7 +492,8 @@ export default function AdminGestionPage() {
 
       <div className={styles.content}>
         {tab === 'postponed'   && <PostponedTab />}
-        {tab === 'suspensions' && <SuspensionsTab />}
+        {tab === 'suspensions' && <SuspensionsTabWrapper />}
+
       </div>
     </div>
   );
