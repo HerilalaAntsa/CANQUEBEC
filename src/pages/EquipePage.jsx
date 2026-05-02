@@ -67,7 +67,7 @@ export default function EquipePage() {
           <FlagBadge team={name} size="xl" />
           <div className={styles.headerMeta}>
             <span className={styles.groupBadge}>Groupe {team.group}</span>
-            {meta?.captain && <span className={styles.metaItem}>👑 {meta.captain}</span>}
+            {meta?.captain && <span className={styles.metaItem}><span className={styles.captainBadge}>C</span> {meta.captain}</span>}
             {meta?.coach   && <span className={styles.metaItem}>🏋️ Coach: {meta.coach}</span>}
           </div>
         </div>
