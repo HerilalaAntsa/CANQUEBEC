@@ -304,13 +304,19 @@ export async function importMatchesFromExcel(parsedMatches) {
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from('matches').insert(toInsert);
-    if (error) throw error;
+    if (error) {
+      console.error('[importMatches] insert error', error);
+      throw new Error(`Insert échoué : ${error.message}${error.details ? ' — ' + error.details : ''}${error.hint ? ' (' + error.hint + ')' : ''}`);
+    }
   }
 
   for (const row of toUpdate) {
     const { id, ...fields } = row;
     const { error } = await supabase.from('matches').update(fields).eq('id', id);
-    if (error) throw error;
+    if (error) {
+      console.error('[importMatches] update error', { id, error });
+      throw new Error(`Update match #${id} échoué : ${error.message}${error.details ? ' — ' + error.details : ''}`);
+    }
   }
 
   return toInsert.length + toUpdate.length;

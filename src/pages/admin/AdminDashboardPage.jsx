@@ -54,7 +54,9 @@ export default function AdminDashboardPage() {
       alert(`✅ ${count} matchs importés depuis l'Excel.`);
       loadMatches();
     } catch (e) {
-      alert('Erreur import : ' + e.message);
+      const detail = e?.details ?? e?.hint ?? e?.code ?? '';
+      alert('Erreur import : ' + e.message + (detail ? `\n\nDétail : ${detail}` : ''));
+      console.error('[importExcel]', e);
     } finally {
       setImporting(false);
     }
@@ -68,10 +70,13 @@ export default function AdminDashboardPage() {
       setSyncMsg(`✅ Google Sheets synchronisé — ${count} matchs mis à jour`);
       loadMatches();
     } catch (e) {
-      setSyncMsg('⚠️ Erreur sync Google Sheets : ' + e.message);
+      const detail = e?.details ?? e?.hint ?? e?.code ?? '';
+      const msg = e.message + (detail ? ` (${detail})` : '');
+      setSyncMsg('⚠️ Erreur sync : ' + msg);
+      console.error('[syncGSheets]', e);
     } finally {
       setSyncing(false);
-      setTimeout(() => setSyncMsg(''), 6000);
+      setTimeout(() => setSyncMsg(''), 12000);
     }
   }
 
