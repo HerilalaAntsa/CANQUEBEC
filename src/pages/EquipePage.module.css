@@ -33,6 +33,12 @@
   color: var(--color-text-muted);
 }
 
+.suspBadge {
+  font-size: 0.85rem;
+  line-height: 1;
+  title: "Suspendu";
+}
+
 .captainBadge {
   display: inline-flex;
   align-items: center;

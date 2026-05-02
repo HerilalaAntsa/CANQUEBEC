@@ -366,3 +366,43 @@ export async function decrementSuspension(id) {
   if (error) throw error;
   return next;
 }
+
+// ── Feuille de match ──────────────────────────────────────────
+
+/** Récupère la feuille de match pour un match */
+export async function getLineup(matchId) {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('match_lineup')
+    .select('*')
+    .eq('match_id', matchId)
+    .order('role')
+    .order('player_num');
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Ajoute un joueur à la feuille de match */
+export async function addLineupEntry({ matchId, team, playerNum, playerName, role }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { data, error } = await supabase
+    .from('match_lineup')
+    .upsert({
+      match_id: Number(matchId),
+      team,
+      player_num: playerNum ? Number(playerNum) : null,
+      player_name: playerName || null,
+      role: role || 'starter',
+    }, { onConflict: 'match_id,team,player_num' })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+/** Supprime une entrée de la feuille de match */
+export async function deleteLineupEntry(id) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('match_lineup').delete().eq('id', id);
+  if (error) throw error;
+}

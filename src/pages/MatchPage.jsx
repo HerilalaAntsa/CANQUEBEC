@@ -38,6 +38,7 @@ export default function MatchPage() {
   const { id } = useParams();
   const [match, setMatch] = useState(null);
   const [events, setEvents] = useState([]);
+  const [lineup, setLineup] = useState([]);
   const [loading, setLoading] = useState(!isSupabaseEnabled ? false : true);
   const [error, setError] = useState(isSupabaseEnabled ? null : 'Données live non disponibles');
 
@@ -45,13 +46,15 @@ export default function MatchPage() {
     if (!isSupabaseEnabled) return;
     async function fetchData() {
       setLoading(true);
-      const [matchRes, eventsRes] = await Promise.all([
+      const [matchRes, eventsRes, lineupRes] = await Promise.all([
         supabase.from('matches').select('*').eq('id', id).single(),
         supabase.from('match_events').select('*').eq('match_id', id).order('minute', { ascending: true }),
+        supabase.from('match_lineup').select('*').eq('match_id', id).order('player_num', { ascending: true }),
       ]);
       if (matchRes.error) { setError('Match introuvable'); setLoading(false); return; }
       setMatch(matchRes.data);
       setEvents(eventsRes.data ?? []);
+      setLineup(lineupRes.data ?? []);
       setLoading(false);
     }
     fetchData();
@@ -199,6 +202,58 @@ export default function MatchPage() {
             <div className={styles.eventsCol}>
               {eventsB.map(ev => renderEvt(ev))}
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* Alignement */}
+      {lineup.length > 0 && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>Alignement</h2>
+          <div className={styles.lineupGrid}>
+            {[match.team_a, match.team_b].map(team => {
+              const starters = lineup.filter(r => r.team === team && r.role === 'starter');
+              const subs     = lineup.filter(r => r.team === team && r.role === 'sub');
+              const absent   = lineup.filter(r => r.team === team && r.role === 'absent');
+              return (
+                <div key={team} className={styles.lineupTeamCol}>
+                  <div className={styles.lineupTeamHeader}>{team}</div>
+                  {starters.length > 0 && (
+                    <>
+                      <div className={styles.lineupRoleLabel}>🟢 Titulaires</div>
+                      {starters.map(p => (
+                        <div key={p.id} className={styles.lineupPlayerRow}>
+                          {p.player_num ? <span className={styles.lineupJersey}>#{p.player_num}</span> : null}
+                          <span>{p.player_name || '—'}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {subs.length > 0 && (
+                    <>
+                      <div className={styles.lineupRoleLabel}>🔵 Remplaçants</div>
+                      {subs.map(p => (
+                        <div key={p.id} className={styles.lineupPlayerRow}>
+                          {p.player_num ? <span className={styles.lineupJersey}>#{p.player_num}</span> : null}
+                          <span>{p.player_name || '—'}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  {absent.length > 0 && (
+                    <>
+                      <div className={styles.lineupRoleLabel}>⚫ Absents</div>
+                      {absent.map(p => (
+                        <div key={p.id} className={`${styles.lineupPlayerRow} ${styles.lineupAbsent}`}>
+                          {p.player_num ? <span className={styles.lineupJersey}>#{p.player_num}</span> : null}
+                          <span>{p.player_name || '—'}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </section>
       )}

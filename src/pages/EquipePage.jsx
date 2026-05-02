@@ -1,21 +1,34 @@
 import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useTeam } from '../hooks/useTeam';
 import { useLeagueData } from '../services/dataStore';
+import { supabase } from '../services/supabaseClient';
 import FlagBadge from '../components/shared/FlagBadge';
 import MatchCard from '../components/calendrier/MatchCard';
 import SortableTable from '../components/shared/SortableTable';
 import { POSITION_LABELS } from '../config/teams';
 import styles from './EquipePage.module.css';
 
-const ROSTER_COLS = [
-  { key: 'number',   label: '#',      sortable: true,  align: 'right' },
-  { key: 'name',     label: 'Joueur', sortable: true },
-  { key: 'position', label: 'Poste',  sortable: true,
-    render: (v) => v ?? '—'
-  },
-  { key: 'goals',   label: '⚽',  sortable: true, align: 'right' },
-  { key: 'assists', label: '🎯',  sortable: true, align: 'right' },
-];
+function buildRosterCols(suspSet, stylesObj) {
+  return [
+    { key: 'number',   label: '#',      sortable: true,  align: 'right' },
+    { key: 'name',     label: 'Joueur', sortable: true,
+      render: (v, row) => (
+        <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
+          {v}
+          {suspSet.has(String(row.number)) && (
+            <span className={stylesObj.suspBadge} title="Suspendu">🚫</span>
+          )}
+        </span>
+      )
+    },
+    { key: 'position', label: 'Poste',  sortable: true,
+      render: (v) => v ?? '—'
+    },
+    { key: 'goals',   label: '⚽',  sortable: true, align: 'right' },
+    { key: 'assists', label: '🎯',  sortable: true, align: 'right' },
+  ];
+}
 
 function StatBadge({ label, value, accent }) {
   return (
@@ -58,6 +71,21 @@ export default function EquipePage() {
   const played   = teamMatches.filter(m => m.status === 'played');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 
+  const [suspSet, setSuspSet] = useState(new Set());
+  useEffect(() => {
+    if (!team?.code) return;
+    supabase
+      .from('suspensions')
+      .select('player_num')
+      .eq('team', team.code)
+      .gt('matches_remaining', 0)
+      .then(({ data }) => {
+        if (data) setSuspSet(new Set(data.map(s => String(s.player_num))));
+      });
+  }, [team?.code]);
+
+  const rosterCols = buildRosterCols(suspSet, styles);
+
   return (
     <div className={styles.page}>
       <div className="container">
@@ -92,7 +120,7 @@ export default function EquipePage() {
             {roster.length > 0 ? (
               <div className={styles.rosterWrap}>
               <SortableTable
-                columns={ROSTER_COLS}
+                columns={rosterCols}
                 data={roster.map(p => ({ ...p, id: `${p.number}-${p.team}` }))}
                 defaultSort="number"
                 defaultDir="asc"

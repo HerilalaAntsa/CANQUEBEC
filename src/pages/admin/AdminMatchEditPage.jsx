@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
@@ -18,6 +18,7 @@ export default function AdminMatchEditPage() {
 
   const [match,     setMatch]     = useState(null);
   const [events,    setEvents]    = useState([]);
+  const [lineup,    setLineup]    = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
   const [saving,    setSaving]    = useState(false);
@@ -57,6 +58,13 @@ export default function AdminMatchEditPage() {
   // Modal 2ème carton jaune → rouge
   const [doubleYellowModal, setDoubleYellowModal] = useState(null); // { playerNum, playerName, team, minute }
 
+  // Lineup form
+  const [luTeam, setLuTeam]         = useState('');
+  const [luNum,  setLuNum]          = useState('');
+  const [luName, setLuName]         = useState('');
+  const [luRole, setLuRole]         = useState('starter');
+  const [addingLu, setAddingLu]     = useState(false);
+
   const loadData = useCallback(async () => {
     try {
       const { match: m, events: ev } = await getMatchWithEvents(id);
@@ -65,6 +73,8 @@ export default function AdminMatchEditPage() {
       setScoreA(m.score_a ?? 0);
       setScoreB(m.score_b ?? 0);
       setEvtTeam(m.team_a);
+      setLuTeam(m.team_a);
+      getLineup(id).then(rows => setLineup(rows)).catch(() => {});
     } catch (e) {
       setError('Impossible de charger ce match : ' + e.message);
     } finally {
@@ -710,8 +720,93 @@ export default function AdminMatchEditPage() {
         }
       </section>
 
-      {/* Modal buteur — quand score augmenté manuellement */}
-      {goalModal && (
+      {/* Feuille de match */}
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>🪪 Feuille de match</h2>
+
+        {/* Formulaire ajout */}
+        <form
+          className={styles.evtForm}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setAddingLu(true);
+            try {
+              const entry = await addLineupEntry({ matchId: id, team: luTeam, playerNum: luNum, playerName: luName, role: luRole });
+              setLineup(prev => {
+                const filtered = prev.filter(r => !(r.team === luTeam && String(r.player_num) === String(luNum)));
+                return [...filtered, entry];
+              });
+              setLuNum(''); setLuName('');
+            } catch (err) { alert('Erreur : ' + err.message); }
+            finally { setAddingLu(false); }
+          }}
+        >
+          <div className={styles.evtRow}>
+            <select value={luTeam} onChange={e => { setLuTeam(e.target.value); setLuNum(''); setLuName(''); }} className={styles.select}>
+              <option value={match.team_a}>{match.team_a}</option>
+              <option value={match.team_b}>{match.team_b}</option>
+            </select>
+            <input
+              type="number" placeholder="N° maillot" min="1" max="26" required
+              className={styles.input} style={{ width: '90px' }}
+              value={luNum}
+              onChange={e => {
+                setLuNum(e.target.value);
+                const found = lookupPlayer(e.target.value, luTeam);
+                if (found) setLuName(found.name ?? '');
+              }}
+            />
+            <input
+              type="text" placeholder="Nom"
+              className={styles.input}
+              value={luName} onChange={e => setLuName(e.target.value)}
+            />
+            <select value={luRole} onChange={e => setLuRole(e.target.value)} className={styles.select}>
+              <option value="starter">🟢 Titulaire</option>
+              <option value="sub">🔵 Remplaçant</option>
+              <option value="absent">⚫ Absent</option>
+            </select>
+            <button type="submit" className={styles.addBtn} disabled={addingLu}>
+              {addingLu ? '...' : '+ Ajouter'}
+            </button>
+          </div>
+        </form>
+
+        {/* Tableau par équipe */}
+        {[match.team_a, match.team_b].map(team => {
+          const rows = lineup.filter(r => r.team === team).sort((a, b) => (a.player_num ?? 99) - (b.player_num ?? 99));
+          return (
+            <div key={team} className={styles.lineupTeamBlock}>
+              <h3 className={styles.lineupTeamTitle}>{team}</h3>
+              {rows.length === 0
+                ? <p className={styles.empty}>Aucun joueur saisi.</p>
+                : (
+                  <div className={styles.lineupList}>
+                    {rows.map(r => (
+                      <div key={r.id} className={styles.lineupRow}>
+                        <span className={styles.lineupRoleDot} title={r.role}>
+                          {r.role === 'starter' ? '🟢' : r.role === 'sub' ? '🔵' : '⚫'}
+                        </span>
+                        <span className={styles.lineupNum}>{r.player_num ? `#${r.player_num}` : '—'}</span>
+                        <span className={styles.lineupName}>{r.player_name || '—'}</span>
+                        <button
+                          className={styles.deleteBtn}
+                          onClick={async () => {
+                            try { await deleteLineupEntry(r.id); setLineup(prev => prev.filter(x => x.id !== r.id)); }
+                            catch (err) { alert('Erreur : ' + err.message); }
+                          }}
+                        >✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )
+              }
+            </div>
+          );
+        })}
+      </section>
+
+      {/* Modal buteur — quand score augmenté manuellement */}      {goalModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <div className={styles.modalCloseRow}>

@@ -116,3 +116,25 @@ CREATE POLICY "auth write suspensions"
 
 -- Ajouter postpone_reason à matches si pas encore fait
 ALTER TABLE matches ADD COLUMN IF NOT EXISTS postpone_reason TEXT;
+
+-- ── Match Lineup (feuille de match) ──────────────────────────
+CREATE TABLE IF NOT EXISTS match_lineup (
+  id          BIGSERIAL PRIMARY KEY,
+  match_id    BIGINT NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+  team        TEXT NOT NULL,
+  player_num  INT,
+  player_name TEXT,
+  role        TEXT NOT NULL DEFAULT 'starter', -- starter | sub | absent
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(match_id, team, player_num)
+);
+
+ALTER TABLE match_lineup ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read lineup"
+  ON match_lineup FOR SELECT USING (true);
+
+CREATE POLICY "auth write lineup"
+  ON match_lineup FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
