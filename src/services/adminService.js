@@ -9,6 +9,8 @@ import { loadHoraireFromUrl } from './excelService';
 
 const OFFLINE_QUEUE_KEY = 'cnq_admin_offline_queue';
 
+export const GSHEET_HORAIRE_URL = 'https://docs.google.com/spreadsheets/d/1Yvz1nlHWeQ9ua4uSh9tD9Aoq83F3h1vGiOMwGdCp5oA/export?format=xlsx';
+
 // ─── Offline queue ────────────────────────────────────────────────────────────
 
 function enqueueOffline(operation) {
@@ -206,14 +208,14 @@ export async function deleteEvent(eventId) {
   }
 }
 
-// ─── Sync depuis l'Excel local (/public/data/HORAIRE_2026.xlsx) ──────────────
+// ─── Sync depuis Google Sheets ───────────────────────────────────────────────
 
 /**
- * Recharge HORAIRE_2026.xlsx depuis /public, parse les matchs, les importe dans Supabase.
+ * Charge l'horaire depuis le Google Sheet public, parse les matchs, les importe dans Supabase.
  */
 export async function syncFromGoogleSheets() {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
-  const url = '/data/HORAIRE_2026.xlsx?t=' + Date.now();
+  const url = GSHEET_HORAIRE_URL + '&t=' + Date.now();
   const data = await loadHoraireFromUrl(url);
   const count = await importMatchesFromExcel(data.matches);
   return { count, teams: data.teams.length };

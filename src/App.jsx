@@ -16,16 +16,21 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminMatchEditPage from './pages/admin/AdminMatchEditPage';
 import AdminGestionPage from './pages/admin/AdminGestionPage';
 import MatchPage from './pages/MatchPage';
+import { GSHEET_HORAIRE_URL } from './services/adminService';
 
-const EXCEL_HORAIRE_URL   = '/data/HORAIRE_2026.xlsx';
-const EXCEL_PLAYERS_A_URL = '/data/LISTE_GROUPE_A.xlsx';
-const EXCEL_PLAYERS_B_URL = '/data/LISTE_GROUPE_B.xlsx';
+const EXCEL_HORAIRE_FALLBACK = '/data/HORAIRE_2026.xlsx';
+const EXCEL_PLAYERS_A_URL    = '/data/LISTE_GROUPE_A.xlsx';
+const EXCEL_PLAYERS_B_URL    = '/data/LISTE_GROUPE_B.xlsx';
 
 function DataLoader({ children }) {
   const { loadHoraire, loadPlayers } = useLeagueData();
 
   useEffect(() => {
-    loadHoraire(EXCEL_HORAIRE_URL);
+    // Charge depuis Google Sheets en priorité, fallback sur le fichier local
+    loadHoraire(GSHEET_HORAIRE_URL + '&t=' + Date.now()).catch(() => {
+      console.warn('[DataLoader] GSheet inaccessible, fallback local');
+      loadHoraire(EXCEL_HORAIRE_FALLBACK);
+    });
   }, [loadHoraire]);
 
   useEffect(() => {
