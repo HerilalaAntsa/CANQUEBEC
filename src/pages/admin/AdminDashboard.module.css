@@ -42,6 +42,18 @@
 }
 .linkBtn:hover { color: var(--color-accent, #e2b04a); }
 
+.gestionBtn {
+  font-size: 0.8rem;
+  color: var(--color-accent, #e2b04a);
+  text-decoration: none;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid rgba(226,176,74,0.35);
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.gestionBtn:hover { background: rgba(226,176,74,0.1); }
+
 .logoutBtn {
   background: rgba(255,80,80,0.12);
   border: 1px solid rgba(255,80,80,0.25);

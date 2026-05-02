@@ -209,6 +209,7 @@ export default function AdminDashboardPage() {
         </div>
         <div className={styles.headerActions}>
           <a href="/" className={styles.linkBtn}>← App publique</a>
+          <Link to="/admin/gestion" className={styles.gestionBtn}>📅 Gestion</Link>
           <button onClick={logout} className={styles.logoutBtn}>Déconnexion</button>
         </div>
       </header>

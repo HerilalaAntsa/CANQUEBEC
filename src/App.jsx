@@ -14,6 +14,7 @@ import EquipesPage from './pages/EquipesPage';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminMatchEditPage from './pages/admin/AdminMatchEditPage';
+import AdminGestionPage from './pages/admin/AdminGestionPage';
 import MatchPage from './pages/MatchPage';
 
 const EXCEL_HORAIRE_URL   = '/data/HORAIRE_2026.xlsx';
@@ -61,6 +62,9 @@ export default function App() {
               } />
               <Route path="/admin/match/:id" element={
                 <ProtectedRoute><AdminMatchEditPage /></ProtectedRoute>
+              } />
+              <Route path="/admin/gestion" element={
+                <ProtectedRoute><AdminGestionPage /></ProtectedRoute>
               } />
 
               {/* ── 404 ── */}

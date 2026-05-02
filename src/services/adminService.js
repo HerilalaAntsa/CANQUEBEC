@@ -114,6 +114,40 @@ export async function setMatchStatus(matchId, status) {
   if (error) throw error;
 }
 
+// ─── Matchs reportés ──────────────────────────────────────────────────────────
+
+/** Retourne tous les matchs avec status='postponed' */
+export async function getPostponedMatches() {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('matches')
+    .select('id, journee, team_a, team_b, date, time, venue, status, postpone_reason')
+    .eq('status', 'postponed')
+    .order('journee', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Marque un match comme reporté avec raison + nouvelle date optionnelle */
+export async function postponeMatch(matchId, reason = '', newDate = null, newTime = null) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const fields = { status: 'postponed', postpone_reason: reason };
+  if (newDate) fields.date = newDate;
+  if (newTime) fields.time = newTime;
+  const { error } = await supabase.from('matches').update(fields).eq('id', matchId);
+  if (error) throw error;
+}
+
+/** Restaure un match reporté → 'upcoming' et mise à jour date/heure */
+export async function restorePostponedMatch(matchId, newDate = null, newTime = null) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const fields = { status: 'upcoming', postpone_reason: null };
+  if (newDate) fields.date = newDate;
+  if (newTime) fields.time = newTime;
+  const { error } = await supabase.from('matches').update(fields).eq('id', matchId);
+  if (error) throw error;
+}
+
 export async function updateMatchDateTime(matchId, date, time) {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
   const fields = {};
