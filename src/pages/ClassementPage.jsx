@@ -7,20 +7,35 @@ import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './ClassementPage.module.css';
 
-function buildScorerList(supabaseScores) {
+function buildPlayerStats(supabaseScores, cardEvents) {
   const map = {};
+  const key = (team, num, name) => `${team}__${num ?? ''}__${name ?? ''}`;
+
+  // Goals from supabaseScores.goals
   for (const match of Object.values(supabaseScores)) {
     for (const g of match.goals ?? []) {
       if (!g.player_name && !g.player_num) continue;
-      const key = `${g.team}__${g.player_num ?? ''}__${g.player_name ?? ''}`;
-      if (!map[key]) {
-        map[key] = { key, team: g.team, playerNum: g.player_num ?? null,
-          playerName: g.player_name || (g.player_num ? `#${g.player_num}` : '—'), goals: 0 };
-      }
-      map[key].goals++;
+      const k = key(g.team, g.player_num, g.player_name);
+      if (!map[k]) map[k] = { key: k, team: g.team, playerNum: g.player_num ?? null,
+        playerName: g.player_name || (g.player_num ? `#${g.player_num}` : '—'),
+        goals: 0, assists: 0, yellow: 0, red: 0 };
+      map[k].goals++;
     }
   }
-  return Object.values(map).sort((a, b) => b.goals - a.goals);
+
+  // Assists/cards from match_events
+  for (const ev of cardEvents) {
+    if (!ev.player_name && !ev.player_num) continue;
+    const k = key(ev.team, ev.player_num, ev.player_name);
+    if (!map[k]) map[k] = { key: k, team: ev.team, playerNum: ev.player_num ?? null,
+      playerName: ev.player_name || (ev.player_num ? `#${ev.player_num}` : '—'),
+      goals: 0, assists: 0, yellow: 0, red: 0 };
+    if (ev.type === 'assist') map[k].assists++;
+    if (ev.type === 'yellow') map[k].yellow++;
+    if (ev.type === 'red')    map[k].red++;
+  }
+
+  return Object.values(map).sort((a, b) => b.goals - a.goals || b.assists - a.assists);
 }
 
 const COLUMNS = [
@@ -51,6 +66,8 @@ export default function ClassementPage() {
   const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores } = useLeagueData();
   const navigate = useNavigate();
   const [tab, setTab] = useState('classement');
+  const [cardEvents, setCardEvents] = useState([]);
+  const [statsSort, setStatsSort] = useState('goals');
 
   // Rafraîchir les scores toutes les 30s
   useEffect(() => {
@@ -58,8 +75,21 @@ export default function ClassementPage() {
     return () => clearInterval(id);
   }, [loadSupabaseScores]);
 
+  // Charger assists + cartons
+  useEffect(() => {
+    if (!isSupabaseEnabled) return;
+    supabase
+      .from('match_events')
+      .select('type, team, player_name, player_num')
+      .in('type', ['assist', 'yellow', 'red'])
+      .then(({ data }) => setCardEvents(data ?? []));
+  }, []);
+
   const isLive = liveStandings?.length > 0;
-  const scorers = useMemo(() => buildScorerList(supabaseScores), [supabaseScores]);
+  const playerStats = useMemo(() => buildPlayerStats(supabaseScores, cardEvents), [supabaseScores, cardEvents]);
+  const sortedStats = useMemo(() => {
+    return [...playerStats].sort((a, b) => b[statsSort] - a[statsSort] || b.goals - a.goals);
+  }, [playerStats, statsSort]);
 
   const last5Map = useMemo(() => {
     const map = {};
@@ -143,43 +173,64 @@ export default function ClassementPage() {
             className={`${styles.tab} ${tab === 'buteurs' ? styles.tabActive : ''}`}
             onClick={() => setTab('buteurs')}
           >
-            ⚽ Buteurs
-            {scorers.length > 0 && <span className={styles.tabCount}>{scorers.length}</span>}
+            📊 Stats joueurs
+            {playerStats.length > 0 && <span className={styles.tabCount}>{playerStats.length}</span>}
           </button>
         </div>
 
         {tab === 'buteurs' ? (
-          <div className={styles.tableWrap}>
-            {scorers.length === 0 ? (
-              <div className={styles.noStat}>Aucun buteur enregistré pour l'instant.</div>
-            ) : (
-              <table className={styles.scorerTable}>
-                <thead>
-                  <tr>
-                    <th className={styles.thRank}>#</th>
-                    <th>Joueur</th>
-                    <th>Équipe</th>
-                    <th className={styles.thStat}>⚽</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {scorers.map((s, i) => (
-                    <tr key={s.key} className={styles.scorerRow} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
-                      <td className={styles.tdRank}>
-                        {i === 0 ? <span>🥇</span> : i === 1 ? <span>🥈</span> : i === 2 ? <span>🥉</span> :
-                          <span className={styles.rankNum}>{i + 1}</span>}
-                      </td>
-                      <td className={styles.tdPlayer}>
-                        {s.playerNum && <span className={styles.jersey}>#{s.playerNum}</span>}
-                        <span className={styles.playerName}>{s.playerName}</span>
-                      </td>
-                      <td><FlagBadge team={s.team} size="sm" /></td>
-                      <td className={styles.tdStat}>{s.goals}</td>
+          <div>
+            {/* Trier par */}
+            <div className={styles.statsSortBar}>
+              <span className={styles.statsSortLabel}>Trier par :</span>
+              {[{k:'goals',l:'⚽ Buts'},{k:'assists',l:'🎯 Passes D'},{k:'yellow',l:'🟨 Jaunes'},{k:'red',l:'🟥 Rouges'}].map(({k,l}) => (
+                <button key={k}
+                  className={`${styles.sortBtn} ${statsSort === k ? styles.sortBtnActive : ''}`}
+                  onClick={() => setStatsSort(k)}>{l}</button>
+              ))}
+            </div>
+            <div className={styles.tableWrap}>
+              {sortedStats.length === 0 ? (
+                <div className={styles.noStat}>Aucune statistique enregistrée pour l'instant.</div>
+              ) : (
+                <table className={styles.scorerTable}>
+                  <thead>
+                    <tr>
+                      <th className={styles.thRank}>#</th>
+                      <th>Joueur</th>
+                      <th>Équipe</th>
+                      <th className={styles.thStat} title="Buts">⚽</th>
+                      <th className={styles.thStat} title="Passes décisives">🎯</th>
+                      <th className={styles.thStat} title="Cartons jaunes">🟨</th>
+                      <th className={styles.thStat} title="Cartons rouges">🟥</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {sortedStats.map((s, i) => (
+                      <tr key={s.key} className={styles.scorerRow} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
+                        <td className={styles.tdRank}>
+                          {i === 0 ? <span>🥇</span> : i === 1 ? <span>🥈</span> : i === 2 ? <span>🥉</span> :
+                            <span className={styles.rankNum}>{i + 1}</span>}
+                        </td>
+                        <td className={styles.tdPlayer}>
+                          {s.playerNum && <span className={styles.jersey}>#{s.playerNum}</span>}
+                          <span className={styles.playerName}>{s.playerName}</span>
+                        </td>
+                        <td><FlagBadge team={s.team} size="sm" /></td>
+                        <td className={`${styles.tdStat} ${statsSort==='goals' ? styles.tdStatActive:''}`}>{s.goals || '—'}</td>
+                        <td className={`${styles.tdStat} ${statsSort==='assists' ? styles.tdStatActive:''}`}>{s.assists || '—'}</td>
+                        <td className={`${styles.tdStat} ${statsSort==='yellow' ? styles.tdStatActive:''}`}>
+                          {s.yellow ? <span className={styles.cardY}>{s.yellow}</span> : '—'}
+                        </td>
+                        <td className={`${styles.tdStat} ${statsSort==='red' ? styles.tdStatActive:''}`}>
+                          {s.red ? <span className={styles.cardR}>{s.red}</span> : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         ) : (
           <>

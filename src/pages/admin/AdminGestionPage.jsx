@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { getMatches, postponeMatch, restorePostponedMatch, getPostponedMatches } from '../../services/adminService';
+import {
+  getMatches, postponeMatch, restorePostponedMatch, getPostponedMatches,
+  getSuspensions, createSuspension, updateSuspension, liftSuspension, decrementSuspension,
+} from '../../services/adminService';
 import { supabase, isSupabaseEnabled } from '../../services/supabaseClient';
 import styles from './AdminGestion.module.css';
 
@@ -202,17 +205,228 @@ function PostponedTab() {
   );
 }
 
-// ─── Onglet Suspensions (placeholder prêt pour la suite) ────────────────────
+// ─── Onglet Suspensions ───────────────────────────────────────────────────────
+
+const TEAMS = [
+  'ALGÉRIE','BURKINA FASO','CAMEROUN','CANADA','CENTRAFRIQUE','CONGO RDC',
+  'CÔTE D\'IVOIRE','GABON','GAMBIE','GUINÉE','HAÏTI','MADAGASCAR','MALI',
+  'NATIONS UNIES','QUÉBEC','SÉNÉGAL','TANZANIE','TOGO'
+];
 
 function SuspensionsTab() {
+  const [suspensions,   setSuspensions]   = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [msg,           setMsg]           = useState('');
+  // Modal ajouter
+  const [addModal,      setAddModal]      = useState(false);
+  const [aTeam,         setATeam]         = useState('');
+  const [aNum,          setANum]          = useState('');
+  const [aName,         setAName]         = useState('');
+  const [aMatches,      setAMatches]      = useState('1');
+  const [aReason,       setAReason]       = useState('red_card');
+  const [saving,        setSaving]        = useState(false);
+  // Modal modifier/lever
+  const [editModal,     setEditModal]     = useState(null);
+  const [eMatches,      setEMatches]      = useState('1');
+  const [eReason,       setEReason]       = useState('');
+  // Modal décrémente (purge match)
+  const [purgeConfirm,  setPurgeConfirm]  = useState(null);
+  // Modal lever (confirmation)
+  const [liftConfirm,   setLiftConfirm]   = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setSuspensions(await getSuspensions()); }
+    catch (e) { setMsg('⚠️ ' + e.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
+
+  async function handleAdd() {
+    if (!aTeam) return;
+    setSaving(true);
+    try {
+      await createSuspension({ team: aTeam, playerNum: aNum ? parseInt(aNum) : null,
+        playerName: aName || null, matchesRemaining: parseInt(aMatches) || 1,
+        reason: aReason, type: 'manual' });
+      flash('✅ Suspension ajoutée.');
+      setAddModal(false); setATeam(''); setANum(''); setAName(''); setAMatches('1'); setAReason('red_card');
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleEdit() {
+    if (!editModal) return;
+    setSaving(true);
+    try {
+      await updateSuspension(editModal.id, { matchesRemaining: parseInt(eMatches) || 1, reason: eReason });
+      flash('✅ Suspension modifiée.');
+      setEditModal(null);
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handlePurge(susp) {
+    setSaving(true);
+    try {
+      const remaining = await decrementSuspension(susp.id);
+      flash(remaining === 0 ? '✅ Match purgé — suspension terminée.' : `✅ Match purgé — ${remaining} match(s) restant(s).`);
+      setPurgeConfirm(null);
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleLift(id) {
+    setSaving(true);
+    try {
+      await liftSuspension(id);
+      flash('✅ Suspension levée.');
+      setLiftConfirm(null);
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  const REASON_LABELS = { red_card: '🟥 Carton rouge', behavior: '⚠️ Comportement', manual: '✏️ Manuelle' };
+
   return (
-    <div className={styles.placeholder}>
-      <span className={styles.placeholderIcon}>🚫</span>
-      <p className={styles.placeholderTitle}>Gestion des suspensions</p>
-      <p className={styles.placeholderText}>
-        Cette section sera disponible prochainement.<br />
-        Elle permettra de gérer les suspensions automatiques (rouge) et manuelles.
-      </p>
+    <div>
+      {msg && <div className={msg.startsWith('⚠️') ? styles.msgError : styles.msg}>{msg}</div>}
+
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          Joueurs suspendus <span className={styles.count}>{suspensions.length}</span>
+        </h2>
+        <button className={styles.addBtn} onClick={() => setAddModal(true)}>+ Ajouter</button>
+      </div>
+
+      {loading ? <p className={styles.info}>Chargement…</p> :
+       suspensions.length === 0 ? <p className={styles.info}>Aucune suspension active.</p> :
+       <div className={styles.cards}>
+         {suspensions.map(s => (
+           <div key={s.id} className={styles.suspCard}>
+             <div className={styles.cardTop}>
+               <span className={styles.suspTeamBadge}>{s.team}</span>
+               <span className={styles.suspTypeBadge}>{s.type === 'auto' ? '🤖 Auto' : '✏️ Manuel'}</span>
+             </div>
+             <div className={styles.suspPlayer}>
+               {s.player_num && <span className={styles.jersey}>#{s.player_num}</span>}
+               <strong>{s.player_name || 'Joueur inconnu'}</strong>
+             </div>
+             <div className={styles.suspMeta}>
+               <span className={styles.suspReason}>{REASON_LABELS[s.reason] ?? s.reason}</span>
+               <span className={`${styles.suspCount} ${s.matches_remaining === 1 ? styles.suspCountWarn : ''}`}>
+                 🚫 {s.matches_remaining} match{s.matches_remaining > 1 ? 's' : ''} restant{s.matches_remaining > 1 ? 's' : ''}
+               </span>
+             </div>
+             <div className={styles.suspActions}>
+               <button className={styles.purgeBtn} onClick={() => setPurgeConfirm(s)}>✓ Purger 1 match</button>
+               <button className={styles.editSmBtn} onClick={() => { setEditModal(s); setEMatches(String(s.matches_remaining)); setEReason(s.reason); }}>✏️</button>
+               <button className={styles.liftBtn} onClick={() => setLiftConfirm(s)}>🗑 Lever</button>
+             </div>
+           </div>
+         ))}
+       </div>
+      }
+
+      {/* Modal ajouter */}
+      {addModal && (
+        <div className={styles.overlay} onClick={() => setAddModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Ajouter une suspension</h3>
+            <label className={styles.label}>Équipe *</label>
+            <select className={styles.input} value={aTeam} onChange={e => setATeam(e.target.value)}>
+              <option value="">— Choisir —</option>
+              {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <label className={styles.label}>N° maillot</label>
+            <input className={styles.input} type="number" placeholder="#" value={aNum} onChange={e => setANum(e.target.value)} />
+            <label className={styles.label}>Nom du joueur</label>
+            <input className={styles.input} placeholder="Nom complet" value={aName} onChange={e => setAName(e.target.value)} />
+            <label className={styles.label}>Matchs suspendus</label>
+            <input className={styles.input} type="number" min="1" max="99" value={aMatches} onChange={e => setAMatches(e.target.value)} />
+            <label className={styles.label}>Raison</label>
+            <select className={styles.input} value={aReason} onChange={e => setAReason(e.target.value)}>
+              <option value="red_card">🟥 Carton rouge</option>
+              <option value="behavior">⚠️ Comportement agressif</option>
+              <option value="manual">✏️ Décision manuelle</option>
+            </select>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setAddModal(false)}>Annuler</button>
+              <button className={styles.confirmBtn} disabled={saving || !aTeam} onClick={handleAdd}>
+                {saving ? '⏳…' : '✅ Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal modifier */}
+      {editModal && (
+        <div className={styles.overlay} onClick={() => setEditModal(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Modifier la suspension</h3>
+            <p className={styles.modalSub}>{editModal.player_name || `#${editModal.player_num}`} — {editModal.team}</p>
+            <label className={styles.label}>Matchs restants</label>
+            <input className={styles.input} type="number" min="0" value={eMatches} onChange={e => setEMatches(e.target.value)} />
+            <label className={styles.label}>Raison</label>
+            <select className={styles.input} value={eReason} onChange={e => setEReason(e.target.value)}>
+              <option value="red_card">🟥 Carton rouge</option>
+              <option value="behavior">⚠️ Comportement agressif</option>
+              <option value="manual">✏️ Décision manuelle</option>
+            </select>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setEditModal(null)}>Annuler</button>
+              <button className={styles.confirmBtn} disabled={saving} onClick={handleEdit}>
+                {saving ? '⏳…' : '✅ Enregistrer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm purge */}
+      {purgeConfirm && (
+        <div className={styles.overlay} onClick={() => setPurgeConfirm(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Confirmer la purge</h3>
+            <p className={styles.modalSub}>
+              {purgeConfirm.player_name || `#${purgeConfirm.player_num}`} — {purgeConfirm.team}<br />
+              Marquer 1 match de suspension purgé ({purgeConfirm.matches_remaining} → {purgeConfirm.matches_remaining - 1}) ?
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setPurgeConfirm(null)}>Annuler</button>
+              <button className={styles.confirmBtn} disabled={saving} onClick={() => handlePurge(purgeConfirm)}>
+                {saving ? '⏳…' : '✓ Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm lift */}
+      {liftConfirm && (
+        <div className={styles.overlay} onClick={() => setLiftConfirm(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Lever la suspension</h3>
+            <p className={styles.modalSub}>
+              Lever totalement la suspension de {liftConfirm.player_name || `#${liftConfirm.player_num}`} ({liftConfirm.team}) ?<br />
+              Cette action est irréversible.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setLiftConfirm(null)}>Annuler</button>
+              <button className={styles.liftConfirmBtn} disabled={saving} onClick={() => handleLift(liftConfirm.id)}>
+                {saving ? '⏳…' : '🗑 Lever la suspension'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

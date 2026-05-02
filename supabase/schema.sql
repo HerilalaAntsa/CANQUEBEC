@@ -83,3 +83,36 @@ CREATE POLICY "auth write events"
   ON match_events FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
+
+-- ── Suspensions ───────────────────────────────────────────────
+-- À exécuter une fois si la table n'existe pas encore
+CREATE TABLE IF NOT EXISTS suspensions (
+  id               SERIAL PRIMARY KEY,
+  team             TEXT NOT NULL,
+  player_num       INTEGER,
+  player_name      TEXT,
+  matches_remaining INTEGER NOT NULL DEFAULT 1,  -- matchs restants à purger
+  reason           TEXT,          -- 'red_card' | 'behavior' | 'manual'
+  type             TEXT NOT NULL DEFAULT 'auto', -- 'auto' | 'manual'
+  match_id         INTEGER REFERENCES matches(id) ON DELETE SET NULL, -- match où le carton a été reçu
+  created_by       UUID REFERENCES auth.users(id),
+  created_at       TIMESTAMPTZ DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TRIGGER suspensions_updated_at
+  BEFORE UPDATE ON suspensions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+ALTER TABLE suspensions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read suspensions"
+  ON suspensions FOR SELECT USING (true);
+
+CREATE POLICY "auth write suspensions"
+  ON suspensions FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- Ajouter postpone_reason à matches si pas encore fait
+ALTER TABLE matches ADD COLUMN IF NOT EXISTS postpone_reason TEXT;

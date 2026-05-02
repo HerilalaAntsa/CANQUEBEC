@@ -315,3 +315,54 @@ export async function importMatchesFromExcel(parsedMatches) {
 
   return toInsert.length + toUpdate.length;
 }
+
+// ─── Suspensions ──────────────────────────────────────────────────────────────
+
+/** Retourne toutes les suspensions actives (matches_remaining > 0) */
+export async function getSuspensions() {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('suspensions')
+    .select('*')
+    .gt('matches_remaining', 0)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Crée une suspension (auto depuis rouge ou manuelle) */
+export async function createSuspension({ team, playerNum, playerName, matchesRemaining = 1, reason = 'red_card', type = 'auto', matchId = null }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('suspensions').insert([{
+    team, player_num: playerNum ?? null, player_name: playerName ?? null,
+    matches_remaining: matchesRemaining, reason, type, match_id: matchId ?? null,
+  }]);
+  if (error) throw error;
+}
+
+/** Modifie une suspension (nombre de matchs restants, raison) */
+export async function updateSuspension(id, { matchesRemaining, reason }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const fields = {};
+  if (matchesRemaining !== undefined) fields.matches_remaining = matchesRemaining;
+  if (reason !== undefined) fields.reason = reason;
+  const { error } = await supabase.from('suspensions').update(fields).eq('id', id);
+  if (error) throw error;
+}
+
+/** Lève une suspension (matches_remaining → 0) */
+export async function liftSuspension(id) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('suspensions').update({ matches_remaining: 0 }).eq('id', id);
+  if (error) throw error;
+}
+
+/** Décrémente de 1 le compteur d'une suspension (match purgé) */
+export async function decrementSuspension(id) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { data: cur } = await supabase.from('suspensions').select('matches_remaining').eq('id', id).single();
+  const next = Math.max(0, (cur?.matches_remaining ?? 1) - 1);
+  const { error } = await supabase.from('suspensions').update({ matches_remaining: next }).eq('id', id);
+  if (error) throw error;
+  return next;
+}

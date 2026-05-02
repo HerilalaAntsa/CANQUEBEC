@@ -179,6 +179,50 @@
 .tdStat { text-align: center; font-size: var(--text-lg); font-weight: 700; color: var(--color-primary); }
 .noStat { padding: var(--space-8) var(--space-4); text-align: center; color: var(--color-text-muted); font-size: var(--text-sm); }
 
+/* Barre de tri stats joueurs */
+.statsSortBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.statsSortLabel {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+.sortBtn {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sortBtn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.sortBtnActive {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.tdStatActive { font-weight: 800; color: var(--color-primary); }
+.cardY {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  background: #f59e0b; color: #000;
+  font-size: 11px; font-weight: 800; border-radius: 3px;
+}
+.cardR {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;
+  background: #ef4444; color: #fff;
+  font-size: 11px; font-weight: 800; border-radius: 3px;
+}
+
 /* Badge groupe A/B */
 .groupBadge {
   display: inline-flex;
