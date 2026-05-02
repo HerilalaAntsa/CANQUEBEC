@@ -206,18 +206,15 @@ export async function deleteEvent(eventId) {
   }
 }
 
-// ─── Sync depuis Google Sheets ───────────────────────────────────────────────
-
-const GSHEET_ID = '1Yvz1nlHWeQ9ua4uSh9tD9Aoq83F3h1vGiOMwGdCp5oA';
-const GSHEET_EXPORT_URL = `https://docs.google.com/spreadsheets/d/${GSHEET_ID}/export?format=xlsx`;
+// ─── Sync depuis l'Excel local (/public/data/HORAIRE_2026.xlsx) ──────────────
 
 /**
- * Télécharge le Google Sheet en XLSX, parse les matchs, les importe dans Supabase.
- * Retourne le nombre de matchs importés.
+ * Recharge HORAIRE_2026.xlsx depuis /public, parse les matchs, les importe dans Supabase.
  */
 export async function syncFromGoogleSheets() {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
-  const data = await loadHoraireFromUrl(GSHEET_EXPORT_URL);
+  const url = '/data/HORAIRE_2026.xlsx?t=' + Date.now();
+  const data = await loadHoraireFromUrl(url);
   const count = await importMatchesFromExcel(data.matches);
   return { count, teams: data.teams.length };
 }

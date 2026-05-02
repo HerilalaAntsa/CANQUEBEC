@@ -71,7 +71,10 @@ export default function AdminDashboardPage() {
       loadMatches();
     } catch (e) {
       const detail = e?.details ?? e?.hint ?? e?.code ?? '';
-      const msg = e.message + (detail ? ` (${detail})` : '');
+      const isLoadFailed = e.message?.includes('Load failed') || e.message?.includes('fetch');
+      const msg = isLoadFailed
+        ? 'Impossible de télécharger le Google Sheet — vérifiez que le fichier est partagé publiquement (Partager → Tous les utilisateurs → Lecteur)'
+        : e.message + (detail ? ` (${detail})` : '');
       setSyncMsg('⚠️ Erreur sync : ' + msg);
       console.error('[syncGSheets]', e);
     } finally {
