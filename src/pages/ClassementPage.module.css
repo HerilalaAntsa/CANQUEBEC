@@ -87,7 +87,11 @@
   flex-shrink: 0;
 }
 
-.tableWrap { margin-top: var(--space-2); }
+.tableWrap {
+  margin-top: var(--space-2);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
 /* Onglets */
 .tabs {
@@ -211,14 +215,4 @@
   box-shadow: inset 4px 0 0 var(--color-zone-red);
 }
 
-/* Mobile: masquer B+, B-, Diff */
-@media (max-width: 599px) {
-  .tableWrap :global(th:nth-child(8)),
-  .tableWrap :global(td:nth-child(8)),
-  .tableWrap :global(th:nth-child(9)),
-  .tableWrap :global(td:nth-child(9)),
-  .tableWrap :global(th:nth-child(10)),
-  .tableWrap :global(td:nth-child(10)) {
-    display: none;
-  }
-}
+/* Toutes les colonnes toujours visibles — scroll horizontal sur mobile */
