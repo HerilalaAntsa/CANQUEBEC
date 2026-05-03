@@ -280,8 +280,8 @@ export function DataProvider({ children }) {
   }, []);
 
   // ── Charge le fichier horaire depuis URL
-  const loadHoraire = useCallback(async (url) => {
-    dispatch({ type: 'HORAIRE_LOAD_START' });
+  const loadHoraire = useCallback(async (url, { silent = false } = {}) => {
+    if (!silent) dispatch({ type: 'HORAIRE_LOAD_START' });
     try {
       const data = await loadHoraireFromUrl(url);
       dispatch({
@@ -292,7 +292,8 @@ export function DataProvider({ children }) {
       // Charge les scores Supabase en parallèle
       loadSupabaseScores();
     } catch (err) {
-      dispatch({ type: 'HORAIRE_LOAD_ERROR', error: err.message });
+      if (!silent) dispatch({ type: 'HORAIRE_LOAD_ERROR', error: err.message });
+      throw err; // re-throw pour que le .catch() dans App.jsx fonctionne
     }
   }, [loadSupabaseScores]);
 

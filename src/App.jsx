@@ -27,7 +27,7 @@ function DataLoader({ children }) {
 
   useEffect(() => {
     // Charge depuis Google Sheets en priorité, fallback sur le fichier local
-    loadHoraire(GSHEET_HORAIRE_URL + '&t=' + Date.now()).catch(() => {
+    loadHoraire(GSHEET_HORAIRE_URL + '&t=' + Date.now(), { silent: true }).catch(() => {
       console.warn('[DataLoader] GSheet inaccessible, fallback local');
       loadHoraire(EXCEL_HORAIRE_FALLBACK);
     });
