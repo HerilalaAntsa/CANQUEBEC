@@ -7,7 +7,7 @@ import styles from './QualificationPage.module.css';
 
 export default function QualificationPage() {
   const { matches, teams, loadSupabaseScores } = useLeagueData();
-  const [filters, setFilters] = useState({ team: '', group: '', venue: '', status: '' });
+  const [filters, setFilters] = useState({ team: '', group: '', venue: '', status: '', referee: '' });
 
   // Rafraîchir les scores/statuts toutes les 30s
   useEffect(() => {
@@ -16,6 +16,15 @@ export default function QualificationPage() {
   }, [loadSupabaseScores]);
 
   const groupMatches = useMemo(() => matches.filter(m => m.journee !== null), [matches]);
+
+  // Liste unique d'arbitres
+  const referees = useMemo(() => {
+    const set = new Set();
+    for (const m of groupMatches) {
+      if (m.referee?.trim()) set.add(m.referee.trim());
+    }
+    return [...set].sort();
+  }, [groupMatches]);
 
   const filtered = useMemo(() => {
     return groupMatches.filter(m => {
@@ -26,6 +35,7 @@ export default function QualificationPage() {
       if (filters.group && m.group !== filters.group) return false;
       if (filters.venue && m.venue?.trim() !== filters.venue) return false;
       if (filters.status && m.status !== filters.status) return false;
+      if (filters.referee && m.referee?.trim() !== filters.referee) return false;
       return true;
     });
   }, [groupMatches, filters]);
@@ -53,7 +63,7 @@ export default function QualificationPage() {
           </p>
         </div>
 
-        <CalendrierFilters teams={teams} filters={filters} onChange={setFilters} />
+        <CalendrierFilters teams={teams} referees={referees} filters={filters} onChange={setFilters} />
 
         {byJournee.length === 0 ? (
           <div className={styles.empty}>Aucun match ne correspond aux filtres sélectionnés.</div>

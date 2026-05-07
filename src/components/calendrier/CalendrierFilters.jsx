@@ -1,6 +1,6 @@
 import styles from './CalendrierFilters.module.css';
 
-export default function CalendrierFilters({ teams, filters, onChange }) {
+export default function CalendrierFilters({ teams, referees = [], filters, onChange }) {
   const set = (key, val) => onChange({ ...filters, [key]: val });
 
   return (
@@ -46,10 +46,23 @@ export default function CalendrierFilters({ teams, filters, onChange }) {
         <option value="played">Joués</option>
       </select>
 
+      {referees.length > 0 && (
+        <select
+          className={styles.select}
+          value={filters.referee}
+          onChange={e => set('referee', e.target.value)}
+        >
+          <option value="">Tous les arbitres</option>
+          {referees.map(r => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+      )}
+
       {Object.values(filters).some(Boolean) && (
         <button
           className={styles.reset}
-          onClick={() => onChange({ team: '', group: '', venue: '', status: '' })}
+          onClick={() => onChange({ team: '', group: '', venue: '', status: '', referee: '' })}
         >
           ✕ Réinitialiser
         </button>
