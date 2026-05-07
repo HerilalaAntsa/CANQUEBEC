@@ -26,6 +26,15 @@ export default function QualificationPage() {
     return [...set].sort();
   }, [groupMatches]);
 
+  // Liste unique de terrains
+  const venues = useMemo(() => {
+    const set = new Set();
+    for (const m of groupMatches) {
+      if (m.venue?.trim()) set.add(m.venue.trim());
+    }
+    return [...set].sort();
+  }, [groupMatches]);
+
   const filtered = useMemo(() => {
     return groupMatches.filter(m => {
       if (filters.team) {
@@ -63,7 +72,7 @@ export default function QualificationPage() {
           </p>
         </div>
 
-        <CalendrierFilters teams={teams} referees={referees} filters={filters} onChange={setFilters} />
+        <CalendrierFilters teams={teams} referees={referees} venues={venues} filters={filters} onChange={setFilters} />
 
         {byJournee.length === 0 ? (
           <div className={styles.empty}>Aucun match ne correspond aux filtres sélectionnés.</div>

@@ -1,6 +1,6 @@
 import styles from './CalendrierFilters.module.css';
 
-export default function CalendrierFilters({ teams, referees = [], filters, onChange }) {
+export default function CalendrierFilters({ teams, referees = [], venues = [], filters, onChange }) {
   const set = (key, val) => onChange({ ...filters, [key]: val });
 
   return (
@@ -32,8 +32,9 @@ export default function CalendrierFilters({ teams, referees = [], filters, onCha
         onChange={e => set('venue', e.target.value)}
       >
         <option value="">Tous les terrains</option>
-        <option value="VANIER">Vanier</option>
-        <option value="NEUFCHATEL">Neufchâtel</option>
+        {venues.map(v => (
+          <option key={v} value={v}>{v}</option>
+        ))}
       </select>
 
       <select
