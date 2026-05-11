@@ -34,7 +34,9 @@ function ArbitresRow({ match }) {
 
 function formatDate(date, dateRaw) {
   if (!date) return dateRaw ?? '';
-  const d = new Date(date);
+  // Forcer interprétation locale (pas UTC) pour éviter le décalage timezone
+  const safe = String(date).length === 10 ? date + 'T00:00:00' : date;
+  const d = new Date(safe);
   if (isNaN(d.getTime())) return dateRaw ?? '';
   return d.toLocaleDateString('fr-CA', {
     weekday: 'short', day: 'numeric', month: 'short',

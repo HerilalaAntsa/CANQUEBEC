@@ -27,7 +27,9 @@ const EVENT_LABELS = {
 
 function formatDate(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  // Forcer interprétation locale (pas UTC) pour éviter le décalage timezone
+  const safe = String(dateStr).length === 10 ? dateStr + 'T00:00:00' : dateStr;
+  const d = new Date(safe);
   if (isNaN(d.getTime())) return dateStr;
   return d.toLocaleDateString('fr-CA', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
