@@ -26,11 +26,9 @@ function DataLoader({ children }) {
   const { loadHoraire, loadPlayers } = useLeagueData();
 
   useEffect(() => {
-    // Charge depuis Google Sheets en priorité, fallback sur le fichier local
-    loadHoraire(GSHEET_HORAIRE_URL + '&t=' + Date.now(), { silent: true }).catch(() => {
-      console.warn('[DataLoader] GSheet inaccessible, fallback local');
-      loadHoraire(EXCEL_HORAIRE_FALLBACK);
-    });
+    // Charge depuis le fichier local (toujours dispo, pas besoin que GSheet soit public)
+    // Les scores/statuts sont ensuite mergés depuis Supabase via loadSupabaseScores
+    loadHoraire(EXCEL_HORAIRE_FALLBACK);
   }, [loadHoraire]);
 
   useEffect(() => {

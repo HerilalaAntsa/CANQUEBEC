@@ -199,9 +199,11 @@ function applySupabaseScores(matches, supabaseScores) {
       scoreB:     live.scoreB ?? m.scoreB,
       status:     live.status,
       goals:      live.goals ?? [],
-      referee:    live.referee ?? m.referee,
-      ref1:       live.ref1    ?? m.ref1,
-      ref2:       live.ref2    ?? m.ref2,
+      time:       live.time        ?? m.time,
+      venue:      live.venue       ?? m.venue,
+      referee:    live.referee     ?? m.referee,
+      ref1:       live.ref1        ?? m.ref1,
+      ref2:       live.ref2        ?? m.ref2,
       coordinator: live.coordinator ?? m.coordinator,
     };
   });
@@ -239,7 +241,7 @@ export function DataProvider({ children }) {
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
       const [matchesRes, eventsRes] = await Promise.all([
-        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, referee, ref1, ref2, coordinator'),
+        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
       ]);
       if (matchesRes.error) throw matchesRes.error;
@@ -264,6 +266,8 @@ export function DataProvider({ children }) {
           scoreA:      row.score_a,
           scoreB:      row.score_b,
           status:      row.status,
+          time:        row.time        ?? null,
+          venue:       row.venue       ?? null,
           goals:       goalsByMatch[row.id] ?? [],
           referee:     row.referee     ?? null,
           ref1:        row.ref1        ?? null,
