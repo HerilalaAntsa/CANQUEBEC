@@ -154,6 +154,32 @@
 .exportBtn:hover:not(:disabled) { background: #1f5bad; }
 .exportBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.backupBtn {
+  padding: 0.5rem 1rem;
+  background: #6d28d9;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.backupBtn:hover:not(:disabled) { background: #5b21b6; }
+.backupBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.restoreBtn {
+  padding: 0.5rem 1rem;
+  background: #b45309;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+.restoreBtn:hover:not(:disabled) { background: #92400e; }
+.restoreBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
 .filters {
   display: flex;
   gap: 0.4rem;

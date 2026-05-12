@@ -411,3 +411,85 @@ export async function deleteLineupEntry(id) {
   const { error } = await supabase.from('match_lineup').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ─── Backup / Restore JSON ────────────────────────────────────────────────────
+
+/**
+ * Exporte toutes les données Supabase (matches, events, suspensions, lineup)
+ * en JSON et déclenche un téléchargement dans le navigateur.
+ */
+export async function exportBackupJSON() {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+
+  const [matchesRes, eventsRes, suspRes, lineupRes] = await Promise.all([
+    supabase.from('matches').select('*'),
+    supabase.from('match_events').select('*'),
+    supabase.from('suspensions').select('*'),
+    supabase.from('match_lineup').select('*'),
+  ]);
+
+  for (const r of [matchesRes, eventsRes, suspRes, lineupRes]) {
+    if (r.error) throw r.error;
+  }
+
+  const backup = {
+    exportedAt: new Date().toISOString(),
+    version: 1,
+    matches:     matchesRes.data ?? [],
+    match_events: eventsRes.data ?? [],
+    suspensions:  suspRes.data ?? [],
+    match_lineup: lineupRes.data ?? [],
+  };
+
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `qcn_backup_${new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', 'h')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  // Aussi sauvegarder dans localStorage comme cache rapide
+  try { localStorage.setItem('qcn_last_backup', json); } catch (_) {}
+
+  return backup;
+}
+
+/**
+ * Restaure les données depuis un objet backup JSON dans Supabase.
+ * N'écrase que les tables présentes dans le backup.
+ * NE supprime PAS les données existantes — fait un upsert.
+ */
+export async function restoreBackupJSON(backup) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  if (!backup?.version) throw new Error('Fichier backup invalide');
+
+  const results = {};
+
+  if (backup.matches?.length) {
+    const { error, count } = await supabase.from('matches').upsert(backup.matches, { onConflict: 'id' });
+    if (error) throw new Error('matches: ' + error.message);
+    results.matches = backup.matches.length;
+  }
+
+  if (backup.match_events?.length) {
+    const { error } = await supabase.from('match_events').upsert(backup.match_events, { onConflict: 'id' });
+    if (error) throw new Error('match_events: ' + error.message);
+    results.match_events = backup.match_events.length;
+  }
+
+  if (backup.suspensions?.length) {
+    const { error } = await supabase.from('suspensions').upsert(backup.suspensions, { onConflict: 'id' });
+    if (error) throw new Error('suspensions: ' + error.message);
+    results.suspensions = backup.suspensions.length;
+  }
+
+  if (backup.match_lineup?.length) {
+    const { error } = await supabase.from('match_lineup').upsert(backup.match_lineup, { onConflict: 'id' });
+    if (error) throw new Error('match_lineup: ' + error.message);
+    results.match_lineup = backup.match_lineup.length;
+  }
+
+  return results;
+}

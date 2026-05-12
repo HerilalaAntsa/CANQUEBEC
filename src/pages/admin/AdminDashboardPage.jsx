@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { getMatches, syncOfflineQueue, getOfflineQueue, syncFromGoogleSheets } from '../../services/adminService';
+import { getMatches, syncOfflineQueue, getOfflineQueue, syncFromGoogleSheets, exportBackupJSON, restoreBackupJSON } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import { importMatchesFromExcel } from '../../services/adminService';
 import styles from './AdminDashboard.module.css';
@@ -21,6 +21,8 @@ export default function AdminDashboardPage() {
   const [importing,    setImporting]    = useState(false);
   const [syncing,      setSyncing]      = useState(false);
   const [exporting,    setExporting]    = useState(false);
+  const [backing,      setBacking]      = useState(false);
+  const [restoring,    setRestoring]    = useState(false);
 
   useEffect(() => {
     loadMatches();
@@ -69,6 +71,8 @@ export default function AdminDashboardPage() {
       const { count } = await syncFromGoogleSheets();
       setSyncMsg(`✅ Google Sheets synchronisé — ${count} matchs mis à jour`);
       loadMatches();
+      // Auto-backup silencieux après chaque sync réussi
+      try { await exportBackupJSON(); } catch (_) {}
     } catch (e) {
       const detail = e?.details ?? e?.hint ?? e?.code ?? '';
       const isLoadFailed = e.message?.includes('Load failed') || e.message?.includes('fetch');
@@ -83,8 +87,47 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function handleBackup() {
+    setBacking(true);
+    try {
+      const backup = await exportBackupJSON();
+      const total = (backup.matches?.length ?? 0) + (backup.match_events?.length ?? 0) + (backup.suspensions?.length ?? 0);
+      setSyncMsg(`✅ Backup téléchargé — ${total} enregistrements exportés`);
+    } catch (e) {
+      setSyncMsg('⚠️ Erreur backup : ' + e.message);
+    } finally {
+      setBacking(false);
+      setTimeout(() => setSyncMsg(''), 6000);
+    }
+  }
+
+  async function handleRestore() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setRestoring(true);
+      try {
+        const text = await file.text();
+        const backup = JSON.parse(text);
+        if (!confirm(`⚠️ Restaurer le backup du ${backup.exportedAt?.slice(0,16).replace('T',' ')} ?\n${backup.matches?.length ?? 0} matchs, ${backup.match_events?.length ?? 0} événements, ${backup.suspensions?.length ?? 0} suspensions.\n\nContinuer ?`)) return;
+        const results = await restoreBackupJSON(backup);
+        const total = Object.values(results).reduce((a, b) => a + b, 0);
+        setSyncMsg(`✅ Restauration réussie — ${total} enregistrements restaurés`);
+        loadMatches();
+      } catch (err) {
+        setSyncMsg('⚠️ Erreur restauration : ' + err.message);
+      } finally {
+        setRestoring(false);
+        setTimeout(() => setSyncMsg(''), 8000);
+      }
+    };
+    input.click();
+  }
+
   async function handleExportExcel() {
-    setExporting(true);
     setSyncMsg('');
     try {
       // 1. Fetch le fichier template binaire
@@ -241,6 +284,12 @@ export default function AdminDashboardPage() {
         </button>
         <button onClick={handleExportExcel} disabled={exporting} className={styles.exportBtn}>
           {exporting ? '⏳ Export en cours...' : '📤 Exporter XLSX'}
+        </button>
+        <button onClick={handleBackup} disabled={backing} className={styles.backupBtn}>
+          {backing ? '⏳...' : '💾 Backup JSON'}
+        </button>
+        <button onClick={handleRestore} disabled={restoring} className={styles.restoreBtn}>
+          {restoring ? '⏳ Restauration...' : '📂 Restaurer backup'}
         </button>
         <div className={styles.filters}>
           {['live', 'upcoming', 'played', 'all'].map(f => (
