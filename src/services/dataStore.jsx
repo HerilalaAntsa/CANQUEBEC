@@ -31,7 +31,7 @@ const initialState = {
   supabaseScores: {},
 
   // État de chargement
-  loading:        false,
+  loading:        true,   // true par défaut pour éviter le flash "introuvable" au refresh
   loadingPlayers: false,
   loadingScores:  false,
   error:          null,
