@@ -6,6 +6,8 @@ import { supabase } from '../services/supabaseClient';
 import FlagBadge from '../components/shared/FlagBadge';
 import MatchCard from '../components/calendrier/MatchCard';
 import SortableTable from '../components/shared/SortableTable';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserTie } from '@fortawesome/free-solid-svg-icons';
 import { POSITION_LABELS } from '../config/teams';
 import { JerseyPanel } from '../components/shared/JerseyBadge';
 import { getJerseys } from '../config/jerseyConfig';
@@ -98,7 +100,7 @@ export default function EquipePage() {
           <div className={styles.headerMeta}>
             <span className={styles.groupBadge}>Groupe {team.group}</span>
             {meta?.captain && <span className={styles.metaItem}><span className={styles.captainBadge}>C</span> {meta.captain}</span>}
-            {meta?.coach   && <span className={styles.metaItem}>🏋️ Coach: {meta.coach}</span>}
+            {meta?.coach   && <span className={styles.metaItem}><FontAwesomeIcon icon={faUserTie} /> Coach: {meta.coach}</span>}
           </div>
         </div>
 
