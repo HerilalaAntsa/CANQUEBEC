@@ -156,7 +156,6 @@ export default function MatchPage() {
             <JerseyBadge
               colorStr={getJerseys(match.team_a)?.principal}
               onClick={() => setShowJerseyModal(true)}
-              label="M"
             />
             {scorersA.length > 0 && (
               <div className={styles.scorersList}>
@@ -186,7 +185,6 @@ export default function MatchPage() {
             <JerseyBadge
               colorStr={getJerseys(match.team_b)?.principal}
               onClick={() => setShowJerseyModal(true)}
-              label="M"
             />
             {scorersB.length > 0 && (
               <div className={`${styles.scorersList} ${styles.right}`}>
