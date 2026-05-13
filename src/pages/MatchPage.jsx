@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import FlagBadge from '../components/shared/FlagBadge';
+import { JerseyBadge, JerseyModal } from '../components/shared/JerseyBadge';
+import { getJerseys } from '../config/jerseyConfig';
 import styles from './MatchPage.module.css';
 
 const VENUE_LABELS = {
@@ -39,6 +41,7 @@ function formatDate(dateStr) {
 export default function MatchPage() {
   const { id } = useParams();
   const [match, setMatch] = useState(null);
+  const [showJerseyModal, setShowJerseyModal] = useState(false);
   const [events, setEvents] = useState([]);
   const [lineup, setLineup] = useState([]);
   const [loading, setLoading] = useState(!isSupabaseEnabled ? false : true);
@@ -150,6 +153,11 @@ export default function MatchPage() {
         <div className={styles.scoreRow}>
           <div className={styles.teamBlock}>
             <FlagBadge team={match.team_a} size="lg" />
+            <JerseyBadge
+              colorStr={getJerseys(match.team_a)?.principal}
+              onClick={() => setShowJerseyModal(true)}
+              label="M"
+            />
             {scorersA.length > 0 && (
               <div className={styles.scorersList}>
                 {scorersA.map(ev => (
@@ -175,6 +183,11 @@ export default function MatchPage() {
 
           <div className={`${styles.teamBlock} ${styles.right}`}>
             <FlagBadge team={match.team_b} size="lg" />
+            <JerseyBadge
+              colorStr={getJerseys(match.team_b)?.principal}
+              onClick={() => setShowJerseyModal(true)}
+              label="M"
+            />
             {scorersB.length > 0 && (
               <div className={`${styles.scorersList} ${styles.right}`}>
                 {scorersB.map(ev => (
@@ -273,6 +286,16 @@ export default function MatchPage() {
             ))}
           </div>
         </section>
+      )}
+
+      {showJerseyModal && (
+        <JerseyModal
+          teamA={match.team_a}
+          teamB={match.team_b}
+          jerseysA={getJerseys(match.team_a)}
+          jerseysB={getJerseys(match.team_b)}
+          onClose={() => setShowJerseyModal(false)}
+        />
       )}
     </div>
   );

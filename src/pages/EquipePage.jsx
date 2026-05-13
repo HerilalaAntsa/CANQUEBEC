@@ -7,6 +7,8 @@ import FlagBadge from '../components/shared/FlagBadge';
 import MatchCard from '../components/calendrier/MatchCard';
 import SortableTable from '../components/shared/SortableTable';
 import { POSITION_LABELS } from '../config/teams';
+import { JerseyPanel } from '../components/shared/JerseyBadge';
+import { getJerseys } from '../config/jerseyConfig';
 import styles from './EquipePage.module.css';
 
 function buildRosterCols(suspSet, stylesObj) {
@@ -111,6 +113,14 @@ export default function EquipePage() {
             <StatBadge label="Buts -" value={standing.goalsAgainst} />
             <StatBadge label="Points" value={standing.points} accent />
           </div>
+        )}
+
+        {/* Maillots */}
+        {getJerseys(name) && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Maillots</h2>
+            <JerseyPanel jerseys={getJerseys(name)} />
+          </section>
         )}
 
         <div className={styles.cols}>
