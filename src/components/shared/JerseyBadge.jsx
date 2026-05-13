@@ -23,7 +23,6 @@ function TShirt({ colorStr, size = 32, id }) {
 
   const gradId = `grad-${id}`;
   const isBicolor = colors.length === 2;
-  const needsBorder = colors[0] === '#f8f8f8' || colors[1] === '#f8f8f8';
 
   return (
     <svg
@@ -44,7 +43,7 @@ function TShirt({ colorStr, size = 32, id }) {
       <path
         d={TSHIRT_PATH}
         fill={isBicolor ? `url(#${gradId})` : colors[0]}
-        stroke={needsBorder ? '#d1d5db' : 'rgba(0,0,0,0.15)'}
+        stroke="rgba(0,0,0,0.25)"
         strokeWidth="1.5"
       />
     </svg>
@@ -67,7 +66,7 @@ export function JerseyCard({ colorStr, label, size = 44 }) {
   if (!colorStr) {
     return (
       <div className={styles.jerseyCard}>
-        <div className={styles.jerseyEmpty}>—</div>
+        <div className={styles.jerseyEmpty}>N/D</div>
         <span className={styles.jerseyLabel}>{label}</span>
       </div>
     );
