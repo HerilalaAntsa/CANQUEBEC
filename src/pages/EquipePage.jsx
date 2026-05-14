@@ -48,6 +48,23 @@ export default function EquipePage() {
   const { loading } = useLeagueData();
   const teamData = useTeam(slug);
 
+  // ⚠️ Hooks TOUJOURS avant les return conditionnels
+  const [suspSet, setSuspSet] = useState(new Set());
+  const [matchTab, setMatchTab] = useState('all');
+
+  const teamCode = teamData?.team?.code;
+  useEffect(() => {
+    if (!teamCode) return;
+    supabase
+      .from('suspensions')
+      .select('player_num')
+      .eq('team', teamCode)
+      .gt('matches_remaining', 0)
+      .then(({ data }) => {
+        if (data) setSuspSet(new Set(data.map(s => String(s.player_num))));
+      });
+  }, [teamCode]);
+
   if (loading) {
     return (
       <div className={styles.page}>
@@ -74,20 +91,6 @@ export default function EquipePage() {
   const { team, name, standing, teamMatches, roster, topScorers: _topScorers, meta } = teamData;
   const played   = teamMatches.filter(m => m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
-
-  const [suspSet, setSuspSet] = useState(new Set());
-  const [matchTab, setMatchTab] = useState('all');
-  useEffect(() => {
-    if (!team?.code) return;
-    supabase
-      .from('suspensions')
-      .select('player_num')
-      .eq('team', team.code)
-      .gt('matches_remaining', 0)
-      .then(({ data }) => {
-        if (data) setSuspSet(new Set(data.map(s => String(s.player_num))));
-      });
-  }, [team?.code]);
 
   const rosterCols = buildRosterCols(suspSet, styles);
 
