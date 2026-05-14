@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'Québec Coupe des Nations 2026',
         short_name: 'QCN 2026',
-        description: 'Calendrier, classement et statistiques de la Coupe des Nations de Québec 2026',
+        description: 'Calendrier, classement et statistiques de la Coupe des Nations de Quebec 2026',
         theme_color: '#003087',
         background_color: '#f4f6f9',
         display: 'standalone',

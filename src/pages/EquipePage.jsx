@@ -169,7 +169,11 @@ export default function EquipePage() {
                   ))}
                 </div>
                 <div className={styles.matchList}>
-                  {(matchTab === 'all' ? [...teamMatches].sort((a,b) => (a.date||'').localeCompare(b.date||''))
+                  {(matchTab === 'all' ? [...teamMatches].sort((a,b) => {
+                      const da = a.date ? String(a.date).split('T')[0] : '';
+                      const db = b.date ? String(b.date).split('T')[0] : '';
+                      return da.localeCompare(db);
+                    })
                     : matchTab === 'upcoming' ? upcoming
                     : [...played].reverse()
                   ).map((m, i) => (
