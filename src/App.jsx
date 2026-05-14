@@ -19,7 +19,7 @@ import MatchPage from './pages/MatchPage';
 import { GSHEET_HORAIRE_URL } from './services/adminService';
 
 const EXCEL_HORAIRE_FALLBACK = '/data/HORAIRE_2026.xlsx';
-const EXCEL_PLAYERS_A_URL    = '/data/@LISTE  GROUPE A - 3.xlsx';
+const EXCEL_PLAYERS_A_URL    = '/data/@LISTE  GROUPE A -3.xlsx';
 const EXCEL_PLAYERS_B_URL    = '/data/@LISTE  GROUPE B -3.xlsx';
 
 function DataLoader({ children }) {
