@@ -72,7 +72,7 @@ export default function EquipePage() {
   }
 
   const { team, name, standing, teamMatches, roster, topScorers: _topScorers, meta } = teamData;
-  const played   = teamMatches.filter(m => m.status === 'played');
+  const played   = teamMatches.filter(m => m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 
   const [suspSet, setSuspSet] = useState(new Set());

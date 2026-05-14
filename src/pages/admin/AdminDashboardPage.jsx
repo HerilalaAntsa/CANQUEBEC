@@ -237,7 +237,7 @@ export default function AdminDashboardPage() {
   const filtered = matches.filter(m => {
     if (filter === 'live')     return m.status === 'live';
     if (filter === 'upcoming') return m.status === 'upcoming';
-    if (filter === 'played')   return m.status === 'played';
+    if (filter === 'played')   return m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b';
     return true;
   });
 
@@ -254,9 +254,12 @@ export default function AdminDashboardPage() {
     <div className={styles.page}>
       {/* Header */}
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>QCN Admin</h1>
-          <p className={styles.email}>{session?.user?.email}</p>
+        <div className={styles.titleGroup}>
+          <div className={styles.titleLogo}>⚽</div>
+          <div>
+            <h1 className={styles.title}>QCN Admin</h1>
+            <p className={styles.email}>{session?.user?.email}</p>
+          </div>
         </div>
         <div className={styles.headerActions}>
           <a href="/" className={styles.linkBtn}>← App publique</a>
@@ -276,34 +279,58 @@ export default function AdminDashboardPage() {
 
       {/* Actions */}
       <div className={styles.actions}>
-        <button onClick={handleSyncGSheets} disabled={syncing} className={styles.gsheetsBtn}>
-          {syncing ? '⏳ Sync en cours...' : '🔄 Sync Google Sheets'}
-        </button>
-        <button onClick={handleImportExcel} disabled={importing} className={styles.importBtn}>
-          {importing ? 'Import en cours...' : '📥 Importer depuis l\'Excel local'}
-        </button>
-        <button onClick={handleExportExcel} disabled={exporting} className={styles.exportBtn}>
-          {exporting ? '⏳ Export en cours...' : '📤 Exporter XLSX'}
-        </button>
-        <button onClick={handleBackup} disabled={backing} className={styles.backupBtn}>
-          {backing ? '⏳...' : '💾 Backup JSON'}
-        </button>
-        <button onClick={handleRestore} disabled={restoring} className={styles.restoreBtn}>
-          {restoring ? '⏳ Restauration...' : '📂 Restaurer backup'}
-        </button>
-        <div className={styles.filters}>
-          {['live', 'upcoming', 'played', 'all'].map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`${styles.filterBtn} ${filter === f ? styles.active : ''} ${f === 'live' ? styles.filterLive : ''}`}
-            >
-              {f === 'live'     ? `🔴 En cours${liveCount > 0 ? ` (${liveCount})` : ''}` :
-               f === 'upcoming' ? 'À venir' :
-               f === 'played'   ? 'Joués' : 'Tous'}
-            </button>
-          ))}
+        <div className={styles.actionsGrid}>
+          <button onClick={handleSyncGSheets} disabled={syncing} className={styles.actionPrimary}>
+            {syncing ? '⏳ Sync en cours…' : '🔄 Synchroniser Google Sheets'}
+          </button>
+          <button onClick={handleImportExcel} disabled={importing} className={`${styles.actionBtn} ${styles.actionBtnImport}`}>
+            {importing ? '⏳…' : '📥 Import Excel local'}
+          </button>
+          <button onClick={handleExportExcel} disabled={exporting} className={`${styles.actionBtn} ${styles.actionBtnExport}`}>
+            {exporting ? '⏳…' : '📤 Exporter XLSX'}
+          </button>
+          <button onClick={handleBackup} disabled={backing} className={`${styles.actionBtn} ${styles.actionBtnBackup}`}>
+            {backing ? '⏳…' : '💾 Backup JSON'}
+          </button>
+          <button onClick={handleRestore} disabled={restoring} className={`${styles.actionBtn} ${styles.actionBtnRestore}`}>
+            {restoring ? '⏳…' : '📂 Restaurer backup'}
+          </button>
         </div>
+      </div>
+
+      {/* Stats bar */}
+      <div className={styles.statsBar}>
+        <div className={styles.statItem}>
+          <span className={styles.statValue}>{matches.length}</span>
+          <span className={styles.statKey}>Total</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={styles.statValue}>{matches.filter(m => m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b').length}</span>
+          <span className={styles.statKey}>Joués</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={styles.statValue}>{matches.filter(m => m.status === 'upcoming').length}</span>
+          <span className={styles.statKey}>À venir</span>
+        </div>
+        <div className={styles.statItem}>
+          <span className={styles.statValue} style={liveCount > 0 ? {color:'#ef4444'} : {}}>{liveCount}</span>
+          <span className={styles.statKey}>Live</span>
+        </div>
+      </div>
+
+      {/* Filtres */}
+      <div className={styles.filtersBar}>
+        {['live', 'upcoming', 'played', 'all'].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`${styles.filterBtn} ${filter === f ? styles.active : ''} ${f === 'live' ? styles.filterLive : ''}`}
+          >
+            {f === 'live'     ? `🔴 En cours${liveCount > 0 ? ` (${liveCount})` : ''}` :
+             f === 'upcoming' ? `⏱ À venir (${matches.filter(m=>m.status==='upcoming').length})` :
+             f === 'played'   ? `✓ Joués` : '☰ Tous'}
+          </button>
+        ))}
       </div>
 
       {/* Content */}
@@ -314,15 +341,25 @@ export default function AdminDashboardPage() {
       )}
 
       <div className={styles.list}>
-        {filtered.map(m => (
-          <Link to={`/admin/match/${m.id}`} key={m.id} className={styles.matchCard}>
+        {filtered.map(m => {
+          const isForfait = m.status === 'forfait_a' || m.status === 'forfait_b';
+          const cardClass = [
+            styles.matchCard,
+            m.status === 'played' ? styles.matchCardPlayed : '',
+            m.status === 'live'   ? styles.matchCardLive   : '',
+            isForfait             ? styles.matchCardForfait : '',
+          ].filter(Boolean).join(' ');
+          return (
+          <Link to={`/admin/match/${m.id}`} key={m.id} className={cardClass}>
             <div className={styles.matchMeta}>
               <span className={styles.journee}>J{m.journee}</span>
               <span className={styles.date}>{formatDate(m.date)}</span>
+              {m.time && <span className={styles.time}>{m.time}</span>}
               <span className={styles.venue}>{m.venue}</span>
-              <span className={`${styles.status} ${styles[m.status]}`}>
-                {m.status === 'live'   ? '🔴 LIVE' :
-                 m.status === 'played' ? 'Joué' : 'À venir'}
+              <span className={`${styles.status} ${isForfait ? styles.forfait : styles[m.status] || ''}`}>
+                {m.status === 'live'                                  ? '🔴 LIVE' :
+                 m.status === 'played'                                ? '✓ Joué' :
+                 m.status === 'forfait_a' || m.status === 'forfait_b' ? '🚫 Forfait' : '⏱ À venir'}
               </span>
             </div>
             <div className={styles.matchTeams}>
@@ -334,7 +371,8 @@ export default function AdminDashboardPage() {
             </div>
             <span className={styles.editHint}>Modifier →</span>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
