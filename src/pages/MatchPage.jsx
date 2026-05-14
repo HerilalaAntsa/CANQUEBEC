@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
+import { useLeagueData } from '../services/dataStore';
 import FlagBadge from '../components/shared/FlagBadge';
 import { JerseyBadge, JerseyModal } from '../components/shared/JerseyBadge';
 import { getJerseys } from '../config/jerseyConfig';
@@ -38,39 +39,89 @@ function formatDate(dateStr) {
   });
 }
 
+/** Mappe un match du store Excel vers le format API Supabase */
+function storeMatchToApi(m) {
+  return {
+    id:          m.supabaseId,
+    team_a:      m.teamA,
+    team_b:      m.teamB,
+    score_a:     m.scoreA,
+    score_b:     m.scoreB,
+    status:      m.status,
+    date:        m.date,
+    time:        m.time,
+    venue:       m.venue,
+    journee:     m.journee,
+    group_name:  m.group,
+    referee:     m.referee,
+    ref1:        m.ref1,
+    ref2:        m.ref2,
+    coordinator: m.coordinator,
+  };
+}
+
 export default function MatchPage() {
   const { id } = useParams();
+  const { matches: storeMatches } = useLeagueData();
   const [match, setMatch] = useState(null);
   const [showJerseyModal, setShowJerseyModal] = useState(false);
   const [events, setEvents] = useState([]);
   const [lineup, setLineup] = useState([]);
-  const [loading, setLoading] = useState(!isSupabaseEnabled ? false : true);
-  const [error, setError] = useState(isSupabaseEnabled ? null : 'Données live non disponibles');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!isSupabaseEnabled) return;
     async function fetchData() {
-      setLoading(true);
-      const [matchRes, eventsRes, lineupRes] = await Promise.all([
-        supabase.from('matches').select('*').eq('id', id).single(),
-        supabase.from('match_events').select('*').eq('match_id', id).order('minute', { ascending: true }),
-        supabase.from('match_lineup').select('*').eq('match_id', id).order('player_num', { ascending: true }),
-      ]);
-      if (matchRes.error) { setError('Match introuvable'); setLoading(false); return; }
-      setMatch(matchRes.data);
-      setEvents(eventsRes.data ?? []);
-      setLineup(lineupRes.data ?? []);
+      // 1. Essayer Supabase d'abord
+      if (isSupabaseEnabled) {
+        setLoading(true);
+        const [matchRes, eventsRes, lineupRes] = await Promise.all([
+          supabase.from('matches').select('*').eq('id', id).single(),
+          supabase.from('match_events').select('*').eq('match_id', id).order('minute', { ascending: true }),
+          supabase.from('match_lineup').select('*').eq('match_id', id).order('player_num', { ascending: true }),
+        ]);
+        if (!matchRes.error && matchRes.data) {
+          setMatch(matchRes.data);
+          setEvents(eventsRes.data ?? []);
+          setLineup(lineupRes.data ?? []);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 2. Fallback : chercher dans le store local (Excel + scores Supabase mergés)
+      const storeMatch = storeMatches.find(m => String(m.supabaseId) === String(id));
+      if (storeMatch) {
+        setMatch(storeMatchToApi(storeMatch));
+        // Les buts issus du store (goals mergés depuis Supabase)
+        if (Array.isArray(storeMatch.goals)) {
+          setEvents(storeMatch.goals.map((g, i) => ({
+            id: i,
+            type:        'goal',
+            team:        g.team,
+            player_name: g.player,
+            player_num:  g.num,
+            minute:      g.minute ?? null,
+            match_id:    id,
+          })));
+        }
+        setLoading(false);
+        return;
+      }
+
+      setError('Match introuvable');
       setLoading(false);
     }
     fetchData();
-  }, [id]);
+  }, [id, storeMatches]);
 
   if (loading) return <div className={styles.center}>Chargement…</div>;
   if (error)   return <div className={styles.center}>{error}</div>;
   if (!match)  return null;
 
   const venue   = VENUE_LABELS[match.venue?.trim()] ?? match.venue;
-  const played  = match.status === 'played';
+  const played  = ['played', 'forfait_a', 'forfait_b'].includes(match.status);
+  const isForfait = match.status === 'forfait_a' || match.status === 'forfait_b';
 
   // Trier par minute (null → 1 en premier)
   const sortedEvents = [...events].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1));
@@ -177,7 +228,7 @@ export default function MatchPage() {
               <span className={styles.scoreVs}>VS</span>
             )}
             {(match.status === 'forfait_a' || match.status === 'forfait_b') ? (
-              <span className={`${styles.statusPill} ${styles.forfait}`}>Forfait</span>
+              <span className={`${styles.statusPill} ${styles.forfait}`}>🚫 Forfait</span>
             ) : (
               <span className={`${styles.statusPill} ${played ? styles.played : styles.upcoming}`}>
                 {played ? 'Terminé' : 'À venir'}
