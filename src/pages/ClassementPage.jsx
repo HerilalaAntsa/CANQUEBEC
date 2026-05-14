@@ -60,7 +60,7 @@ const COLUMNS = [
       return <span>0</span>;
     }
   },
-  { key: 'last5', label: 'Forme', sortable: false, align: 'center',
+  { key: 'last5', label: '5 derniers matchs', sortable: false, align: 'center',
     render: (_, row) => (
       <span style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
         {(row.last5 ?? []).length === 0
