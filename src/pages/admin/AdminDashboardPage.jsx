@@ -341,38 +341,63 @@ export default function AdminDashboardPage() {
       )}
 
       <div className={styles.list}>
-        {filtered.map(m => {
-          const isForfait = m.status === 'forfait_a' || m.status === 'forfait_b';
-          const cardClass = [
-            styles.matchCard,
-            m.status === 'played' ? styles.matchCardPlayed : '',
-            m.status === 'live'   ? styles.matchCardLive   : '',
-            isForfait             ? styles.matchCardForfait : '',
-          ].filter(Boolean).join(' ');
-          return (
-          <Link to={`/admin/match/${m.id}`} key={m.id} className={cardClass}>
-            <div className={styles.matchMeta}>
-              <span className={styles.journee}>J{m.journee}</span>
-              <span className={styles.date}>{formatDate(m.date)}</span>
-              {m.time && <span className={styles.time}>{m.time}</span>}
-              <span className={styles.venue}>{m.venue}</span>
-              <span className={`${styles.status} ${isForfait ? styles.forfait : styles[m.status] || ''}`}>
-                {m.status === 'live'                                  ? '🔴 LIVE' :
-                 m.status === 'played'                                ? '✓ Joué' :
-                 m.status === 'forfait_a' || m.status === 'forfait_b' ? '🚫 Forfait' : '⏱ À venir'}
-              </span>
+        {(() => {
+          // Grouper par journée en préservant l'ordre
+          const groups = [];
+          const seen = {};
+          for (const m of filtered) {
+            const j = m.journee ?? 0;
+            if (!seen[j]) { seen[j] = true; groups.push({ journee: j, matches: [] }); }
+            groups[groups.length - 1].matches.push(m);
+          }
+          // re-trier correctement (cas où filtre mélange)
+          const grouped = {};
+          for (const m of filtered) {
+            const j = m.journee ?? 0;
+            if (!grouped[j]) grouped[j] = [];
+            grouped[j].push(m);
+          }
+          const journees = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+          return journees.map(j => (
+            <div key={j} className={styles.journeeGroup}>
+              <div className={styles.journeeHeader}>
+                <span className={styles.journeeTitle}>Journée {j}</span>
+                <span className={styles.journeeCount}>{grouped[j].length} match{grouped[j].length > 1 ? 's' : ''}</span>
+              </div>
+              {grouped[j].map(m => {
+                const isForfait = m.status === 'forfait_a' || m.status === 'forfait_b';
+                const cardClass = [
+                  styles.matchCard,
+                  m.status === 'played' ? styles.matchCardPlayed : '',
+                  m.status === 'live'   ? styles.matchCardLive   : '',
+                  isForfait             ? styles.matchCardForfait : '',
+                ].filter(Boolean).join(' ');
+                return (
+                  <Link to={`/admin/match/${m.id}`} key={m.id} className={cardClass}>
+                    <div className={styles.matchMeta}>
+                      <span className={styles.date}>{formatDate(m.date)}</span>
+                      {m.time && <span className={styles.time}>{m.time}</span>}
+                      <span className={styles.venue}>{m.venue}</span>
+                      <span className={`${styles.status} ${isForfait ? styles.forfait : styles[m.status] || ''}`}>
+                        {m.status === 'live'                                  ? '🔴 LIVE' :
+                         m.status === 'played'                                ? '✓ Joué' :
+                         m.status === 'forfait_a' || m.status === 'forfait_b' ? '🚫 Forfait' : '⏱ À venir'}
+                      </span>
+                    </div>
+                    <div className={styles.matchTeams}>
+                      <span className={styles.team}>{m.team_a}</span>
+                      <span className={styles.score}>
+                        {m.score_a !== null ? `${m.score_a} — ${m.score_b}` : 'vs'}
+                      </span>
+                      <span className={styles.team}>{m.team_b}</span>
+                    </div>
+                    <span className={styles.editHint}>Modifier →</span>
+                  </Link>
+                );
+              })}
             </div>
-            <div className={styles.matchTeams}>
-              <span className={styles.team}>{m.team_a}</span>
-              <span className={styles.score}>
-                {m.score_a !== null ? `${m.score_a} — ${m.score_b}` : 'vs'}
-              </span>
-              <span className={styles.team}>{m.team_b}</span>
-            </div>
-            <span className={styles.editHint}>Modifier →</span>
-          </Link>
-          );
-        })}
+          ));
+        })()}
       </div>
     </div>
   );

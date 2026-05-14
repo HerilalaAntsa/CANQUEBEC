@@ -307,6 +307,49 @@
 .info { padding: 2.5rem 1.5rem; color: #555; font-size: 0.9rem; text-align: center; }
 .errorMsg { padding: 1rem 1.5rem; color: #ff7070; font-size: 0.9rem; background: rgba(239,68,68,0.06); border-radius: 8px; margin: 1rem 1.25rem; }
 
+/* ── Groupes journée ── */
+.journeeGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.journeeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.25rem 0.3rem;
+  margin-top: 0.5rem;
+}
+
+.journeeTitle {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #e2b04a;
+  position: relative;
+  padding-left: 0.75rem;
+}
+.journeeTitle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  background: #e2b04a;
+  border-radius: 2px;
+}
+
+.journeeCount {
+  font-size: 0.65rem;
+  color: #444;
+  font-weight: 500;
+}
+
 /* ── Liste matchs ── */
 .listHeader {
   display: flex;
