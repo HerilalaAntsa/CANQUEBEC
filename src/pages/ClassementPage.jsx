@@ -184,10 +184,10 @@ export default function ClassementPage() {
             s.points    === prev.points &&
             s.goalDiff  === prev.goalDiff &&
             s.goalsFor  === prev.goalsFor;
-          pos = tied ? arr[i - 1]._pos : i + 1;
+          pos = tied ? (prev._rankPos ?? 1) : i + 1;
         }
-        s._pos = pos;
-        return { ...s, pos, last5: last5Map[s.team] ?? [] };
+        // Ne pas muter s directement — on passe par une propriété locale
+        return { ...s, _rankPos: pos, pos, last5: last5Map[s.team] ?? [] };
       });
   }, [standings, liveStandings, teams, last5Map]);
 
