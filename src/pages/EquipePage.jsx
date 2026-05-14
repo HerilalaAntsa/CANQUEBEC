@@ -76,6 +76,7 @@ export default function EquipePage() {
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 
   const [suspSet, setSuspSet] = useState(new Set());
+  const [matchTab, setMatchTab] = useState('all');
   useEffect(() => {
     if (!team?.code) return;
     supabase
@@ -146,24 +147,29 @@ export default function EquipePage() {
           </section>
 
           <div className={styles.rightCol}>
-            {/* Prochains matchs */}
-            {upcoming.length > 0 && (
+            {/* Matchs — onglets */}
+            {teamMatches.length > 0 && (
               <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Prochains matchs</h2>
-                <div className={styles.matchList}>
-                  {upcoming.slice(0, 5).map((m, i) => (
-                    <MatchCard key={m.id ?? i} match={m} />
+                <h2 className={styles.sectionTitle}>Matchs</h2>
+                <div className={styles.matchTabs}>
+                  {[['all','Tous'], ['upcoming','À venir'], ['played','Joués']].map(([key, label]) => (
+                    <button
+                      key={key}
+                      className={`${styles.matchTab} ${matchTab === key ? styles.matchTabActive : ''}`}
+                      onClick={() => setMatchTab(key)}
+                    >
+                      {label}
+                      <span className={styles.matchTabCount}>
+                        {key === 'all' ? teamMatches.length : key === 'upcoming' ? upcoming.length : played.length}
+                      </span>
+                    </button>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {/* Résultats */}
-            {played.length > 0 && (
-              <section className={styles.section}>
-                <h2 className={styles.sectionTitle}>Résultats</h2>
                 <div className={styles.matchList}>
-                  {[...played].reverse().slice(0, 5).map((m, i) => (
+                  {(matchTab === 'all' ? [...teamMatches].sort((a,b) => (a.date||'').localeCompare(b.date||''))
+                    : matchTab === 'upcoming' ? upcoming
+                    : [...played].reverse()
+                  ).map((m, i) => (
                     <MatchCard key={m.id ?? i} match={m} />
                   ))}
                 </div>
