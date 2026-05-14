@@ -68,16 +68,16 @@ const COLUMNS = [
           : (row.last5 ?? []).map((r, i) => (
             <span key={i} style={{
               display: 'inline-block',
-              width: '14px', height: '14px',
-              borderRadius: '3px',
-              fontSize: '0.6rem',
-              fontWeight: 700,
-              lineHeight: '14px',
+              width: '16px', height: '16px',
+              borderRadius: '50%',
+              fontSize: '0.58rem',
+              fontWeight: 800,
+              lineHeight: '16px',
               textAlign: 'center',
               background: r === 'W' ? '#16a34a' : r === 'L' ? '#dc2626' : '#6b7280',
               color: '#fff',
             }}>
-              {r === 'W' ? '✓' : r === 'L' ? '✕' : '='}
+              {r === 'W' ? 'V' : r === 'L' ? 'D' : 'N'}
             </span>
           ))
         }
