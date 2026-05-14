@@ -153,6 +153,7 @@ export default function MatchPage() {
         <div className={styles.scoreRow}>
           <div className={styles.teamBlock}>
             <FlagBadge team={match.team_a} size="lg" link />
+            {match.status === 'forfait_a' && <span className={styles.forfaitLabel}>FORFAIT</span>}
             <JerseyBadge
               colorStr={getJerseys(match.team_a)?.principal}
               onClick={() => setShowJerseyModal(true)}
@@ -175,13 +176,18 @@ export default function MatchPage() {
             ) : (
               <span className={styles.scoreVs}>VS</span>
             )}
-            <span className={`${styles.statusPill} ${played ? styles.played : styles.upcoming}`}>
-              {played ? 'Terminé' : 'À venir'}
-            </span>
+            {(match.status === 'forfait_a' || match.status === 'forfait_b') ? (
+              <span className={`${styles.statusPill} ${styles.forfait}`}>Forfait</span>
+            ) : (
+              <span className={`${styles.statusPill} ${played ? styles.played : styles.upcoming}`}>
+                {played ? 'Terminé' : 'À venir'}
+              </span>
+            )}
           </div>
 
           <div className={`${styles.teamBlock} ${styles.right}`}>
             <FlagBadge team={match.team_b} size="lg" link />
+            {match.status === 'forfait_b' && <span className={styles.forfaitLabel}>FORFAIT</span>}
             <JerseyBadge
               colorStr={getJerseys(match.team_b)?.principal}
               onClick={() => setShowJerseyModal(true)}

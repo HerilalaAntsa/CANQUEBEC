@@ -17,6 +17,9 @@ export default function StatusPill({ match }) {
   if (match.status === 'played') {
     variant = 'played';
     label   = 'Terminé';
+  } else if (match.status === 'forfait_a' || match.status === 'forfait_b') {
+    variant = 'forfait';
+    label   = 'Forfait';
   } else if (match.status === 'live') {
     variant = 'live';
     label   = '🔴 En cours';

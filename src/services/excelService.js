@@ -231,6 +231,19 @@ function parseMatches(ws) {
     const scoreA = typeof row[8] === 'number' ? row[8] : null;
     const scoreB = typeof row[9] === 'number' ? row[9] : null;
 
+    // Détection forfait : col K (index 10) = "FORFAIT A" ou "FORFAIT B"
+    const forfaitCol = row[10] ? row[10].toString().trim().toUpperCase() : '';
+    let status, finalScoreA, finalScoreB;
+    if (forfaitCol === 'FORFAIT A') {
+      status = 'forfait_a'; finalScoreA = 0; finalScoreB = 3;
+    } else if (forfaitCol === 'FORFAIT B') {
+      status = 'forfait_b'; finalScoreA = 3; finalScoreB = 0;
+    } else {
+      status = (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming';
+      finalScoreA = scoreA;
+      finalScoreB = scoreB;
+    }
+
     matches.push({
       id:        row[0] ? parseInt(row[0]) : null,
       journee:   currentJournee,
@@ -240,10 +253,10 @@ function parseMatches(ws) {
       group:     row[4] ? row[4].toString().trim().toUpperCase() : '',
       teamA,
       teamB,
-      scoreA,
-      scoreB,
-      status:    (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
-      restTeams: row[10] ? row[10].toString().trim() : '',
+      scoreA:    finalScoreA,
+      scoreB:    finalScoreB,
+      status,
+      restTeams: forfaitCol.startsWith('FORFAIT') ? '' : (row[10] ? row[10].toString().trim() : ''),
       referee:     row[11] ? row[11].toString().trim() : '',
       ref1:        row[12] ? row[12].toString().trim() : '',
       ref2:        row[13] ? row[13].toString().trim() : '',

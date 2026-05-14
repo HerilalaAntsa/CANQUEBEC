@@ -43,6 +43,20 @@
 .endBtn    { background: #22c55e; color: #fff; }
 .reopenBtn { background: rgba(255,255,255,0.1); color: var(--color-text-muted, #aaa); }
 
+/* ── Forfait ──────────────────────────────────────────── */
+.forfaitABtn, .forfaitBBtn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.forfaitABtn:hover:not(:disabled), .forfaitBBtn:hover:not(:disabled) { background: rgba(239,68,68,0.1); }
+.forfaitABtn:disabled, .forfaitBBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
 /* ── Reporté ──────────────────────────────────────────── */
 .postponeBtn {
   background: transparent;

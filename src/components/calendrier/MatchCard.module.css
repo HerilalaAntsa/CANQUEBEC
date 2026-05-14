@@ -8,6 +8,25 @@
   overflow: hidden;
 }
 
+.cardForfait {
+  opacity: 0.72;
+  filter: grayscale(0.4);
+}
+
+.forfaitBadge {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

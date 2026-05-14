@@ -49,8 +49,11 @@ export default function MatchCard({ match }) {
   const venue = VENUE_LABELS[match.venue?.trim()] ?? match.venue;
   const isTBD = match.phase != null;
 
+  const isForfait = match.status === 'forfait_a' || match.status === 'forfait_b';
+  const forfaitTeam = match.status === 'forfait_a' ? match.teamA : match.status === 'forfait_b' ? match.teamB : null;
+
   const card = (
-    <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${match.supabaseId ? styles.clickable : ''}`}>
+    <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${isForfait ? styles.cardForfait : ''} ${match.supabaseId ? styles.clickable : ''}`}>
       <div className={styles.statusBadge}><StatusPill match={match} /></div>
       <div className={styles.meta}>
         <span className={styles.date}>{formatDate(match.date, match.dateRaw)}</span>
@@ -64,10 +67,12 @@ export default function MatchCard({ match }) {
       <div className={styles.matchup}>
         <div className={styles.teamWrap}>
           <FlagBadge team={match.teamA} link={!isTBD} size="md" />
+          {isForfait && forfaitTeam === match.teamA && <span className={styles.forfaitBadge}>FORFAIT</span>}
         </div>
         <ScoreBadge scoreA={match.scoreA} scoreB={match.scoreB} size="md" />
         <div className={`${styles.teamWrap} ${styles.right}`}>
           <FlagBadge team={match.teamB} link={!isTBD} size="md" />
+          {isForfait && forfaitTeam === match.teamB && <span className={styles.forfaitBadge}>FORFAIT</span>}
         </div>
       </div>
 

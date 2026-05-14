@@ -95,10 +95,24 @@ export default function AdminMatchEditPage() {
         setScoreB('0');
         setMatch(prev => ({ ...prev, score_a: 0, score_b: 0 }));
       }
+      // Forfait A → score 0-3
+      if (newStatus === 'forfait_a') {
+        await updateScore(id, 0, 3);
+        setScoreA('0'); setScoreB('3');
+        setMatch(prev => ({ ...prev, score_a: 0, score_b: 3 }));
+      }
+      // Forfait B → score 3-0
+      if (newStatus === 'forfait_b') {
+        await updateScore(id, 3, 0);
+        setScoreA('3'); setScoreB('0');
+        setMatch(prev => ({ ...prev, score_a: 3, score_b: 0 }));
+      }
       setMatch(prev => ({ ...prev, status: newStatus }));
       setSavedMsg(
-        newStatus === 'live'   ? '🔴 Match démarré' :
-        newStatus === 'played' ? '✅ Match terminé' : 'Statut mis à jour'
+        newStatus === 'live'      ? '🔴 Match démarré'  :
+        newStatus === 'played'    ? '✅ Match terminé'   :
+        newStatus === 'forfait_a' ? '🚫 Forfait A enregistré' :
+        newStatus === 'forfait_b' ? '🚫 Forfait B enregistré' : 'Statut mis à jour'
       );
       setTimeout(() => setSavedMsg(''), 3000);
     } catch (e) {
@@ -484,9 +498,11 @@ export default function AdminMatchEditPage() {
         <h2 className={styles.sectionTitle}>Statut du match</h2>
         <div className={styles.statusRow}>
           <span className={`${styles.statusBadge} ${styles[`status_${match.status}`]}`}>
-            {match.status === 'live'      ? '🔴 En cours'  :
-             match.status === 'played'   ? '✅ Terminé'    :
-             match.status === 'postponed'? '⚠️ Reporté'   : '⏳ À venir'}
+            {match.status === 'live'       ? '🔴 En cours'     :
+             match.status === 'played'    ? '✅ Terminé'       :
+             match.status === 'postponed' ? '⚠️ Reporté'      :
+             match.status === 'forfait_a' ? '🚫 Forfait (A)'  :
+             match.status === 'forfait_b' ? '🚫 Forfait (B)'  : '⏳ À venir'}
           </span>
           {(match.status === 'upcoming' || match.status === 'postponed') && (
             <button className={styles.liveBtn} disabled={statusBusy} onClick={() => handleStatus('live')}>
@@ -503,7 +519,23 @@ export default function AdminMatchEditPage() {
               🔄 Rouvrir
             </button>
           )}
-          {match.status !== 'postponed' && match.status !== 'played' && (
+          {(match.status === 'upcoming' || match.status === 'postponed') && (
+            <button className={styles.forfaitABtn} disabled={statusBusy} onClick={() => handleStatus('forfait_a')}>
+              🚫 Forfait {match.team_a}
+            </button>
+          )}
+          {(match.status === 'upcoming' || match.status === 'postponed') && (
+            <button className={styles.forfaitBBtn} disabled={statusBusy} onClick={() => handleStatus('forfait_b')}>
+              🚫 Forfait {match.team_b}
+            </button>
+          )}
+          {(match.status === 'forfait_a' || match.status === 'forfait_b') && (
+            <button className={styles.reopenBtn} disabled={statusBusy} onClick={() => handleStatus('upcoming')}>
+              ↩ Annuler forfait
+            </button>
+          )}
+          {match.status !== 'postponed' && match.status !== 'played' &&
+           match.status !== 'forfait_a' && match.status !== 'forfait_b' && (
             <button
               className={styles.postponeBtn}
               disabled={statusBusy}

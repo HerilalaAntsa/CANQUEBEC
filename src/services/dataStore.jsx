@@ -146,7 +146,8 @@ function computeLiveStandings(matches, supabaseScores) {
   };
 
   for (const row of Object.values(supabaseScores)) {
-    if (row.status !== 'played' && row.status !== 'live') continue;
+    const isForfait = row.status === 'forfait_a' || row.status === 'forfait_b';
+    if (row.status !== 'played' && row.status !== 'live' && !isForfait) continue;
     if (row.scoreA === null || row.scoreB === null) continue;
 
     const a = row.teamA;
@@ -161,7 +162,16 @@ function computeLiveStandings(matches, supabaseScores) {
     table[b].goalsFor     += row.scoreB;
     table[b].goalsAgainst += row.scoreA;
 
-    if (row.scoreA > row.scoreB) {
+    if (isForfait) {
+      // Forfait A → B gagne 3-0 ; Forfait B → A gagne 3-0
+      if (row.status === 'forfait_a') {
+        table[b].won++; table[b].points += 3;
+        table[a].lost++;
+      } else {
+        table[a].won++; table[a].points += 3;
+        table[b].lost++;
+      }
+    } else if (row.scoreA > row.scoreB) {
       table[a].won++; table[a].points += 3;
       table[b].lost++;
     } else if (row.scoreA < row.scoreB) {
