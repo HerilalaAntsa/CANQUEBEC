@@ -66,18 +66,20 @@ const COLUMNS = [
         {(row.last5 ?? []).length === 0
           ? <span style={{ color: '#444', fontSize: '0.7em' }}>—</span>
           : (row.last5 ?? []).map((r, i) => (
-            <span key={i} style={{
-              display: 'inline-block',
-              width: '16px', height: '16px',
+            <span key={i} title={r === 'W' ? 'Victoire' : r === 'L' ? 'Défaite' : 'Nul'} style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '18px', height: '18px',
               borderRadius: '50%',
-              fontSize: '0.58rem',
-              fontWeight: 800,
-              lineHeight: '16px',
-              textAlign: 'center',
-              background: r === 'W' ? '#16a34a' : r === 'L' ? '#dc2626' : '#6b7280',
+              fontSize: '0.65rem',
+              fontWeight: 900,
+              background: r === 'W' ? '#16a34a' : r === 'L' ? '#dc2626' : '#9ca3af',
               color: '#fff',
+              boxShadow: i === 0 ? `0 0 0 2px #fff, 0 0 0 3.5px ${r === 'W' ? '#16a34a' : r === 'L' ? '#dc2626' : '#9ca3af'}` : 'none',
+              flexShrink: 0,
             }}>
-              {r === 'W' ? 'V' : r === 'L' ? 'D' : 'N'}
+              {r === 'W' ? '✓' : r === 'L' ? '✕' : '—'}
             </span>
           ))
         }
