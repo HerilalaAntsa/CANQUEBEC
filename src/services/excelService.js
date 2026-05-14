@@ -235,9 +235,9 @@ function parseMatches(ws) {
     const forfaitCol = row[10] ? row[10].toString().trim().toUpperCase() : '';
     let status, finalScoreA, finalScoreB;
     if (forfaitCol === 'FORFAIT A') {
-      status = 'forfait_a'; finalScoreA = 0; finalScoreB = 0;
+      status = 'forfait_a'; finalScoreA = 0; finalScoreB = 3;
     } else if (forfaitCol === 'FORFAIT B') {
-      status = 'forfait_b'; finalScoreA = 0; finalScoreB = 0;
+      status = 'forfait_b'; finalScoreA = 3; finalScoreB = 0;
     } else {
       status = (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming';
       finalScoreA = scoreA;
