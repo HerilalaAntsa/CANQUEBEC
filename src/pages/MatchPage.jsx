@@ -152,7 +152,7 @@ export default function MatchPage() {
         {/* Score */}
         <div className={styles.scoreRow}>
           <div className={styles.teamBlock}>
-            <FlagBadge team={match.team_a} size="lg" />
+            <FlagBadge team={match.team_a} size="lg" link />
             <JerseyBadge
               colorStr={getJerseys(match.team_a)?.principal}
               onClick={() => setShowJerseyModal(true)}
@@ -181,7 +181,7 @@ export default function MatchPage() {
           </div>
 
           <div className={`${styles.teamBlock} ${styles.right}`}>
-            <FlagBadge team={match.team_b} size="lg" />
+            <FlagBadge team={match.team_b} size="lg" link />
             <JerseyBadge
               colorStr={getJerseys(match.team_b)?.principal}
               onClick={() => setShowJerseyModal(true)}
