@@ -87,7 +87,7 @@ const COLUMNS = [
 ];
 
 export default function ClassementPage() {
-  const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores } = useLeagueData();
+  const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores, matches } = useLeagueData();
   const navigate = useNavigate();
   const [tab, setTab] = useState('classement');
   const [cardEvents, setCardEvents] = useState([]);
@@ -117,24 +117,32 @@ export default function ClassementPage() {
 
   const last5Map = useMemo(() => {
     const map = {};
-    for (const [key, m] of Object.entries(supabaseScores ?? {})) {
-      if (m.status !== 'played') continue;
-      const parts = key.split(':');
-      const journee = parseInt(parts[0]) || 0;
-      const { teamA, teamB, scoreA, scoreB } = m;
-      const rA = scoreA > scoreB ? 'W' : scoreA < scoreB ? 'L' : 'D';
-      const rB = scoreB > scoreA ? 'W' : scoreB < scoreA ? 'L' : 'D';
+    const played = (matches ?? []).filter(m =>
+      m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b'
+    );
+    for (const m of played) {
+      const { teamA, teamB, scoreA, scoreB, journee, status } = m;
+      if (!teamA || !teamB) continue;
+      // Pour les forfaits, résultat direct sans scores
+      let rA, rB;
+      if (status === 'forfait_a')      { rA = 'L'; rB = 'W'; }
+      else if (status === 'forfait_b') { rA = 'W'; rB = 'L'; }
+      else if (scoreA === null || scoreB === null) continue;
+      else {
+        rA = scoreA > scoreB ? 'W' : scoreA < scoreB ? 'L' : 'D';
+        rB = scoreB > scoreA ? 'W' : scoreB < scoreA ? 'L' : 'D';
+      }
       if (!map[teamA]) map[teamA] = [];
-      map[teamA].push({ journee, result: rA });
+      map[teamA].push({ journee: journee ?? 0, result: rA });
       if (!map[teamB]) map[teamB] = [];
-      map[teamB].push({ journee, result: rB });
+      map[teamB].push({ journee: journee ?? 0, result: rB });
     }
     const out = {};
     for (const [team, arr] of Object.entries(map)) {
       out[team] = arr.sort((a, b) => b.journee - a.journee).slice(0, 5).map(r => r.result);
     }
     return out;
-  }, [supabaseScores]);
+  }, [matches]);
 
   const tableData = useMemo(() => {
     // Base : standings Excel (toutes les équipes avec stats initiales)
@@ -163,7 +171,22 @@ export default function ClassementPage() {
         b.goalDiff - a.goalDiff ||
         b.goalsFor - a.goalsFor
       )
-      .map((s, i) => ({ ...s, pos: i + 1, last5: last5Map[s.team] ?? [] }));
+      .map((s, i, arr) => {
+        // Rang ex-aequo standard : 1,1,3 (pas 1,2,3)
+        let pos;
+        if (i === 0) {
+          pos = 1;
+        } else {
+          const prev = arr[i - 1];
+          const tied =
+            s.points    === prev.points &&
+            s.goalDiff  === prev.goalDiff &&
+            s.goalsFor  === prev.goalsFor;
+          pos = tied ? arr[i - 1]._pos : i + 1;
+        }
+        s._pos = pos;
+        return { ...s, pos, last5: last5Map[s.team] ?? [] };
+      });
   }, [standings, liveStandings, teams, last5Map]);
 
   const getRowClass = (row) => {
