@@ -357,7 +357,7 @@ export default function AdminDashboardPage() {
             if (!grouped[j]) grouped[j] = [];
             grouped[j].push(m);
           }
-          const journees = Object.keys(grouped).map(Number).sort((a, b) => a - b);
+          const journees = Object.keys(grouped).map(Number).filter(j => j > 0).sort((a, b) => a - b);
           return journees.map(j => (
             <div key={j} className={styles.journeeGroup}>
               <div className={styles.journeeHeader}>
