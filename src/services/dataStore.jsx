@@ -148,7 +148,6 @@ function computeLiveStandings(matches, supabaseScores) {
   for (const row of Object.values(supabaseScores)) {
     const isForfait = row.status === 'forfait_a' || row.status === 'forfait_b';
     if (row.status !== 'played' && row.status !== 'live' && !isForfait) continue;
-    if (row.scoreA === null || row.scoreB === null) continue;
 
     const a = row.teamA;
     const b = row.teamB;
@@ -157,13 +156,9 @@ function computeLiveStandings(matches, supabaseScores) {
     ensure(a); ensure(b);
     table[a].played++;
     table[b].played++;
-    table[a].goalsFor     += row.scoreA;
-    table[a].goalsAgainst += row.scoreB;
-    table[b].goalsFor     += row.scoreB;
-    table[b].goalsAgainst += row.scoreA;
 
     if (isForfait) {
-      // Forfait A → B gagne 3-0 ; Forfait B → A gagne 3-0
+      // Forfait : 3 points directs au vainqueur, 0 au perdant, pas de buts comptés
       if (row.status === 'forfait_a') {
         table[b].won++; table[b].points += 3;
         table[a].lost++;
@@ -171,7 +166,16 @@ function computeLiveStandings(matches, supabaseScores) {
         table[a].won++; table[a].points += 3;
         table[b].lost++;
       }
-    } else if (row.scoreA > row.scoreB) {
+      continue; // ne pas compter les buts
+    }
+
+    if (row.scoreA === null || row.scoreB === null) continue;
+    table[a].goalsFor     += row.scoreA;
+    table[a].goalsAgainst += row.scoreB;
+    table[b].goalsFor     += row.scoreB;
+    table[b].goalsAgainst += row.scoreA;
+
+    if (row.scoreA > row.scoreB) {
       table[a].won++; table[a].points += 3;
       table[b].lost++;
     } else if (row.scoreA < row.scoreB) {

@@ -95,17 +95,17 @@ export default function AdminMatchEditPage() {
         setScoreB('0');
         setMatch(prev => ({ ...prev, score_a: 0, score_b: 0 }));
       }
-      // Forfait A → score 0-3
+      // Forfait A → score 0-0
       if (newStatus === 'forfait_a') {
-        await updateScore(id, 0, 3);
-        setScoreA('0'); setScoreB('3');
-        setMatch(prev => ({ ...prev, score_a: 0, score_b: 3 }));
+        await updateScore(id, 0, 0);
+        setScoreA('0'); setScoreB('0');
+        setMatch(prev => ({ ...prev, score_a: 0, score_b: 0 }));
       }
-      // Forfait B → score 3-0
+      // Forfait B → score 0-0
       if (newStatus === 'forfait_b') {
-        await updateScore(id, 3, 0);
-        setScoreA('3'); setScoreB('0');
-        setMatch(prev => ({ ...prev, score_a: 3, score_b: 0 }));
+        await updateScore(id, 0, 0);
+        setScoreA('0'); setScoreB('0');
+        setMatch(prev => ({ ...prev, score_a: 0, score_b: 0 }));
       }
       setMatch(prev => ({ ...prev, status: newStatus }));
       setSavedMsg(
