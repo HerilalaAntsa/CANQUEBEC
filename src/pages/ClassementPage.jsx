@@ -43,13 +43,13 @@ const COLUMNS = [
   { key: 'team', label: 'Équipe', sortable: true,
     render: (v) => <FlagBadge team={v} link size="sm" />
   },
+  { key: 'points', label: 'Pts', sortable: true, align: 'right',
+    render: (v) => <strong>{v}</strong>
+  },
   { key: 'played',       label: 'PJ',   sortable: true, align: 'right' },
   { key: 'won',          label: 'V',    sortable: true, align: 'right' },
   { key: 'drawn',        label: 'N',    sortable: true, align: 'right' },
   { key: 'lost',         label: 'D',    sortable: true, align: 'right' },
-  { key: 'points', label: 'Pts', sortable: true, align: 'right', highlight: true,
-    render: (v) => <strong style={{ fontSize: '1.05em' }}>{v}</strong>
-  },
   { key: 'goalsFor',     label: 'B+',   sortable: true, align: 'right' },
   { key: 'goalsAgainst', label: 'B-',   sortable: true, align: 'right' },
   { key: 'goalDiff',     label: 'Diff', sortable: true, align: 'right',
