@@ -60,6 +60,30 @@ const COLUMNS = [
       return <span>0</span>;
     }
   },
+  { key: 'last5', label: 'Forme', sortable: false, align: 'center',
+    render: (_, row) => (
+      <span style={{ display: 'flex', gap: '2px', justifyContent: 'center' }}>
+        {(row.last5 ?? []).length === 0
+          ? <span style={{ color: '#444', fontSize: '0.7em' }}>—</span>
+          : (row.last5 ?? []).map((r, i) => (
+            <span key={i} style={{
+              display: 'inline-block',
+              width: '14px', height: '14px',
+              borderRadius: '3px',
+              fontSize: '0.6rem',
+              fontWeight: 700,
+              lineHeight: '14px',
+              textAlign: 'center',
+              background: r === 'W' ? '#16a34a' : r === 'L' ? '#dc2626' : '#6b7280',
+              color: '#fff',
+            }}>
+              {r === 'W' ? '✓' : r === 'L' ? '✕' : '='}
+            </span>
+          ))
+        }
+      </span>
+    )
+  },
 ];
 
 export default function ClassementPage() {
