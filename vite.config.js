@@ -38,10 +38,14 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Force le nouveau SW à prendre le contrôle immédiatement
+        skipWaiting: true,
+        clientsClaim: true,
         // Cache les assets statiques
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'],
-        // Ne pas mettre en cache les appels Supabase
+        // Toutes les navigations → index.html
         navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api\//, /^\/data\//],
         runtimeCaching: [
           {
             urlPattern: /^\/data\/.+\.xlsx$/i,
