@@ -8,15 +8,18 @@ export function useTeam(slug) {
   const { teams, matches, standings, liveStandings, players, scorers, assisters, teamMeta } = useLeagueData();
 
   const mergedStandings = useMemo(() => {
-    const base = {};
-    for (const s of standings) {
-      base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
+    // Si liveStandings disponibles (Supabase), ils ont priorité
+    // Sinon, on garde les standings statiques de l'Excel
+    if (liveStandings && liveStandings.length > 0) {
+      const base = {};
+      for (const s of standings) base[s.team] = { ...s };
+      for (const s of liveStandings) {
+        if (base[s.team]) base[s.team] = { ...base[s.team], ...s };
+        else base[s.team] = s;
+      }
+      return Object.values(base);
     }
-    for (const s of (liveStandings ?? [])) {
-      if (base[s.team]) base[s.team] = { ...base[s.team], ...s };
-      else base[s.team] = s;
-    }
-    return Object.values(base);
+    return standings;
   }, [standings, liveStandings]);
 
   return useMemo(() => {

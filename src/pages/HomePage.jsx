@@ -78,10 +78,13 @@ export default function HomePage() {
 
   // Standings: live (Supabase) merged sur Excel pour avoir toutes les équipes
   const mergedStandings = useMemo(() => {
-    const base = {};
-    for (const s of standings) base[s.team] = { ...s, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, goalDiff: 0, points: 0 };
-    for (const s of (liveStandings ?? [])) base[s.team] = { ...(base[s.team] ?? {}), ...s };
-    return Object.values(base);
+    if (liveStandings && liveStandings.length > 0) {
+      const base = {};
+      for (const s of standings) base[s.team] = { ...s };
+      for (const s of liveStandings) base[s.team] = { ...(base[s.team] ?? {}), ...s };
+      return Object.values(base);
+    }
+    return standings;
   }, [standings, liveStandings]);
 
   const upcoming = useMemo(() =>
