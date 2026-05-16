@@ -173,21 +173,9 @@ export default function ClassementPage() {
         b.goalDiff - a.goalDiff ||
         b.goalsFor - a.goalsFor
       )
-      .map((s, i, arr) => {
-        // Rang ex-aequo standard : 1,1,3 (pas 1,2,3)
-        let pos;
-        if (i === 0) {
-          pos = 1;
-        } else {
-          const prev = arr[i - 1];
-          const tied =
-            s.points    === prev.points &&
-            s.goalDiff  === prev.goalDiff &&
-            s.goalsFor  === prev.goalsFor;
-          pos = tied ? (prev._rankPos ?? 1) : i + 1;
-        }
-        // Ne pas muter s directement — on passe par une propriété locale
-        return { ...s, _rankPos: pos, pos, last5: last5Map[s.team] ?? [] };
+      .map((s, i) => {
+        // Rang simple 1, 2, 3, 4
+        return { ...s, _rankPos: i + 1, pos: i + 1, last5: last5Map[s.team] ?? [] };
       });
   }, [standings, liveStandings, teams, last5Map]);
 
