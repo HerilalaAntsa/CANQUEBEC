@@ -43,7 +43,12 @@ export default function QualificationPage() {
       }
       if (filters.group && m.group !== filters.group) return false;
       if (filters.venue && m.venue?.trim() !== filters.venue) return false;
-      if (filters.status && m.status !== filters.status) return false;
+      if (filters.status) {
+        const isPlayed = filters.status === 'played'
+          ? ['played', 'forfait_a', 'forfait_b'].includes(m.status)
+          : m.status === filters.status;
+        if (!isPlayed) return false;
+      }
       if (filters.referee && m.referee?.trim() !== filters.referee) return false;
       return true;
     });
@@ -59,7 +64,7 @@ export default function QualificationPage() {
     return [...map.entries()].sort((a, b) => a[0] - b[0]);
   }, [filtered]);
 
-  const played = groupMatches.filter(m => m.status === 'played').length;
+  const played = groupMatches.filter(m => ['played', 'forfait_a', 'forfait_b'].includes(m.status)).length;
 
   return (
     <div className={styles.page}>

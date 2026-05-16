@@ -23,7 +23,12 @@ export default function CalendrierPage() {
     }
     if (filters.group && m.group !== filters.group) return false;
     if (filters.venue && m.venue?.trim() !== filters.venue) return false;
-    if (filters.status && m.status !== filters.status) return false;
+    if (filters.status) {
+      const isPlayed = filters.status === 'played'
+        ? ['played', 'forfait_a', 'forfait_b'].includes(m.status)
+        : m.status === filters.status;
+      if (!isPlayed) return false;
+    }
     return true;
   }), [filters]);
 

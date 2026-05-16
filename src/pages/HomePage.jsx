@@ -94,7 +94,7 @@ export default function HomePage() {
 
   const recentResults = useMemo(() =>
     matches
-      .filter(m => m.status === 'played')
+      .filter(m => ['played', 'forfait_a', 'forfait_b'].includes(m.status))
       .sort((a, b) => new Date(b.date) - new Date(a.date))
       .slice(0, 3),
     [matches]
