@@ -37,12 +37,45 @@ export function useTeam(slug) {
 
     const standing = mergedStandings.find(s => normalizeTeamName(s.team) === name) ?? null;
 
+    // Calculer buts/passes depuis les events des matchs mergés (Supabase > Excel)
+    const goalsByPlayer  = {}; // { playerNum: count }
+    const assistsByPlayer = {};
+    for (const m of teamMatches) {
+      if (!Array.isArray(m.goals)) continue;
+      for (const g of m.goals) {
+        if (normalizeTeamName(g.team) !== name) continue;
+        const num = String(g.player_num ?? g.num ?? '');
+        if (!num) continue;
+        if (g.type === 'goal' || g.type == null) {
+          goalsByPlayer[num] = (goalsByPlayer[num] ?? 0) + 1;
+        }
+        if (g.type === 'assist') {
+          assistsByPlayer[num] = (assistsByPlayer[num] ?? 0) + 1;
+        }
+      }
+    }
+
     const roster = players
       .filter(p => normalizeTeamName(p.team) === name)
+      .map(p => {
+        const num = String(p.number ?? '');
+        const liveGoals   = goalsByPlayer[num];
+        const liveAssists = assistsByPlayer[num];
+        return {
+          ...p,
+          goals:   liveGoals   !== undefined ? liveGoals   : (p.goals   ?? 0),
+          assists: liveAssists !== undefined ? liveAssists : (p.assists ?? 0),
+        };
+      })
       .sort((a, b) => a.number - b.number);
 
     const topScorers = scorers
       .filter(s => normalizeTeamName(s.team) === name)
+      .map(s => {
+        const num = String(s.playerNumber ?? '');
+        const liveGoals = goalsByPlayer[num];
+        return liveGoals !== undefined ? { ...s, goals: liveGoals } : s;
+      })
       .sort((a, b) => b.goals - a.goals);
 
     const topAssisters = assisters
