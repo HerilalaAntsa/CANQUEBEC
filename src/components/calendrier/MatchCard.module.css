@@ -171,8 +171,8 @@
 }
 
 .scorersRight {
-  align-items: flex-end;
-  text-align: right;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .scorersSep {
