@@ -44,6 +44,7 @@ export default function CalendrierFilters({ teams, referees = [], venues = [], f
       >
         <option value="">Tous les matchs</option>
         <option value="upcoming">À venir</option>
+        <option value="live">🔴 En cours</option>
         <option value="played">Joués</option>
       </select>
 
