@@ -196,11 +196,12 @@ function computeLiveStandings(matches, supabaseScores) {
  */
 function applySupabaseScores(matches, supabaseScores) {
   if (!supabaseScores || Object.keys(supabaseScores).length === 0) return matches;
+  const norm = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
   return matches.map((m) => {
     // Phase finale → clé "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
     const key = m.phase
-      ? `phase:${m.phase}:${m.teamA}:${m.teamB}`
-      : `${m.journee}:${m.teamA}:${m.teamB}`;
+      ? `phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`
+      : `${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`;
     const live = supabaseScores[key];
     if (!live) return m;
     return {
@@ -266,10 +267,13 @@ export function DataProvider({ children }) {
 
       const scores = {};
       for (const row of matchesRes.data ?? []) {
+        // Normaliser les noms pour éviter mismatch apostrophe (U+2019 vs U+0027)
+        const tA = (row.team_a || '').trim().toUpperCase().replace(/\u2019/g, "'");
+        const tB = (row.team_b || '').trim().toUpperCase().replace(/\u2019/g, "'");
         // Clé : phase finale → "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
         const key = row.phase
-          ? `phase:${row.phase}:${row.team_a}:${row.team_b}`
-          : `${row.journee}:${row.team_a}:${row.team_b}`;
+          ? `phase:${row.phase}:${tA}:${tB}`
+          : `${row.journee}:${tA}:${tB}`;
         scores[key] = {
           id:          row.id,
           teamA:       row.team_a,
