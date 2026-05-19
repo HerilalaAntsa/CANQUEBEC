@@ -13,15 +13,17 @@ import { JerseyPanel } from '../components/shared/JerseyBadge';
 import { getJerseys } from '../config/jerseyConfig';
 import styles from './EquipePage.module.css';
 
-function buildRosterCols(suspSet, stylesObj) {
+function buildRosterCols(suspMap, stylesObj) {
   return [
     { key: 'number',   label: '#',      sortable: true,  align: 'right' },
     { key: 'name',     label: 'Joueur', sortable: true,
       render: (v, row) => (
         <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
           {v}
-          {suspSet.has(String(row.number)) && (
-            <span className={stylesObj.suspBadge} title="Suspendu">🚫</span>
+          {suspMap[String(row.number)] != null && (
+            <span className={stylesObj.suspBadge} title={`Suspendu — ${suspMap[String(row.number)]} match(s) restant(s)`}>
+              🚨 {suspMap[String(row.number)]}
+            </span>
           )}
         </span>
       )
@@ -49,7 +51,7 @@ export default function EquipePage() {
   const teamData = useTeam(slug);
 
   // ⚠️ Hooks TOUJOURS avant les return conditionnels
-  const [suspSet, setSuspSet] = useState(new Set());
+  const [suspMap, setSuspMap] = useState({}); // { playerNum: matches_remaining }
   const [matchTab, setMatchTab] = useState('all');
 
   const teamCode = teamData?.team?.code;
@@ -57,11 +59,15 @@ export default function EquipePage() {
     if (!teamCode) return;
     supabase
       .from('suspensions')
-      .select('player_num')
+      .select('player_num, matches_remaining')
       .eq('team', teamCode)
       .gt('matches_remaining', 0)
       .then(({ data }) => {
-        if (data) setSuspSet(new Set(data.map(s => String(s.player_num))));
+        if (data) {
+          const map = {};
+          data.forEach(s => { map[String(s.player_num)] = s.matches_remaining; });
+          setSuspMap(map);
+        }
       });
   }, [teamCode]);
 
@@ -92,7 +98,7 @@ export default function EquipePage() {
   const played   = teamMatches.filter(m => m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 
-  const rosterCols = buildRosterCols(suspSet, styles);
+  const rosterCols = buildRosterCols(suspMap, styles);
 
   return (
     <div className={styles.page}>

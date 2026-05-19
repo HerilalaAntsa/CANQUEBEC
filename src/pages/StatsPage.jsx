@@ -6,6 +6,12 @@ import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './StatsPage.module.css';
 
+const REASON_LABELS = {
+  red_card:  '🟥 Carton rouge',
+  behavior:  '⚠️ Comportement',
+  manual:    '✏️ Manuelle',
+};
+
 /** Agrège les buts depuis supabaseScores (déjà dans le store) */
 function buildScorerList(supabaseScores) {
   const map = {};
@@ -55,6 +61,10 @@ export default function StatsPage() {
   const [tab, setTab] = useState('goals');
   const [assistEvents, setAssistEvents] = useState([]);
   const [assistLoading, setAssistLoading] = useState(false);
+  const [redEvents, setRedEvents] = useState([]);
+  const [suspensions, setSuspensions] = useState([]);
+  const [disciplineLoading, setDisciplineLoading] = useState(false);
+  const [journeeFilter, setJourneeFilter] = useState('');
 
   // Rafraîchir les scores toutes les 30s
   useEffect(() => {
@@ -76,8 +86,39 @@ export default function StatsPage() {
       .finally(() => setAssistLoading(false));
   }, []);
 
+  // Charger cartons rouges + suspensions
+  useEffect(() => {
+    if (!isSupabaseEnabled || tab !== 'discipline') return;
+    setDisciplineLoading(true);
+    Promise.all([
+      supabase
+        .from('match_events')
+        .select('id, team, player_name, player_num, minute, match_id, matches(journee, team_a, team_b)')
+        .eq('type', 'red')
+        .order('match_id', { ascending: true }),
+      supabase
+        .from('suspensions')
+        .select('*')
+        .order('created_at', { ascending: false }),
+    ]).then(([redRes, suspRes]) => {
+      if (!redRes.error) setRedEvents(redRes.data ?? []);
+      if (!suspRes.error) setSuspensions(suspRes.data ?? []);
+    }).finally(() => setDisciplineLoading(false));
+  }, [tab]);
+
   const scorers = useMemo(() => buildScorerList(supabaseScores), [supabaseScores]);
   const assisters = useMemo(() => buildAssistList(assistEvents), [assistEvents]);
+
+  // Journées disponibles dans les rouges
+  const journees = useMemo(() => {
+    const set = new Set(redEvents.map(ev => ev.matches?.journee).filter(Boolean));
+    return [...set].sort((a, b) => a - b);
+  }, [redEvents]);
+  const filteredReds = useMemo(() => {
+    if (!journeeFilter) return redEvents;
+    return redEvents.filter(ev => String(ev.matches?.journee) === String(journeeFilter));
+  }, [redEvents, journeeFilter]);
+  const activeSuspensions = useMemo(() => suspensions.filter(s => s.matches_remaining > 0), [suspensions]);
 
   const hasScorers  = scorers.length > 0;
   const hasAssisters = assisters.length > 0;
@@ -107,6 +148,13 @@ export default function StatsPage() {
           >
             🎯 Passeurs
             {hasAssisters && <span className={styles.tabCount}>{assisters.length}</span>}
+          </button>
+          <button
+            className={`${styles.tab} ${tab === 'discipline' ? styles.tabActive : ''}`}
+            onClick={() => setTab('discipline')}
+          >
+            🟥 Discipline
+            {activeSuspensions.length > 0 && <span className={`${styles.tabCount} ${styles.tabCountRed}`}>{activeSuspensions.length}</span>}
           </button>
         </div>
 
@@ -195,7 +243,94 @@ export default function StatsPage() {
                 <div className={styles.noStat}>Aucun passeur enregistré pour l’instant.</div>
               )
             )}
-          </div>
+            {tab === 'discipline' && (
+              disciplineLoading ? (
+                <div className={styles.noStat}>Chargement…</div>
+              ) : (
+                <div className={styles.disciplineWrap}>
+                  {/* Suspensions actives */}
+                  {activeSuspensions.length > 0 && (
+                    <div className={styles.suspSection}>
+                      <h3 className={styles.suspTitle}>🚨 Joueurs suspendus actuellement</h3>
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Joueur</th>
+                            <th>Équipe</th>
+                            <th className={styles.thStat}>Matchs restants</th>
+                            <th>Raison</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {activeSuspensions.map(s => (
+                            <tr key={s.id} className={styles.row} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
+                              <td className={styles.tdPlayer}>
+                                {s.player_num && <span className={styles.jersey}>#{s.player_num}</span>}
+                                <span className={styles.playerName}>{s.player_name || '—'}</span>
+                              </td>
+                              <td className={styles.tdTeam}><FlagBadge team={s.team} size="sm" /></td>
+                              <td className={styles.tdStat} style={{ color: 'var(--color-accent)' }}>{s.matches_remaining}</td>
+                              <td className={styles.tdReason}>{REASON_LABELS[s.reason] ?? s.reason}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Cartons rouges par journée */}
+                  <div className={styles.suspSection}>
+                    <div className={styles.disciplineHeader}>
+                      <h3 className={styles.suspTitle}>🟥 Cartons rouges</h3>
+                      {journees.length > 1 && (
+                        <div className={styles.journeeFilter}>
+                          <button
+                            className={`${styles.jBtn} ${journeeFilter === '' ? styles.jBtnActive : ''}`}
+                            onClick={() => setJourneeFilter('')}
+                          >Toutes</button>
+                          {journees.map(j => (
+                            <button
+                              key={j}
+                              className={`${styles.jBtn} ${String(journeeFilter) === String(j) ? styles.jBtnActive : ''}`}
+                              onClick={() => setJourneeFilter(String(j))}
+                            >J{j}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {filteredReds.length === 0 ? (
+                      <div className={styles.noStat}>Aucun carton rouge enregistré.</div>
+                    ) : (
+                      <table className={styles.table}>
+                        <thead>
+                          <tr>
+                            <th>Joueur</th>
+                            <th>Équipe</th>
+                            <th>Match</th>
+                            <th className={styles.thStat}>Min.</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredReds.map(ev => (
+                            <tr key={ev.id} className={styles.row} onClick={() => navigate(`/equipe/${generateSlug(ev.team)}`)}>
+                              <td className={styles.tdPlayer}>
+                                {ev.player_num && <span className={styles.jersey}>#{ev.player_num}</span>}
+                                <span className={styles.playerName}>{ev.player_name || '—'}</span>
+                              </td>
+                              <td className={styles.tdTeam}><FlagBadge team={ev.team} size="sm" /></td>
+                              <td className={styles.tdMatch}>
+                                {ev.matches ? `J${ev.matches.journee} — ${ev.matches.team_a} vs ${ev.matches.team_b}` : '—'}
+                              </td>
+                              <td className={styles.tdStat}>{ev.minute ?? '—'}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )
+            )}          </div>
         )}
       </div>
     </div>

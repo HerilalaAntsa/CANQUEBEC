@@ -34,9 +34,17 @@
 }
 
 .suspBadge {
-  font-size: 0.85rem;
-  line-height: 1;
-  title: "Suspendu";
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-accent, #d4001e);
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .captainBadge {

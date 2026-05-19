@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry, createSuspension, getSuspensions, decrementSuspension } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import styles from './AdminMatchEdit.module.css';
 
@@ -88,6 +88,15 @@ export default function AdminMatchEditPage() {
     setStatusBusy(true);
     try {
       await setMatchStatus(id, newStatus);
+      // Décrémenter les suspensions actives des 2 équipes quand match terminé
+      if (newStatus === 'played') {
+        try {
+          const allSusp = await getSuspensions();
+          const teams = [match.team_a, match.team_b];
+          const relevant = allSusp.filter(s => teams.includes(s.team) && s.matches_remaining > 0);
+          await Promise.all(relevant.map(s => decrementSuspension(s.id)));
+        } catch { /* non bloquant */ }
+      }
       // Si on démarre le match et que le score est encore null → forcer 0-0
       if (newStatus === 'live' && (match.score_a === null || match.score_b === null)) {
         await updateScore(id, 0, 0);
@@ -202,6 +211,22 @@ export default function AdminMatchEditPage() {
     try {
       await addEvent(event);
       setEvents(prev => [...prev, { ...event, id: Date.now() }]);
+      // Auto-suspension 1 match si carton rouge (règlement art.8.2)
+      if (evtType === 'red') {
+        try {
+          await createSuspension({
+            team:             evtTeam,
+            playerNum:        evtPlayerNum ? Number(evtPlayerNum) : null,
+            playerName:       evtPlayerName || null,
+            matchesRemaining: 1,
+            reason:           'red_card',
+            type:             'auto',
+            matchId:          Number(id),
+          });
+          setSavedMsg('🟥 Carton rouge enregistré — suspension 1 match créée automatiquement');
+          setTimeout(() => setSavedMsg(''), 4000);
+        } catch { /* non bloquant */ }
+      }
       // Auto-incrément score si c'est un but
       if (evtType === 'goal') {
         const newA = evtTeam === match.team_a ? Number(scoreA) + 1 : Number(scoreA);
@@ -447,9 +472,17 @@ export default function AdminMatchEditPage() {
       setEvents(prev => [...prev, { ...yellowEvt, id: Date.now() }]);
       await addEvent(redEvt);
       setEvents(prev => [...prev, { ...redEvt, id: Date.now() + 1 }]);
+      // Auto-suspension 1 match
+      try {
+        await createSuspension({
+          team: team, playerNum: playerNum ? Number(playerNum) : null,
+          playerName: playerName || null, matchesRemaining: 1,
+          reason: 'red_card', type: 'auto', matchId: Number(id),
+        });
+      } catch { /* non bloquant */ }
       setEvtPlayerNum(''); setEvtPlayerName(''); setEvtMinute('');
-      setSavedMsg('🟨🟥 2ème jaune → carton rouge enregistré');
-      setTimeout(() => setSavedMsg(''), 3000);
+      setSavedMsg('🟨🟥 2ème jaune → carton rouge + suspension 1 match');
+      setTimeout(() => setSavedMsg(''), 4000);
     } catch {
       setSavedMsg('⚠️ Erreur lors de l\'enregistrement');
     } finally {
