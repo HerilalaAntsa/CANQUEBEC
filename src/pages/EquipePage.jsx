@@ -17,16 +17,22 @@ function buildRosterCols(suspMap, stylesObj) {
   return [
     { key: 'number',   label: '#',      sortable: true,  align: 'right' },
     { key: 'name',     label: 'Joueur', sortable: true,
-      render: (v, row) => (
-        <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
-          {v}
-          {suspMap[String(row.number)] != null && (
-            <span className={stylesObj.suspBadge} title={`Suspendu — ${suspMap[String(row.number)]} match(s) restant(s)`}>
-              🚨 {suspMap[String(row.number)]}
-            </span>
-          )}
-        </span>
-      )
+      render: (v, row) => {
+        const info = suspMap[String(row.number)];
+        return (
+          <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
+            {v}
+            {info?.suspended && info.remaining > 0 && (
+              <span className={stylesObj.suspBadge} title={`Suspendu — ${info.remaining} match(s) restant(s)`}>
+                🚫 {info.remaining}
+              </span>
+            )}
+            {info?.hasRed && !(info?.suspended && info.remaining > 0) && (
+              <span className={stylesObj.redBadge} title="Carton rouge reçu">🟥</span>
+            )}
+          </span>
+        );
+      }
     },
     { key: 'position', label: 'Poste',  sortable: true,
       render: (v) => v ?? '—'
@@ -57,18 +63,32 @@ export default function EquipePage() {
   const teamName = teamData?.name; // ex: "CAMEROUN"
   useEffect(() => {
     if (!teamName) return;
-    supabase
-      .from('suspensions')
-      .select('player_num, matches_remaining')
-      .eq('team', teamName)
-      .gt('matches_remaining', 0)
-      .then(({ data }) => {
-        if (data) {
-          const map = {};
-          data.forEach(s => { map[String(s.player_num)] = s.matches_remaining; });
-          setSuspMap(map);
-        }
-      });
+    // Charger les cartons rouges depuis match_events + suspensions actives
+    Promise.all([
+      supabase
+        .from('match_events')
+        .select('player_num, player_name, match_id, matches(journee)')
+        .eq('type', 'red')
+        .eq('team', teamName),
+      supabase
+        .from('suspensions')
+        .select('player_num, matches_remaining')
+        .eq('team', teamName)
+        .gt('matches_remaining', 0),
+    ]).then(([redRes, suspRes]) => {
+      const map = {};
+      // D'abord les suspensions actives (priorité)
+      for (const s of suspRes.data ?? []) {
+        map[String(s.player_num)] = { suspended: true, remaining: s.matches_remaining };
+      }
+      // Ensuite les rouges sans suspension explicite → juste afficher le rouge
+      for (const ev of redRes.data ?? []) {
+        const key = String(ev.player_num);
+        if (!map[key]) map[key] = { suspended: false, remaining: 0 };
+        map[key].hasRed = true;
+      }
+      setSuspMap(map);
+    });
   }, [teamName]);
 
   if (loading) {

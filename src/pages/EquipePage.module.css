@@ -47,6 +47,11 @@
   line-height: 1.4;
 }
 
+.redBadge {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
 .captainBadge {
   display: inline-flex;
   align-items: center;
