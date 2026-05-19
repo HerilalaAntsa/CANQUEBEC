@@ -54,13 +54,13 @@ export default function EquipePage() {
   const [suspMap, setSuspMap] = useState({}); // { playerNum: matches_remaining }
   const [matchTab, setMatchTab] = useState('all');
 
-  const teamCode = teamData?.team?.code;
+  const teamName = teamData?.name; // ex: "CAMEROUN"
   useEffect(() => {
-    if (!teamCode) return;
+    if (!teamName) return;
     supabase
       .from('suspensions')
       .select('player_num, matches_remaining')
-      .eq('team', teamCode)
+      .eq('team', teamName)
       .gt('matches_remaining', 0)
       .then(({ data }) => {
         if (data) {
@@ -69,7 +69,7 @@ export default function EquipePage() {
           setSuspMap(map);
         }
       });
-  }, [teamCode]);
+  }, [teamName]);
 
   if (loading) {
     return (
