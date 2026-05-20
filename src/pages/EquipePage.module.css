@@ -128,7 +128,9 @@
   gap: var(--space-6);
 }
 
-.section {}
+.section {
+  margin-bottom: var(--space-6);
+}
 
 .rosterWrap {
   overflow-x: auto;
