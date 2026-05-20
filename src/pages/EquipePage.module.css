@@ -52,6 +52,13 @@
   line-height: 1;
 }
 
+.suspText {
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--color-accent, #d4001e);
+  white-space: nowrap;
+}
+
 .captainBadge {
   display: inline-flex;
   align-items: center;

@@ -20,15 +20,15 @@ function buildRosterCols(suspMap, stylesObj) {
       render: (v, row) => {
         const info = suspMap[String(row.number)];
         return (
-          <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
+          <span style={{ display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' }}>
             {v}
-            {info?.suspended && info.remaining > 0 && (
-              <span className={stylesObj.suspBadge} title={`Suspendu — ${info.remaining} match(s) restant(s)`}>
-                🚫 {info.remaining}
+            {info?.hasRed && (
+              <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem' }}>
+                <span style={{ fontSize:'0.85rem', lineHeight:1 }}>🟥</span>
+                {info.suspended && info.remaining > 0 && (
+                  <em className={stylesObj.suspText}>suspendu ({info.remaining} match{info.remaining > 1 ? 's' : ''})</em>
+                )}
               </span>
-            )}
-            {info?.hasRed && !(info?.suspended && info.remaining > 0) && (
-              <span className={stylesObj.redBadge} title="Carton rouge reçu">🟥</span>
             )}
           </span>
         );
@@ -60,36 +60,66 @@ export default function EquipePage() {
   const [suspMap, setSuspMap] = useState({}); // { playerNum: matches_remaining }
   const [matchTab, setMatchTab] = useState('all');
 
-  const teamName = teamData?.name; // ex: "CAMEROUN"
+  const teamName  = teamData?.name;
+  const teamMatches = teamData?.teamMatches ?? [];
   useEffect(() => {
     if (!teamName) return;
-    // Charger les cartons rouges depuis match_events + suspensions actives
+
+    // Source de vérité unique : match_events type=red + override manuel suspensions
     Promise.all([
+      // Tous les rouges de cette équipe avec la journée du match
       supabase
         .from('match_events')
-        .select('player_num, player_name, match_id, matches(journee)')
+        .select('player_num, player_name, match_id, matches(journee, team_a, team_b, status)')
         .eq('type', 'red')
         .eq('team', teamName),
+      // Overrides manuels de l'admin (durée différente de 1, levée anticipée, etc.)
       supabase
         .from('suspensions')
-        .select('player_num, matches_remaining')
-        .eq('team', teamName)
-        .gt('matches_remaining', 0),
+        .select('player_num, matches_remaining, match_id')
+        .eq('team', teamName),
     ]).then(([redRes, suspRes]) => {
-      const map = {};
-      // D'abord les suspensions actives (priorité)
-      for (const s of suspRes.data ?? []) {
-        map[String(s.player_num)] = { suspended: true, remaining: s.matches_remaining };
+      const reds    = redRes.data  ?? [];
+      const overrides = suspRes.data ?? [];
+
+      // Journées jouées par cette équipe (played/forfait) dans l'ordre
+      const playedJournees = [...teamMatches]
+        .filter(m => ['played','forfait_a','forfait_b'].includes(m.status))
+        .map(m => m.journee)
+        .sort((a, b) => a - b);
+
+      // Map matchId → override admin si existant
+      const overrideByMatch = {};
+      for (const o of overrides) {
+        if (o.match_id) overrideByMatch[o.match_id] = o.matches_remaining;
       }
-      // Ensuite les rouges sans suspension explicite → juste afficher le rouge
-      for (const ev of redRes.data ?? []) {
-        const key = String(ev.player_num);
-        if (!map[key]) map[key] = { suspended: false, remaining: 0 };
-        map[key].hasRed = true;
+
+      const map = {};
+      for (const ev of reds) {
+        const key       = String(ev.player_num);
+        const redJournee = ev.matches?.journee ?? 0;
+
+        // Nombre de matchs de SUSPENSION pour ce rouge (1 par défaut, ou override admin)
+        const matchId       = ev.match_id;
+        const suspDuration  = overrideByMatch[matchId] !== undefined
+          ? overrideByMatch[matchId]  // admin a modifié (0 = levée)
+          : 1;                        // règlement art.8.2 : 1 match minimum
+
+        // Matchs joués par l'équipe APRÈS la journée du rouge
+        const playedSince = playedJournees.filter(j => j > redJournee).length;
+        const remaining   = Math.max(0, suspDuration - playedSince);
+
+        if (!map[key] || remaining > (map[key].remaining ?? 0)) {
+          map[key] = {
+            hasRed:    true,
+            suspended: remaining > 0,
+            remaining,
+          };
+        }
       }
       setSuspMap(map);
     });
-  }, [teamName]);
+  }, [teamName, teamMatches]);
 
   if (loading) {
     return (
