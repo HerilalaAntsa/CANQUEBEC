@@ -1,0 +1,12 @@
+const X = require('xlsx');
+const wb = X.readFile('/Users/antsa/Documents/Antsa/PROJECTS/CAN-QUEBEC/lnq-2026/public/data/Copie de @LISTE  GROUPE A .xlsx');
+console.log('Nouveau A sheets:', wb.SheetNames);
+const ws = wb.Sheets[wb.SheetNames[2]];
+const r = X.utils.sheet_to_json(ws, {header:1, defval:''});
+r.slice(0,15).forEach(function(row,i){ console.log(i, JSON.stringify(row)); });
+console.log('\n--- Ancien ---');
+const wb2 = X.readFile('/Users/antsa/Documents/Antsa/PROJECTS/CAN-QUEBEC/lnq-2026/public/data/@LISTE  GROUPE A -3.xlsx');
+console.log('Ancien A sheets:', wb2.SheetNames);
+const ws2 = wb2.Sheets[wb2.SheetNames[2]];
+const r2 = X.utils.sheet_to_json(ws2, {header:1, defval:''});
+r2.slice(0,15).forEach(function(row,i){ console.log(i, JSON.stringify(row)); });
