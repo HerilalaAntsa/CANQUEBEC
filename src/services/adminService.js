@@ -372,6 +372,32 @@ export async function decrementSuspension(id) {
   return next;
 }
 
+/**
+ * Crée ou met à jour un override de suspension pour un carton rouge donné (match_id).
+ * Si une row existe déjà pour ce match_id → update. Sinon → insert.
+ */
+export async function setOverrideSuspension({ team, playerNum, playerName, matchId, matchesRemaining, reason = 'red_card' }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { data: existing } = await supabase
+    .from('suspensions')
+    .select('id')
+    .eq('match_id', matchId)
+    .maybeSingle();
+  if (existing) {
+    const { error } = await supabase
+      .from('suspensions')
+      .update({ matches_remaining: matchesRemaining, reason })
+      .eq('id', existing.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase.from('suspensions').insert([{
+      team, player_num: playerNum ?? null, player_name: playerName ?? null,
+      matches_remaining: matchesRemaining, reason, type: 'auto', match_id: matchId ?? null,
+    }]);
+    if (error) throw error;
+  }
+}
+
 // ── Feuille de match ──────────────────────────────────────────
 
 /** Récupère la feuille de match pour un match */

@@ -5,7 +5,9 @@ import { useLeagueData } from '../../services/dataStore';
 import {
   getMatches, postponeMatch, restorePostponedMatch, getPostponedMatches,
   getSuspensions, createSuspension, updateSuspension, liftSuspension, decrementSuspension,
+  setOverrideSuspension,
 } from '../../services/adminService';
+import { getAllActiveSuspensions } from '../../services/disciplineService';
 import { supabase, isSupabaseEnabled } from '../../services/supabaseClient';
 import styles from './AdminGestion.module.css';
 
@@ -215,11 +217,11 @@ const TEAMS = [
 ];
 
 function SuspensionsTabWrapper() {
-  const { players } = useLeagueData();
-  return <SuspensionsTab players={players ?? []} />;
+  const { players, matches } = useLeagueData();
+  return <SuspensionsTab players={players ?? []} allMatches={matches ?? []} />;
 }
 
-function SuspensionsTab({ players }) {
+function SuspensionsTab({ players, allMatches = [] }) {
   const [suspensions,   setSuspensions]   = useState([]);
   const [loading,       setLoading]       = useState(true);
   const [msg,           setMsg]           = useState('');
@@ -242,10 +244,10 @@ function SuspensionsTab({ players }) {
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { setSuspensions(await getSuspensions()); }
+    try { setSuspensions(await getAllActiveSuspensions(allMatches)); }
     catch (e) { setMsg('⚠️ ' + e.message); }
     finally { setLoading(false); }
-  }, []);
+  }, [allMatches]);
 
   useEffect(() => { load(); }, [load]);
   const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
@@ -268,7 +270,11 @@ function SuspensionsTab({ players }) {
     if (!editModal) return;
     setSaving(true);
     try {
-      await updateSuspension(editModal.id, { matchesRemaining: parseInt(eMatches) || 1, reason: eReason });
+      await setOverrideSuspension({
+        team: editModal.team, playerNum: editModal.playerNum,
+        playerName: editModal.playerName, matchId: editModal.matchId,
+        matchesRemaining: parseInt(eMatches) || 1, reason: eReason,
+      });
       flash('✅ Suspension modifiée.');
       setEditModal(null);
       load();
@@ -279,18 +285,27 @@ function SuspensionsTab({ players }) {
   async function handlePurge(susp) {
     setSaving(true);
     try {
-      const remaining = await decrementSuspension(susp.id);
-      flash(remaining === 0 ? '✅ Match purgé — suspension terminée.' : `✅ Match purgé — ${remaining} match(s) restant(s).`);
+      const next = Math.max(0, susp.remaining - 1);
+      await setOverrideSuspension({
+        team: susp.team, playerNum: susp.playerNum,
+        playerName: susp.playerName, matchId: susp.matchId,
+        matchesRemaining: next, reason: 'red_card',
+      });
+      flash(next === 0 ? '✅ Match purgé — suspension terminée.' : `✅ Match purgé — ${next} match(s) restant(s).`);
       setPurgeConfirm(null);
       load();
     } catch (e) { flash('⚠️ ' + e.message); }
     finally { setSaving(false); }
   }
 
-  async function handleLift(id) {
+  async function handleLift(susp) {
     setSaving(true);
     try {
-      await liftSuspension(id);
+      await setOverrideSuspension({
+        team: susp.team, playerNum: susp.playerNum,
+        playerName: susp.playerName, matchId: susp.matchId,
+        matchesRemaining: 0, reason: 'red_card',
+      });
       flash('✅ Suspension levée.');
       setLiftConfirm(null);
       load();
@@ -315,24 +330,24 @@ function SuspensionsTab({ players }) {
        suspensions.length === 0 ? <p className={styles.info}>Aucune suspension active.</p> :
        <div className={styles.cards}>
          {suspensions.map(s => (
-           <div key={s.id} className={styles.suspCard}>
+           <div key={`${s.team}__${s.playerNum}`} className={styles.suspCard}>
              <div className={styles.cardTop}>
                <span className={styles.suspTeamBadge}>{s.team}</span>
-               <span className={styles.suspTypeBadge}>{s.type === 'auto' ? '🤖 Auto' : '✏️ Manuel'}</span>
+               <span className={styles.suspTypeBadge}>🤖 Auto</span>
              </div>
              <div className={styles.suspPlayer}>
-               {s.player_num && <span className={styles.jersey}>#{s.player_num}</span>}
-               <strong>{s.player_name || 'Joueur inconnu'}</strong>
+               {s.playerNum && <span className={styles.jersey}>#{s.playerNum}</span>}
+               <strong>{s.playerName || 'Joueur inconnu'}</strong>
              </div>
              <div className={styles.suspMeta}>
-               <span className={styles.suspReason}>{REASON_LABELS[s.reason] ?? s.reason}</span>
-               <span className={`${styles.suspCount} ${s.matches_remaining === 1 ? styles.suspCountWarn : ''}`}>
-                 🚫 {s.matches_remaining} match{s.matches_remaining > 1 ? 's' : ''} restant{s.matches_remaining > 1 ? 's' : ''}
+               <span className={styles.suspReason}>🟥 Carton rouge</span>
+               <span className={`${styles.suspCount} ${s.remaining === 1 ? styles.suspCountWarn : ''}`}>
+                 🚫 {s.remaining} match{s.remaining > 1 ? 's' : ''} restant{s.remaining > 1 ? 's' : ''}
                </span>
              </div>
              <div className={styles.suspActions}>
                <button className={styles.purgeBtn} onClick={() => setPurgeConfirm(s)}>✓ Purger 1 match</button>
-               <button className={styles.editSmBtn} onClick={() => { setEditModal(s); setEMatches(String(s.matches_remaining)); setEReason(s.reason); }}>✏️</button>
+               <button className={styles.editSmBtn} onClick={() => { setEditModal(s); setEMatches(String(s.remaining)); setEReason('red_card'); }}>✏️</button>
                <button className={styles.liftBtn} onClick={() => setLiftConfirm(s)}>🗑 Lever</button>
              </div>
            </div>
@@ -396,7 +411,7 @@ function SuspensionsTab({ players }) {
         <div className={styles.overlay} onClick={() => setEditModal(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Modifier la suspension</h3>
-            <p className={styles.modalSub}>{editModal.player_name || `#${editModal.player_num}`} — {editModal.team}</p>
+            <p className={styles.modalSub}>{editModal.playerName || `#${editModal.playerNum}`} — {editModal.team}</p>
             <label className={styles.label}>Matchs restants</label>
             <input className={styles.input} type="number" min="0" value={eMatches} onChange={e => setEMatches(e.target.value)} />
             <label className={styles.label}>Raison</label>
@@ -421,8 +436,8 @@ function SuspensionsTab({ players }) {
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Confirmer la purge</h3>
             <p className={styles.modalSub}>
-              {purgeConfirm.player_name || `#${purgeConfirm.player_num}`} — {purgeConfirm.team}<br />
-              Marquer 1 match de suspension purgé ({purgeConfirm.matches_remaining} → {purgeConfirm.matches_remaining - 1}) ?
+              {purgeConfirm.playerName || `#${purgeConfirm.playerNum}`} — {purgeConfirm.team}<br />
+              Marquer 1 match de suspension purgé ({purgeConfirm.remaining} → {purgeConfirm.remaining - 1}) ?
             </p>
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setPurgeConfirm(null)}>Annuler</button>
@@ -440,12 +455,12 @@ function SuspensionsTab({ players }) {
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Lever la suspension</h3>
             <p className={styles.modalSub}>
-              Lever totalement la suspension de {liftConfirm.player_name || `#${liftConfirm.player_num}`} ({liftConfirm.team}) ?<br />
+              Lever totalement la suspension de {liftConfirm.playerName || `#${liftConfirm.playerNum}`} ({liftConfirm.team}) ?<br />
               Cette action est irréversible.
             </p>
             <div className={styles.modalActions}>
               <button className={styles.cancelBtn} onClick={() => setLiftConfirm(null)}>Annuler</button>
-              <button className={styles.liftConfirmBtn} disabled={saving} onClick={() => handleLift(liftConfirm.id)}>
+              <button className={styles.liftConfirmBtn} disabled={saving} onClick={() => handleLift(liftConfirm)}>
                 {saving ? '⏳…' : '🗑 Lever la suspension'}
               </button>
             </div>

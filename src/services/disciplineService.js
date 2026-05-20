@@ -160,7 +160,7 @@ export async function getAllActiveSuspensions(allMatches = []) {
     if (remaining > 0 && (!seen[key] || remaining > seen[key])) {
       seen[key] = remaining;
       const idx = result.findIndex(r => r.team === ev.team && String(r.playerNum) === String(ev.player_num));
-      const entry = { team: ev.team, playerNum: ev.player_num, playerName: ev.player_name, remaining };
+      const entry = { team: ev.team, playerNum: ev.player_num, playerName: ev.player_name, remaining, matchId: ev.match_id };
       if (idx >= 0) result[idx] = entry;
       else result.push(entry);
     }
