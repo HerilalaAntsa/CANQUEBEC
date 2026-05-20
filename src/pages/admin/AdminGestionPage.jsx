@@ -347,7 +347,7 @@ function SuspensionsTab({ players, allMatches = [] }) {
              </div>
              <div className={styles.suspActions}>
                <button className={styles.purgeBtn} onClick={() => setPurgeConfirm(s)}>✓ Purger 1 match</button>
-               <button className={styles.editSmBtn} onClick={() => { setEditModal(s); setEMatches(String(s.remaining)); setEReason('red_card'); }}>✏️</button>
+               <button className={styles.editSmBtn} onClick={() => { setEditModal(s); setEMatches(String(s.remaining)); setEReason('red_card'); }}>✏️ Modifier</button>
                <button className={styles.liftBtn} onClick={() => setLiftConfirm(s)}>🗑 Lever</button>
              </div>
            </div>
