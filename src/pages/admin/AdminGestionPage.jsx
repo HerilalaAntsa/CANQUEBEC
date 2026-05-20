@@ -34,7 +34,7 @@ function PostponedTab() {
     setLoading(true);
     try {
       const [all, poned] = await Promise.all([getMatches(), getPostponedMatches()]);
-      setAllMatches(all.filter(m => m.status !== 'postponed'));
+      setAllMatches(all.filter(m => m.status !== 'postponed' && !['played','forfait_a','forfait_b'].includes(m.status)));
       setPostponed(poned);
     } catch (e) {
       setMsg('⚠️ ' + e.message);
