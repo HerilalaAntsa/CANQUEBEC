@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLeagueData } from '../services/dataStore';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
+import { getAllRedCards, getAllActiveSuspensions } from '../services/disciplineService';
 import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './StatsPage.module.css';
@@ -55,7 +56,7 @@ function buildAssistList(assistEvents) {
 }
 
 export default function StatsPage() {
-  const { supabaseScores, loadSupabaseScores } = useLeagueData();
+  const { supabaseScores, loadSupabaseScores, matches } = useLeagueData();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState('goals');
@@ -86,25 +87,18 @@ export default function StatsPage() {
       .finally(() => setAssistLoading(false));
   }, []);
 
-  // Charger cartons rouges + suspensions
+  // Charger cartons rouges + suspensions actives via disciplineService
   useEffect(() => {
     if (!isSupabaseEnabled || tab !== 'discipline') return;
     setDisciplineLoading(true);
     Promise.all([
-      supabase
-        .from('match_events')
-        .select('id, team, player_name, player_num, minute, match_id, matches(journee, team_a, team_b)')
-        .eq('type', 'red')
-        .order('match_id', { ascending: true }),
-      supabase
-        .from('suspensions')
-        .select('*')
-        .order('created_at', { ascending: false }),
-    ]).then(([redRes, suspRes]) => {
-      if (!redRes.error) setRedEvents(redRes.data ?? []);
-      if (!suspRes.error) setSuspensions(suspRes.data ?? []);
+      getAllRedCards(),
+      getAllActiveSuspensions(matches),
+    ]).then(([reds, actives]) => {
+      setRedEvents(reds);
+      setSuspensions(actives);
     }).finally(() => setDisciplineLoading(false));
-  }, [tab]);
+  }, [tab, matches]);
 
   const scorers = useMemo(() => buildScorerList(supabaseScores), [supabaseScores]);
   const assisters = useMemo(() => buildAssistList(assistEvents), [assistEvents]);
@@ -118,7 +112,7 @@ export default function StatsPage() {
     if (!journeeFilter) return redEvents;
     return redEvents.filter(ev => String(ev.matches?.journee) === String(journeeFilter));
   }, [redEvents, journeeFilter]);
-  const activeSuspensions = useMemo(() => suspensions.filter(s => s.matches_remaining > 0), [suspensions]);
+  const activeSuspensions = suspensions; // getAllActiveSuspensions retourne déjà remaining > 0
 
   const hasScorers  = scorers.length > 0;
   const hasAssisters = assisters.length > 0;
@@ -263,14 +257,14 @@ export default function StatsPage() {
                         </thead>
                         <tbody>
                           {activeSuspensions.map(s => (
-                            <tr key={s.id} className={styles.row} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
+                            <tr key={`${s.team}-${s.playerNum}`} className={styles.row} onClick={() => navigate(`/equipe/${generateSlug(s.team)}`)}>
                               <td className={styles.tdPlayer}>
-                                {s.player_num && <span className={styles.jersey}>#{s.player_num}</span>}
-                                <span className={styles.playerName}>{s.player_name || '—'}</span>
+                                {s.playerNum && <span className={styles.jersey}>#{s.playerNum}</span>}
+                                <span className={styles.playerName}>{s.playerName || '—'}</span>
                               </td>
                               <td className={styles.tdTeam}><FlagBadge team={s.team} size="sm" /></td>
-                              <td className={styles.tdStat} style={{ color: 'var(--color-accent)' }}>{s.matches_remaining}</td>
-                              <td className={styles.tdReason}>{REASON_LABELS[s.reason] ?? s.reason}</td>
+                              <td className={styles.tdStat} style={{ color: 'var(--color-accent)' }}>{s.remaining}</td>
+                              <td className={styles.tdReason}>🟥 Carton rouge</td>
                             </tr>
                           ))}
                         </tbody>

@@ -2,7 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useTeam } from '../hooks/useTeam';
 import { useLeagueData } from '../services/dataStore';
-import { supabase } from '../services/supabaseClient';
+import { getSuspensionMap } from '../services/disciplineService';
 import FlagBadge from '../components/shared/FlagBadge';
 import MatchCard from '../components/calendrier/MatchCard';
 import SortableTable from '../components/shared/SortableTable';
@@ -60,66 +60,12 @@ export default function EquipePage() {
   const [suspMap, setSuspMap] = useState({}); // { playerNum: matches_remaining }
   const [matchTab, setMatchTab] = useState('all');
 
-  const teamName  = teamData?.name;
-  const teamMatches = teamData?.teamMatches ?? [];
+  const teamName   = teamData?.name;
+  const teamMatchesForSusp = teamData?.teamMatches ?? [];
   useEffect(() => {
     if (!teamName) return;
-
-    // Source de vérité unique : match_events type=red + override manuel suspensions
-    Promise.all([
-      // Tous les rouges de cette équipe avec la journée du match
-      supabase
-        .from('match_events')
-        .select('player_num, player_name, match_id, matches(journee, team_a, team_b, status)')
-        .eq('type', 'red')
-        .eq('team', teamName),
-      // Overrides manuels de l'admin (durée différente de 1, levée anticipée, etc.)
-      supabase
-        .from('suspensions')
-        .select('player_num, matches_remaining, match_id')
-        .eq('team', teamName),
-    ]).then(([redRes, suspRes]) => {
-      const reds    = redRes.data  ?? [];
-      const overrides = suspRes.data ?? [];
-
-      // Journées jouées par cette équipe (played/forfait) dans l'ordre
-      const playedJournees = [...teamMatches]
-        .filter(m => ['played','forfait_a','forfait_b'].includes(m.status))
-        .map(m => m.journee)
-        .sort((a, b) => a - b);
-
-      // Map matchId → override admin si existant
-      const overrideByMatch = {};
-      for (const o of overrides) {
-        if (o.match_id) overrideByMatch[o.match_id] = o.matches_remaining;
-      }
-
-      const map = {};
-      for (const ev of reds) {
-        const key       = String(ev.player_num);
-        const redJournee = ev.matches?.journee ?? 0;
-
-        // Nombre de matchs de SUSPENSION pour ce rouge (1 par défaut, ou override admin)
-        const matchId       = ev.match_id;
-        const suspDuration  = overrideByMatch[matchId] !== undefined
-          ? overrideByMatch[matchId]  // admin a modifié (0 = levée)
-          : 1;                        // règlement art.8.2 : 1 match minimum
-
-        // Matchs joués par l'équipe APRÈS la journée du rouge
-        const playedSince = playedJournees.filter(j => j > redJournee).length;
-        const remaining   = Math.max(0, suspDuration - playedSince);
-
-        if (!map[key] || remaining > (map[key].remaining ?? 0)) {
-          map[key] = {
-            hasRed:    true,
-            suspended: remaining > 0,
-            remaining,
-          };
-        }
-      }
-      setSuspMap(map);
-    });
-  }, [teamName, teamMatches]);
+    getSuspensionMap(teamName, teamMatchesForSusp).then(setSuspMap);
+  }, [teamName, teamMatchesForSusp]);
 
   if (loading) {
     return (
