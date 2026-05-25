@@ -141,7 +141,7 @@ export default function ClassementPage() {
     }
     const out = {};
     for (const [team, arr] of Object.entries(map)) {
-      out[team] = arr.sort((a, b) => b.journee - a.journee).slice(0, 5).map(r => r.result);
+      out[team] = arr.sort((a, b) => b.journee - a.journee).slice(0, 5).reverse().map(r => r.result);
     }
     return out;
   }, [matches]);
