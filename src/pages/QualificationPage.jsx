@@ -7,7 +7,7 @@ import styles from './QualificationPage.module.css';
 
 export default function QualificationPage() {
   const { matches, teams, loadSupabaseScores } = useLeagueData();
-  const [filters, setFilters] = useState({ team: '', group: '', venue: '', status: '', referee: '' });
+  const [filters, setFilters] = useState({ team: '', group: '', venue: '', status: '', referee: '', journee: '' });
 
   // Rafraîchir les scores/statuts toutes les 30s
   useEffect(() => {
@@ -35,6 +35,11 @@ export default function QualificationPage() {
     return [...set].sort();
   }, [groupMatches]);
 
+  // Liste des journées disponibles
+  const journees = useMemo(() =>
+    [...new Set(groupMatches.map(m => m.journee).filter(Boolean))].sort((a, b) => a - b)
+  , [groupMatches]);
+
   const filtered = useMemo(() => {
     return groupMatches.filter(m => {
       if (filters.team) {
@@ -50,6 +55,7 @@ export default function QualificationPage() {
         if (!isMatch) return false;
       }
       if (filters.referee && m.referee?.trim() !== filters.referee) return false;
+      if (filters.journee && String(m.journee) !== filters.journee) return false;
       return true;
     });
   }, [groupMatches, filters]);
@@ -77,7 +83,7 @@ export default function QualificationPage() {
           </p>
         </div>
 
-        <CalendrierFilters teams={teams} referees={referees} venues={venues} filters={filters} onChange={setFilters} />
+        <CalendrierFilters teams={teams} referees={referees} venues={venues} journees={journees} filters={filters} onChange={setFilters} />
 
         {byJournee.length === 0 ? (
           <div className={styles.empty}>Aucun match ne correspond aux filtres sélectionnés.</div>

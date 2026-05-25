@@ -89,7 +89,7 @@ export default function HomePage() {
 
   const upcoming = useMemo(() =>
     matches
-      .filter(m => m.status === 'upcoming' || m.status === 'live')
+      .filter(m => (m.status === 'upcoming' || m.status === 'live') && !(m.scoreA != null && m.scoreB != null))
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(0, 3),
     [matches]

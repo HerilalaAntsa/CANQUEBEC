@@ -1,10 +1,22 @@
 import styles from './CalendrierFilters.module.css';
 
-export default function CalendrierFilters({ teams, referees = [], venues = [], filters, onChange }) {
+export default function CalendrierFilters({ teams, referees = [], venues = [], journees = [], filters, onChange }) {
   const set = (key, val) => onChange({ ...filters, [key]: val });
 
   return (
     <div className={styles.bar}>
+      {journees.length > 1 && (
+        <select
+          className={styles.select}
+          value={filters.journee ?? ''}
+          onChange={e => set('journee', e.target.value)}
+        >
+          <option value="">Toutes les journées</option>
+          {journees.map(j => (
+            <option key={j} value={String(j)}>Journée {j}</option>
+          ))}
+        </select>
+      )}
       <select
         className={styles.select}
         value={filters.team}
@@ -64,7 +76,7 @@ export default function CalendrierFilters({ teams, referees = [], venues = [], f
       {Object.values(filters).some(Boolean) && (
         <button
           className={styles.reset}
-          onClick={() => onChange({ team: '', group: '', venue: '', status: '', referee: '' })}
+          onClick={() => onChange({ team: '', group: '', venue: '', status: '', referee: '', journee: '' })}
         >
           ✕ Réinitialiser
         </button>
