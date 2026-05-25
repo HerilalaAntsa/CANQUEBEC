@@ -44,16 +44,7 @@ const COLUMNS = [
     render: (v) => <FlagBadge team={v} link size="sm" />
   },
   { key: 'points', label: 'Pts', sortable: true, align: 'right',
-    render: (v, row) => (
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-        <strong>{v}</strong>
-        {row?.penalty < 0 && (
-          <span title={`Pénalité : ${row.penalty} pts`} style={{ fontSize: '0.7rem', color: 'var(--color-danger)', fontWeight: 700 }}>
-            ({row.penalty})
-          </span>
-        )}
-      </span>
-    )
+    render: (v) => <strong>{v}</strong>
   },
   { key: 'played',       label: 'PJ',   sortable: true, align: 'right' },
   { key: 'won',          label: 'V',    sortable: true, align: 'right' },
