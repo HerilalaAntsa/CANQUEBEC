@@ -16,6 +16,7 @@ export default function AdminDashboardPage() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState('');
   const [filter,       setFilter]       = useState('upcoming'); // 'all' | 'upcoming' | 'played'
+  const [journeeFilter, setJourneeFilter] = useState('');       // '' = toutes les journées
   const [offlineCount, setOfflineCount] = useState(0);
   const [syncMsg,      setSyncMsg]      = useState('');
   const [importing,    setImporting]    = useState(false);

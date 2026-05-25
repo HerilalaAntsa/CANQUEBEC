@@ -264,9 +264,10 @@ export function DataProvider({ children }) {
       const [matchesRes, eventsRes, penaltyRes] = await Promise.all([
         supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
-        supabase.from('penalty_points').select('team, points'),
+        supabase.from('penalty_points').select('team, points').then(r => r),
       ]);
       if (matchesRes.error) throw matchesRes.error;
+      const penaltyData = penaltyRes.error ? [] : (penaltyRes.data ?? []);
 
       // Regrouper les buts par match_id
       const goalsByMatch = {};
@@ -300,7 +301,7 @@ export function DataProvider({ children }) {
           coordinator: row.coordinator ?? null,
         };
       }
-      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyRes.data ?? [] });
+      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyData });
       log.info('SUPABASE_SCORES_LOADED', { count: matchesRes.data?.length });
     } catch (err) {
       log.warn('SUPABASE_SCORES_ERROR', { error: err.message });
