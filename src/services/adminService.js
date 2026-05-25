@@ -519,3 +519,30 @@ export async function restoreBackupJSON(backup) {
 
   return results;
 }
+
+// ── Points de pénalité ──────────────────────────────────────────────────────
+
+/** Retourne toutes les pénalités (déductions/bonus de points au classement) */
+export async function getPenaltyPoints() {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('penalty_points')
+    .select('*')
+    .order('team', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Ajoute une pénalité/bonus de points */
+export async function addPenaltyPoints({ team, points, reason }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('penalty_points').insert([{ team, points, reason: reason || null }]);
+  if (error) throw error;
+}
+
+/** Supprime une pénalité par id */
+export async function deletePenaltyPoints(id) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('penalty_points').delete().eq('id', id);
+  if (error) throw error;
+}

@@ -239,7 +239,7 @@ export default function AdminDashboardPage() {
     if (filter === 'upcoming') return m.status === 'upcoming';
     if (filter === 'played')   return m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b';
     return true;
-  });
+  }).filter(m => !journeeFilter || String(m.journee) === journeeFilter);
 
   const liveCount = matches.filter(m => m.status === 'live').length;
 
@@ -331,6 +331,16 @@ export default function AdminDashboardPage() {
              f === 'played'   ? `✓ Joués` : '☰ Tous'}
           </button>
         ))}
+        <select
+          className={styles.journeeSelect}
+          value={journeeFilter}
+          onChange={e => setJourneeFilter(e.target.value)}
+        >
+          <option value="">Toutes les journées</option>
+          {[...new Set(matches.map(m => m.journee).filter(Boolean))].sort((a,b)=>a-b).map(j => (
+            <option key={j} value={String(j)}>Journée {j}</option>
+          ))}
+        </select>
       </div>
 
       {/* Content */}

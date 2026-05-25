@@ -29,6 +29,7 @@ const initialState = {
 
   // Scores live depuis Supabase (clé: `${journee}:${teamA}:${teamB}`)
   supabaseScores: {},
+  penaltyPoints:  [],   // [{ team, points, reason }] déductions/bonus au classement
 
   // État de chargement
   loading:        true,   // true par défaut pour éviter le flash "introuvable" au refresh
@@ -69,7 +70,7 @@ function reducer(state, action) {
         matches:    applySupabaseScores(data.matches, state.supabaseScores),
         teams:      data.teams,
         standings:  data.standings,
-        liveStandings: computeLiveStandings(data.matches, state.supabaseScores),
+        liveStandings: computeLiveStandings(data.matches, state.supabaseScores, state.penaltyPoints),
         scorers,
         assisters,
         players,
@@ -115,12 +116,14 @@ function reducer(state, action) {
 
     case 'SUPABASE_SCORES_LOADED': {
       const scores = action.scores; // { [key]: { id, scoreA, scoreB, status, goals } }
+      const penalties = action.penalties ?? state.penaltyPoints;
       return {
         ...state,
         loadingScores:  false,
         supabaseScores: scores,
+        penaltyPoints:  penalties,
         matches:        applySupabaseScores(state.matches, scores),
-        liveStandings:  computeLiveStandings(state.matches, scores),
+        liveStandings:  computeLiveStandings(state.matches, scores, penalties),
       };
     }
 
@@ -135,8 +138,9 @@ function reducer(state, action) {
 /**
  * Calcule le classement live depuis les scores Supabase.
  * Victoire = +3, Nul = +1 chaque, Défaite = 0
+ * penalties = [{ team, points }] → déductions/bonus
  */
-function computeLiveStandings(matches, supabaseScores) {
+function computeLiveStandings(matches, supabaseScores, penalties = []) {
   if (!supabaseScores || Object.keys(supabaseScores).length === 0) return [];
 
   const table = {}; // { teamName: { played, won, drawn, lost, goalsFor, goalsAgainst, points } }
@@ -182,6 +186,11 @@ function computeLiveStandings(matches, supabaseScores) {
       table[a].drawn++; table[a].points += 1;
       table[b].drawn++; table[b].points += 1;
     }
+  }
+
+  // Appliquer les déductions/bonus de points
+  for (const p of penalties) {
+    if (table[p.team]) table[p.team].points += p.points;
   }
 
   return Object.values(table).map(r => ({
@@ -252,9 +261,10 @@ export function DataProvider({ children }) {
     if (!isSupabaseEnabled) return;
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
-      const [matchesRes, eventsRes] = await Promise.all([
+      const [matchesRes, eventsRes, penaltyRes] = await Promise.all([
         supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
+        supabase.from('penalty_points').select('team, points'),
       ]);
       if (matchesRes.error) throw matchesRes.error;
 
@@ -290,7 +300,7 @@ export function DataProvider({ children }) {
           coordinator: row.coordinator ?? null,
         };
       }
-      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores });
+      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyRes.data ?? [] });
       log.info('SUPABASE_SCORES_LOADED', { count: matchesRes.data?.length });
     } catch (err) {
       log.warn('SUPABASE_SCORES_ERROR', { error: err.message });

@@ -44,7 +44,16 @@ const COLUMNS = [
     render: (v) => <FlagBadge team={v} link size="sm" />
   },
   { key: 'points', label: 'Pts', sortable: true, align: 'right',
-    render: (v) => <strong>{v}</strong>
+    render: (v, row) => (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+        <strong>{v}</strong>
+        {row?.penalty < 0 && (
+          <span title={`Pénalité : ${row.penalty} pts`} style={{ fontSize: '0.7rem', color: 'var(--color-danger)', fontWeight: 700 }}>
+            ({row.penalty})
+          </span>
+        )}
+      </span>
+    )
   },
   { key: 'played',       label: 'PJ',   sortable: true, align: 'right' },
   { key: 'won',          label: 'V',    sortable: true, align: 'right' },
@@ -89,7 +98,7 @@ const COLUMNS = [
 ];
 
 export default function ClassementPage() {
-  const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores, matches } = useLeagueData();
+  const { standings, liveStandings, teams, loadSupabaseScores, supabaseScores, matches, penaltyPoints } = useLeagueData();
   const navigate = useNavigate();
   const [tab, setTab] = useState('classement');
   const [cardEvents, setCardEvents] = useState([]);
@@ -175,7 +184,8 @@ export default function ClassementPage() {
       )
       .map((s, i) => {
         // Rang simple 1, 2, 3, 4
-        return { ...s, _rankPos: i + 1, pos: i + 1, last5: last5Map[s.team] ?? [] };
+        const penalty = (penaltyPoints ?? []).filter(p => p.team === s.team).reduce((sum, p) => sum + p.points, 0);
+        return { ...s, _rankPos: i + 1, pos: i + 1, last5: last5Map[s.team] ?? [], penalty: penalty || 0 };
       });
   }, [standings, liveStandings, teams, last5Map]);
 

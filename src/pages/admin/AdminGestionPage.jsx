@@ -6,6 +6,7 @@ import {
   getMatches, postponeMatch, restorePostponedMatch, getPostponedMatches,
   getSuspensions, createSuspension, updateSuspension, liftSuspension, decrementSuspension,
   setOverrideSuspension,
+  getPenaltyPoints, addPenaltyPoints, deletePenaltyPoints,
 } from '../../services/adminService';
 import { getAllActiveSuspensions } from '../../services/disciplineService';
 import { supabase, isSupabaseEnabled } from '../../services/supabaseClient';
@@ -473,6 +474,132 @@ function SuspensionsTab({ players, allMatches = [] }) {
 
 // ─── Page principale ──────────────────────────────────────────────────────────
 
+// ─── Onglet Points de pénalité ────────────────────────────────────────────────
+
+const TEAMS_PENALTY = [
+  'ALGÉRIE','BURKINA FASO','CAMEROUN','CANADA','CENTRAFRIQUE','CONGO RDC',
+  'CÔTE D\'IVOIRE','GABON','GAMBIE','GUINÉE','HAÏTI','MADAGASCAR','MALI',
+  'NATIONS UNIES','QUÉBEC','SÉNÉGAL','TANZANIE','TOGO'
+];
+
+function PenaltyTab() {
+  const [penalties, setPenalties] = useState([]);
+  const [loading,   setLoading]   = useState(true);
+  const [msg,       setMsg]       = useState('');
+  const [saving,    setSaving]    = useState(false);
+  // Form
+  const [pTeam,   setPTeam]   = useState('');
+  const [pPoints, setPPoints] = useState('-2');
+  const [pReason, setPReason] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setPenalties(await getPenaltyPoints()); }
+    catch (e) { setMsg('⚠️ ' + e.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
+
+  async function handleAdd() {
+    if (!pTeam || !pPoints) return;
+    setSaving(true);
+    try {
+      await addPenaltyPoints({ team: pTeam, points: parseInt(pPoints), reason: pReason });
+      flash('✅ Pénalité ajoutée.');
+      setPTeam(''); setPPoints('-2'); setPReason('');
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleDelete(id) {
+    setSaving(true);
+    try {
+      await deletePenaltyPoints(id);
+      flash('✅ Supprimé.');
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  const totalByTeam = {};
+  for (const p of penalties) {
+    totalByTeam[p.team] = (totalByTeam[p.team] ?? 0) + p.points;
+  }
+
+  return (
+    <div>
+      {msg && <div className={msg.startsWith('⚠️') ? styles.msgError : styles.msg}>{msg}</div>}
+
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>Points de pénalité <span className={styles.count}>{penalties.length}</span></h2>
+      </div>
+      <p className={styles.info} style={{ marginBottom: '1rem' }}>
+        Ces points sont ajoutés (négatif = déduction) directement au classement live.<br />
+        Ex: <strong>-2</strong> = l'équipe perd 2 pts au classement.
+      </p>
+
+      {/* Formulaire ajout */}
+      <div className={styles.addForm}>
+        <select className={styles.input} value={pTeam} onChange={e => setPTeam(e.target.value)}>
+          <option value="">— Choisir une équipe —</option>
+          {TEAMS_PENALTY.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <input
+          className={styles.input} type="number" placeholder="Points (ex: -2)"
+          value={pPoints} onChange={e => setPPoints(e.target.value)}
+          style={{ width: '120px' }}
+        />
+        <input
+          className={styles.input} placeholder="Raison (optionnel)"
+          value={pReason} onChange={e => setPReason(e.target.value)}
+        />
+        <button className={styles.addBtn} disabled={saving || !pTeam || !pPoints} onClick={handleAdd}>
+          {saving ? '⏳…' : '+ Ajouter'}
+        </button>
+      </div>
+
+      {/* Liste */}
+      {loading ? <p className={styles.info}>Chargement…</p> :
+       penalties.length === 0 ? <p className={styles.info}>Aucune pénalité enregistrée.</p> :
+       <div className={styles.cards}>
+         {penalties.map(p => (
+           <div key={p.id} className={styles.suspCard}>
+             <div className={styles.cardTop}>
+               <span className={styles.suspTeamBadge}>{p.team}</span>
+               <span className={`${styles.suspTypeBadge} ${p.points < 0 ? styles.suspCountWarn : ''}`}>
+                 {p.points > 0 ? `+${p.points}` : p.points} pts
+               </span>
+             </div>
+             {p.reason && <p className={styles.reason}>{p.reason}</p>}
+             <div className={styles.suspActions}>
+               <button className={styles.liftBtn} disabled={saving} onClick={() => handleDelete(p.id)}>🗑 Supprimer</button>
+             </div>
+           </div>
+         ))}
+       </div>
+      }
+
+      {/* Résumé par équipe si plusieurs lignes */}
+      {Object.keys(totalByTeam).length > 0 && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <h3 className={styles.sectionTitle} style={{ fontSize: '0.9rem' }}>Résumé par équipe</h3>
+          {Object.entries(totalByTeam).map(([team, total]) => (
+            <div key={team} className={styles.matchRow}>
+              <span className={styles.matchTeams}>{team}</span>
+              <span className={`${styles.suspCount} ${total < 0 ? styles.suspCountWarn : ''}`}>
+                {total > 0 ? `+${total}` : total} pts
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminGestionPage() {
   const { session, logout } = useAuth();
   const [tab, setTab] = useState('postponed');
@@ -503,11 +630,18 @@ export default function AdminGestionPage() {
         >
           🚫 Suspensions
         </button>
+        <button
+          className={`${styles.tab} ${tab === 'penalties' ? styles.tabActive : ''}`}
+          onClick={() => setTab('penalties')}
+        >
+          ⚠️ Pénalités
+        </button>
       </div>
 
       <div className={styles.content}>
         {tab === 'postponed'   && <PostponedTab />}
         {tab === 'suspensions' && <SuspensionsTabWrapper />}
+        {tab === 'penalties'   && <PenaltyTab />}
 
       </div>
     </div>

@@ -258,6 +258,7 @@ export default function AdminMatchEditPage() {
   function handleStartEdit(ev) {
     setEditingEvt({
       id:          ev.id,
+      team:        ev.team        ?? '',
       player_num:  ev.player_num  ?? '',
       player_name: ev.player_name ?? '',
       minute:      ev.minute      ?? '',
@@ -299,7 +300,7 @@ export default function AdminMatchEditPage() {
     const next = Number(newVal);
     if (next > prev) {
       const defaultMin = events.reduce((max, ev) => ev.minute != null && ev.minute > max ? ev.minute : max, 0) || 1;
-      setGoalModalMin(String(defaultMin));
+      setGoalModalMin('');
       setGoalModalNum(''); setGoalModalName('');
       setGoalModalPDNum(''); setGoalModalPDName('');
       setGoalModal({
@@ -733,7 +734,15 @@ export default function AdminMatchEditPage() {
                           type="number" placeholder="N°" className={styles.editInput}
                           style={{ width: '60px' }}
                           value={editingEvt.player_num}
-                          onChange={e => setEditingEvt(prev => ({ ...prev, player_num: e.target.value }))}
+                          onChange={e => {
+                            const num = e.target.value;
+                            const found = num && editingEvt.team ? lookupPlayer(num, editingEvt.team) : null;
+                            setEditingEvt(prev => ({
+                              ...prev,
+                              player_num: num,
+                              ...(found ? { player_name: found.name ?? prev.player_name } : {}),
+                            }));
+                          }}
                         />
                         <input
                           type="text" placeholder="Nom" className={styles.editInput}

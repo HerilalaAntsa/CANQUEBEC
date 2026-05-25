@@ -138,3 +138,22 @@ CREATE POLICY "auth write lineup"
   ON match_lineup FOR ALL
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
+
+-- ── Points de pénalité (déductions au classement) ──────────────
+CREATE TABLE IF NOT EXISTS penalty_points (
+  id         BIGSERIAL PRIMARY KEY,
+  team       TEXT NOT NULL,
+  points     INTEGER NOT NULL,  -- négatif ex: -2, ou positif si bonus
+  reason     TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE penalty_points ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read penalty_points"
+  ON penalty_points FOR SELECT USING (true);
+
+CREATE POLICY "auth write penalty_points"
+  ON penalty_points FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');

@@ -1,0 +1,43 @@
+graph TB
+    subgraph Deploy["☁️ Vercel"]
+        REPO["Repo Git\n/public/data/HORAIRE_2026.xlsx"]
+    end
+
+    subgraph Browser["🌐 Navigateur (100% client-side)"]
+        direction TB
+
+        subgraph Load["Chargement données"]
+            FETCH["fetch('/data/HORAIRE_2026.xlsx')\nauto au démarrage"]
+            UPLOAD["ExcelLoader.jsx\n(bouton fallback)"]
+            SJS["SheetJS\nnpm xlsx"]
+        end
+
+        subgraph Core["Couche services"]
+            EXC["excelService.js\nparse + normalise\n6 feuilles → objets JS"]
+            STORE["dataStore.js\nContext + Reducer\n(état mémoire)"]
+            LOG["logger.js\nJSON structuré\n+ correlation_id"]
+        end
+
+        subgraph Hooks["Hooks"]
+            HLD["useLeagueData()"]
+            HTE["useTeam(slug)"]
+            HSR["useSearch(query)"]
+        end
+
+        subgraph Pages["Pages / Vues"]
+            P1["🏠 Home\nDashboard"]
+            P2["📅 Calendrier"]
+            P3["🏆 Classement"]
+            P4["⚽ Stats"]
+            P5["🛡️ Équipe"]
+        end
+    end
+
+    REPO -->|"git push\n→ auto-deploy"| FETCH
+    FETCH --> SJS
+    UPLOAD --> SJS
+    SJS --> EXC
+    EXC --> STORE
+    STORE --> Hooks
+    Hooks --> Pages
+    EXC -.->|"log events"| LOG
