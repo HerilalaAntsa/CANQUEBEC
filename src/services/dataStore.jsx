@@ -211,7 +211,8 @@ function applySupabaseScores(matches, supabaseScores) {
     const key = m.phase
       ? `phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`
       : `${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`;
-    const live = supabaseScores[key];
+    const fallbackKey = `teams:${norm(m.teamA)}:${norm(m.teamB)}`;
+    const live = supabaseScores[key] ?? supabaseScores[fallbackKey];
     if (!live) return m;
     return {
       ...m,
@@ -281,11 +282,13 @@ export function DataProvider({ children }) {
         // Normaliser les noms pour éviter mismatch apostrophe (U+2019 vs U+0027)
         const tA = (row.team_a || '').trim().toUpperCase().replace(/\u2019/g, "'");
         const tB = (row.team_b || '').trim().toUpperCase().replace(/\u2019/g, "'");
-        // Clé : phase finale → "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
+        // Clé principale : journee:teamA:teamB
+        // Clé secondaire (fallback si journee erronée) : teamA:teamB seul
         const key = row.phase
           ? `phase:${row.phase}:${tA}:${tB}`
           : `${row.journee}:${tA}:${tB}`;
-        scores[key] = {
+        const fallbackKey = `teams:${tA}:${tB}`;
+        const entry = {
           id:          row.id,
           teamA:       row.team_a,
           teamB:       row.team_b,
@@ -300,6 +303,10 @@ export function DataProvider({ children }) {
           ref2:        row.ref2        ?? null,
           coordinator: row.coordinator ?? null,
         };
+        scores[key] = entry;
+        // Fallback : si journée erronée dans Supabase, permettre merge par équipes seules
+        // (n'écrase pas si une vraie clé journée existe déjà)
+        if (!scores[fallbackKey]) scores[fallbackKey] = entry;
       }
       dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyData });
       log.info('SUPABASE_SCORES_LOADED', { count: matchesRes.data?.length });
