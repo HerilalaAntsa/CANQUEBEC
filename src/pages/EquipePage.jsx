@@ -58,7 +58,7 @@ export default function EquipePage() {
 
   // ⚠️ Hooks TOUJOURS avant les return conditionnels
   const [suspMap, setSuspMap] = useState({}); // { playerNum: matches_remaining }
-  const [matchTab, setMatchTab] = useState('all');
+  const [matchTab, setMatchTab] = useState('upcoming');
 
   const teamName   = teamData?.name;
   const teamMatchesForSusp = teamData?.teamMatches ?? [];
