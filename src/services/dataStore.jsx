@@ -149,7 +149,9 @@ function computeLiveStandings(matches, supabaseScores, penalties = []) {
     if (!table[name]) table[name] = { team: name, played: 0, won: 0, drawn: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
   };
 
-  for (const row of Object.values(supabaseScores)) {
+  for (const [key, row] of Object.entries(supabaseScores)) {
+    // Ignorer les clés fallback "teams:tA:tB" pour ne pas compter chaque match en double
+    if (key.startsWith('teams:')) continue;
     const isForfait = row.status === 'forfait_a' || row.status === 'forfait_b';
     if (row.status !== 'played' && row.status !== 'live' && !isForfait) continue;
 
