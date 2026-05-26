@@ -298,36 +298,11 @@ export default function AdminMatchEditPage() {
   function handleScoreChange(team, newVal) {
     const prev = team === 'A' ? Number(scoreA) : Number(scoreB);
     const next = Number(newVal);
-    if (next > prev) {
-      const defaultMin = events.reduce((max, ev) => ev.minute != null && ev.minute > max ? ev.minute : max, 0) || 1;
-      setGoalModalMin('');
-      setGoalModalNum(''); setGoalModalName('');
-      setGoalModalPDNum(''); setGoalModalPDName('');
-      setGoalModal({
-        team: team === 'A' ? match.team_a : match.team_b,
-        prevScoreA: Number(scoreA),
-        prevScoreB: Number(scoreB),
-        newScoreA: team === 'A' ? next : Number(scoreA),
-        newScoreB: team === 'B' ? next : Number(scoreB),
-      });
-      // ne pas changer le score tout de suite — le modal s'en charge
-      return;
-    }
-    if (next < prev) {
-      const teamName = team === 'A' ? match.team_a : match.team_b;
-      // Dernier but de cette équipe
-      const teamGoals = [...events]
-        .filter(ev => ev.type === 'goal' && ev.team === teamName)
-        .sort((a, b) => (b.minute ?? 0) - (a.minute ?? 0));
-      const lastGoal = teamGoals[0] ?? null;
-      setRemoveGoalModal({
-        team: teamName,
-        prevScoreA: Number(scoreA),
-        prevScoreB: Number(scoreB),
-        newScoreA: team === 'A' ? next : Number(scoreA),
-        newScoreB: team === 'B' ? next : Number(scoreB),
-        lastGoal,
-      });
+    if (next !== prev) {
+      const newScoreA = team === 'A' ? next : Number(scoreA);
+      const newScoreB = team === 'B' ? next : Number(scoreB);
+      if (team === 'A') setScoreA(String(next)); else setScoreB(String(next));
+      updateScore(id, newScoreA, newScoreB).catch(() => {});
       return;
     }
     if (team === 'A') setScoreA(newVal);

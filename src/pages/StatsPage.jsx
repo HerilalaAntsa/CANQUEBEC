@@ -16,7 +16,8 @@ const REASON_LABELS = {
 /** Agrège les buts depuis supabaseScores (déjà dans le store) */
 function buildScorerList(supabaseScores) {
   const map = {};
-  for (const match of Object.values(supabaseScores)) {
+  for (const [_key, match] of Object.entries(supabaseScores)) {
+    if (_key.startsWith('teams:')) continue;
     for (const g of match.goals ?? []) {
       if (!g.player_name && !g.player_num) continue;
       const key = `${g.team}__${g.player_num ?? ''}__${g.player_name ?? ''}`;
