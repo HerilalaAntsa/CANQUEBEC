@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Fichiers Excel listes joueurs (mise à jour manuelle hors git)
+public/data/@LISTE*.xlsx
+public/data/@Liste*.xlsx
+public/data/old/
