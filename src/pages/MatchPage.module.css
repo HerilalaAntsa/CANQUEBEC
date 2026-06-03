@@ -441,10 +441,55 @@
 
 @media (max-width: 640px) {
   .eventsGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    gap: 6px;
   }
 
   .eventsDiv {
-    display: none;
+    display: block;
+  }
+
+  .evtHeader {
+    padding: 4px 8px;
+  }
+
+  .evtHeaderLabel {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  .evtHeaderMin {
+    font-size: 11px;
+  }
+
+  .evtBody {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .evtAvatar {
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+  }
+
+  .evtPlayerName {
+    font-size: 0.82rem;
+  }
+
+  .evtPlayerMeta,
+  .evtPD {
+    font-size: 0.7rem;
+  }
+
+  .evtSubRow {
+    gap: 6px;
+    padding: 7px 8px;
+  }
+
+  .evtSubLabelIn,
+  .evtSubLabelOut {
+    min-width: 42px;
+    font-size: 9px;
   }
 }
