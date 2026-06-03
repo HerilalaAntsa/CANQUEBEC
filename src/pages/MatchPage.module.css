@@ -75,7 +75,9 @@
 }
 
 .scorerItem {
-  display: block;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
@@ -85,7 +87,14 @@
 }
 
 .scorersList.right .scorerItem {
+  justify-content: flex-end;
   text-align: right;
+}
+
+.scorerItem > :first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scorerMin {

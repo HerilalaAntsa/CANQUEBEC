@@ -126,11 +126,16 @@ export default function MatchPage() {
   // Trier par minute (null → 1 en premier)
   const sortedEvents = [...events].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1));
 
-  // Séparer les événements par équipe
-  const eventsA  = sortedEvents.filter(e => e.team === match.team_a);
-  const eventsB  = sortedEvents.filter(e => e.team === match.team_b);
-  const scorersA = sortedEvents.filter(e => e.type === 'goal' && e.team === match.team_a);
-  const scorersB = sortedEvents.filter(e => e.type === 'goal' && e.team === match.team_b);
+  // Normalisation pour éviter les mismatch (espaces, apostrophes typographiques)
+  const normTeam = (v) => (v || '').trim().toUpperCase().replace(/\u2019/g, "'");
+  const teamAKey = normTeam(match.team_a);
+  const teamBKey = normTeam(match.team_b);
+
+  // Séparer les événements/buteurs par équipe
+  const eventsA  = sortedEvents.filter(e => normTeam(e.team) === teamAKey);
+  const eventsB  = sortedEvents.filter(e => normTeam(e.team) === teamBKey);
+  const scorersA = sortedEvents.filter(e => e.type === 'goal' && normTeam(e.team) === teamAKey);
+  const scorersB = sortedEvents.filter(e => e.type === 'goal' && normTeam(e.team) === teamBKey);
 
   const ARB_ROLES = [
     { key: 'referee',     label: 'Arbitre central' },
