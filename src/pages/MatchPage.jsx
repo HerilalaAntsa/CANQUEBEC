@@ -218,8 +218,11 @@ export default function MatchPage() {
               <div className={styles.scorersList}>
                 {scorersA.map(ev => (
                   <span key={ev.id} className={styles.scorerItem}>
-                    ⚽ {ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}
-                    {ev.minute ? <span className={styles.scorerMin}> {ev.minute}'</span> : ''}
+                    <span className={styles.scorerMain}>
+                      <span className={styles.scorerIcon}>⚽</span>
+                      <span className={styles.scorerName}>{ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}</span>
+                    </span>
+                    {ev.minute ? <span className={styles.scorerMin}>{ev.minute}'</span> : ''}
                   </span>
                 ))}
               </div>
@@ -252,8 +255,11 @@ export default function MatchPage() {
               <div className={`${styles.scorersList} ${styles.right}`}>
                 {scorersB.map(ev => (
                   <span key={ev.id} className={styles.scorerItem}>
-                    ⚽ {ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}
-                    {ev.minute ? <span className={styles.scorerMin}> {ev.minute}'</span> : ''}
+                    <span className={styles.scorerMain}>
+                      <span className={styles.scorerIcon}>⚽</span>
+                      <span className={styles.scorerName}>{ev.player_name || (ev.player_num ? `#${ev.player_num}` : '?')}</span>
+                    </span>
+                    {ev.minute ? <span className={styles.scorerMin}>{ev.minute}'</span> : ''}
                   </span>
                 ))}
               </div>
