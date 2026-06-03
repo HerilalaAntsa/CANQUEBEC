@@ -51,6 +51,7 @@
 .teamBlock {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -66,6 +67,7 @@
   flex-direction: column;
   gap: 2px;
   margin-top: var(--space-2);
+  width: 100%;
 }
 
 .scorersList.right {
@@ -73,9 +75,17 @@
 }
 
 .scorerItem {
+  display: block;
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.scorersList.right .scorerItem {
+  text-align: right;
 }
 
 .scorerMin {
@@ -145,8 +155,10 @@
 /* ── Événements ── */
 .eventsGrid {
   display: grid;
-  grid-template-columns: 1fr 2px 1fr;
+  grid-template-columns: minmax(0, 1fr) 2px minmax(0, 1fr);
   gap: var(--space-2);
+  width: 100%;
+  min-width: 0;
 }
 
 .eventsDiv {
@@ -158,6 +170,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
 }
 
 .eventRow {
@@ -302,6 +315,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
+  min-width: 0;
 }
 
 .evtHeader {
@@ -369,12 +383,18 @@
 .evtPlayerMeta {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .evtPD {
   font-size: var(--text-xs);
   color: var(--color-text-muted);
   font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Remplacement */
@@ -388,6 +408,10 @@
   align-items: flex-start;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
+}
+
+.evtSubRow > div {
+  min-width: 0;
 }
 .evtSubRow + .evtSubRow {
   border-top: 1px solid var(--color-border);
@@ -413,4 +437,14 @@
   white-space: nowrap;
   min-width: 52px;
   padding-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .eventsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .eventsDiv {
+    display: none;
+  }
 }
