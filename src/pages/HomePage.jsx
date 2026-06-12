@@ -88,13 +88,30 @@ export default function HomePage() {
     return standings;
   }, [standings, liveStandings]);
 
-  const upcoming = useMemo(() =>
-    matches
-      .filter(m => (m.status === 'upcoming' || m.status === 'live') && !(m.scoreA != null && m.scoreB != null))
+  const upcoming = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const seen = new Set();
+    return matches
+      .filter(m => {
+        if (m.status !== 'upcoming' && m.status !== 'live') return false;
+        if (m.scoreA != null && m.scoreB != null) return false;
+        // Exclure matchs dont la date est passée mais pas encore à jour dans Supabase
+        if (m.date) {
+          const safe = String(m.date).length === 10 ? m.date + 'T00:00:00' : m.date;
+          const matchDay = new Date(safe);
+          matchDay.setHours(0, 0, 0, 0);
+          if (matchDay < today) return false;
+        }
+        // Dédupliquer par équipes + date (double entrée Excel pour même match)
+        const dedupeKey = `${m.teamA}|${m.teamB}|${m.date}`;
+        if (seen.has(dedupeKey)) return false;
+        seen.add(dedupeKey);
+        return true;
+      })
       .sort((a, b) => new Date(a.date) - new Date(b.date))
-      .slice(0, 3),
-    [matches]
-  );
+      .slice(0, 3);
+  }, [matches]);
 
   const recentResults = useMemo(() =>
     matches
