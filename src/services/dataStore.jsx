@@ -208,13 +208,25 @@ function computeLiveStandings(matches, supabaseScores, penalties = []) {
 function applySupabaseScores(matches, supabaseScores) {
   if (!supabaseScores || Object.keys(supabaseScores).length === 0) return matches;
   const norm = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
+
+  // Compter les occurrences d'une même paire d'équipes dans l'horaire (phase groupes)
+  // Si une paire apparaît plusieurs fois, on n'utilise PAS le fallback teams:*
+  // pour éviter d'appliquer un même match Supabase sur plusieurs lignes Excel.
+  const pairCounts = new Map();
+  for (const m of matches) {
+    if (m.phase) continue;
+    const pairKey = `teams:${norm(m.teamA)}:${norm(m.teamB)}`;
+    pairCounts.set(pairKey, (pairCounts.get(pairKey) ?? 0) + 1);
+  }
+
   return matches.map((m) => {
     // Phase finale → clé "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
     const key = m.phase
       ? `phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`
       : `${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`;
     const fallbackKey = `teams:${norm(m.teamA)}:${norm(m.teamB)}`;
-    const live = supabaseScores[key] ?? supabaseScores[fallbackKey];
+    const canUseFallback = !m.phase && (pairCounts.get(fallbackKey) ?? 0) === 1;
+    const live = supabaseScores[key] ?? (canUseFallback ? supabaseScores[fallbackKey] : undefined);
     if (!live) return m;
     return {
       ...m,
