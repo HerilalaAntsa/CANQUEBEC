@@ -219,7 +219,7 @@ function applySupabaseScores(matches, supabaseScores) {
     pairCounts.set(pairKey, (pairCounts.get(pairKey) ?? 0) + 1);
   }
 
-  return matches.map((m) => {
+  const merged = matches.map((m) => {
     // Phase finale → clé "phase:X:teamA:teamB", groupes → "journee:teamA:teamB"
     const key = m.phase
       ? `phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`
@@ -243,6 +243,32 @@ function applySupabaseScores(matches, supabaseScores) {
       coordinator: live.coordinator ?? m.coordinator,
     };
   });
+
+  // Dédupliquer les doublons de l'horaire (mêmes équipes/date/heure)
+  // en gardant la version la plus fiable (score/statut/buteurs Supabase).
+  const statusRank = (s) => {
+    if (s === 'played' || s === 'forfait_a' || s === 'forfait_b') return 3;
+    if (s === 'live') return 2;
+    if (s === 'postponed') return 1;
+    return 0; // upcoming / inconnu
+  };
+  const qualityRank = (m) => {
+    const hasScore = Number.isFinite(m?.scoreA) && Number.isFinite(m?.scoreB) ? 1 : 0;
+    const hasSupa  = m?.supabaseId ? 1 : 0;
+    const goalsLen = Array.isArray(m?.goals) ? m.goals.length : 0;
+    return hasSupa * 100 + statusRank(m?.status) * 10 + hasScore * 5 + Math.min(goalsLen, 4);
+  };
+
+  const byKey = new Map();
+  for (const m of merged) {
+    const dedupeKey = `m:${m.phase ? `phase:${m.phase}` : 'groups'}:${norm(m.teamA)}:${norm(m.teamB)}:${m.date ?? ''}:${m.time ?? ''}`;
+    const prev = byKey.get(dedupeKey);
+    if (!prev || qualityRank(m) > qualityRank(prev)) {
+      byKey.set(dedupeKey, m);
+    }
+  }
+
+  return [...byKey.values()];
 }
 
 /**
