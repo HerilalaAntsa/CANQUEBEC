@@ -52,6 +52,10 @@ export default function MatchCard({ match }) {
   const isForfait = match.status === 'forfait_a' || match.status === 'forfait_b';
   const forfaitTeam = match.status === 'forfait_a' ? match.teamA : match.status === 'forfait_b' ? match.teamB : null;
 
+  const normT = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
+  const tA = normT(match.teamA);
+  const tB = normT(match.teamB);
+
   const card = (
     <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${isForfait ? styles.cardForfait : ''} ${match.supabaseId ? styles.clickable : ''}`}>
       <div className={styles.statusBadge}><StatusPill match={match} /></div>
@@ -79,7 +83,7 @@ export default function MatchCard({ match }) {
       {match.goals?.length > 0 && (
         <div className={styles.scorers}>
           <div className={styles.scorersCol}>
-            {match.goals.filter(g => g.team === match.teamA).map((g, i) => (
+            {match.goals.filter(g => normT(g.team) === tA).map((g, i) => (
               <span key={i} className={styles.scorer}>
                 ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
               </span>
@@ -87,7 +91,7 @@ export default function MatchCard({ match }) {
           </div>
           <div className={styles.scorersSep} />
           <div className={`${styles.scorersCol} ${styles.scorersRight}`}>
-            {match.goals.filter(g => g.team === match.teamB).map((g, i) => (
+            {match.goals.filter(g => normT(g.team) === tB).map((g, i) => (
               <span key={i} className={styles.scorer}>
                 ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
               </span>
@@ -99,7 +103,7 @@ export default function MatchCard({ match }) {
       {match.redCards?.length > 0 && (
         <div className={styles.reds}>
           <div className={styles.redsCol}>
-            {match.redCards.filter(r => r.team === match.teamA).map((r, i) => (
+            {match.redCards.filter(r => normT(r.team) === tA).map((r, i) => (
               <span key={i} className={styles.redItem}>
                 🟥 {r.player_name || (r.player_num ? `#${r.player_num}` : '?')}
               </span>
@@ -107,7 +111,7 @@ export default function MatchCard({ match }) {
           </div>
           <div className={styles.redsSep} />
           <div className={`${styles.redsCol} ${styles.redsRight}`}>
-            {match.redCards.filter(r => r.team === match.teamB).map((r, i) => (
+            {match.redCards.filter(r => normT(r.team) === tB).map((r, i) => (
               <span key={i} className={styles.redItem}>
                 🟥 {r.player_name || (r.player_num ? `#${r.player_num}` : '?')}
               </span>
