@@ -96,6 +96,26 @@ export default function MatchCard({ match }) {
         </div>
       )}
 
+      {match.redCards?.length > 0 && (
+        <div className={styles.reds}>
+          <div className={styles.redsCol}>
+            {match.redCards.filter(r => r.team === match.teamA).map((r, i) => (
+              <span key={i} className={styles.redItem}>
+                🟥 {r.player_name || (r.player_num ? `#${r.player_num}` : '?')}
+              </span>
+            ))}
+          </div>
+          <div className={styles.redsSep} />
+          <div className={`${styles.redsCol} ${styles.redsRight}`}>
+            {match.redCards.filter(r => r.team === match.teamB).map((r, i) => (
+              <span key={i} className={styles.redItem}>
+                🟥 {r.player_name || (r.player_num ? `#${r.player_num}` : '?')}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className={styles.footer}>
         <ArbitresRow match={match} />
       </div>

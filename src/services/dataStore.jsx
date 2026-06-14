@@ -302,9 +302,10 @@ export function DataProvider({ children }) {
     if (!isSupabaseEnabled) return;
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
-      const [matchesRes, eventsRes, penaltyRes] = await Promise.all([
+      const [matchesRes, eventsRes, redEventsRes, penaltyRes] = await Promise.all([
         supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
+        supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'red'),
         supabase.from('penalty_points').select('team, points').then(r => r),
       ]);
       if (matchesRes.error) throw matchesRes.error;
@@ -315,6 +316,13 @@ export function DataProvider({ children }) {
       for (const ev of eventsRes.data ?? []) {
         if (!goalsByMatch[ev.match_id]) goalsByMatch[ev.match_id] = [];
         goalsByMatch[ev.match_id].push(ev);
+      }
+
+      // Regrouper les cartons rouges par match_id
+      const redsByMatch = {};
+      for (const ev of redEventsRes.data ?? []) {
+        if (!redsByMatch[ev.match_id]) redsByMatch[ev.match_id] = [];
+        redsByMatch[ev.match_id].push(ev);
       }
 
       const scores = {};
@@ -338,6 +346,7 @@ export function DataProvider({ children }) {
           time:        row.time        ?? null,
           venue:       row.venue       ?? null,
           goals:       goalsByMatch[row.id] ?? [],
+          redCards:    redsByMatch[row.id]   ?? [],
           referee:     row.referee     ?? null,
           ref1:        row.ref1        ?? null,
           ref2:        row.ref2        ?? null,
