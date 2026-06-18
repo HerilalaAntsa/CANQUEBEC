@@ -272,16 +272,17 @@ export async function importMatchesFromExcel(parsedMatches) {
 
   const byJourneeKey = {};
   const byPhaseKey = {};
+  const normKey = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'").replace(/\u2018/g, "'");
   for (const row of existing ?? []) {
-    if (row.journee !== null) byJourneeKey[`${row.journee}:${row.team_a}:${row.team_b}`] = row;
-    else if (row.phase)       byPhaseKey[`${row.phase}:${row.team_a}:${row.team_b}`]     = row;
+    if (row.journee !== null) byJourneeKey[`${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
+    else if (row.phase)       byPhaseKey[`${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`]     = row;
   }
 
   const toInsert = [];
   const toUpdate = [];
 
   for (const row of groupRows) {
-    const key = `${row.journee}:${row.team_a}:${row.team_b}`;
+    const key = `${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`;
     const ex  = byJourneeKey[key];
     if (ex) {
       // Préserver les scores/statut déjà saisis via admin
@@ -292,7 +293,7 @@ export async function importMatchesFromExcel(parsedMatches) {
   }
 
   for (const row of finaleRows) {
-    const key = `${row.phase}:${row.team_a}:${row.team_b}`;
+    const key = `${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`;
     const ex  = byPhaseKey[key];
     if (ex) {
       toUpdate.push({ id: ex.id, ...row, score_a: ex.score_a, score_b: ex.score_b, status: ex.status });
