@@ -230,6 +230,10 @@ export async function syncFromGoogleSheets() {
 export async function importMatchesFromExcel(parsedMatches) {
   if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
 
+  // Normalise apostrophes, accents composés et casse pour toutes les comparaisons de clés
+  const normKey = s => (s || '').normalize('NFC').trim().toUpperCase()
+    .replace(/[\u2018\u2019\u201A\u201B\u02BC\u0060\u00B4]/g, "'");
+
   const allRows = parsedMatches
     .map((m) => ({
       journee:     m.journee ?? null,
@@ -252,13 +256,21 @@ export async function importMatchesFromExcel(parsedMatches) {
 
   if (allRows.length === 0) throw new Error('Aucun match valide à importer');
 
-  const groupRows  = allRows.filter(r => r.journee !== null);
+  // Dédupliquer les groupRows (même journée+teamA+teamB possible dans l'Excel)
+  const _groupRaw = allRows.filter(r => r.journee !== null);
+  const _seenGroup = new Set();
+  const groupRows = _groupRaw.filter(r => {
+    const k = `${r.journee}:${normKey(r.team_a)}:${normKey(r.team_b)}`;
+    if (_seenGroup.has(k)) return false;
+    _seenGroup.add(k);
+    return true;
+  });
 
   // Dédupliquer les finaleRows (même phase+teamA+teamB possible dans l'Excel)
   const _finaleRaw = allRows.filter(r => r.journee === null && r.phase !== null);
   const _seenPhase = new Set();
   const finaleRows = _finaleRaw.filter(r => {
-    const k = `${r.phase}:${r.team_a}:${r.team_b}`;
+    const k = `${r.phase}:${normKey(r.team_a)}:${normKey(r.team_b)}`;
     if (_seenPhase.has(k)) return false;
     _seenPhase.add(k);
     return true;
@@ -272,7 +284,6 @@ export async function importMatchesFromExcel(parsedMatches) {
 
   const byJourneeKey = {};
   const byPhaseKey = {};
-  const normKey = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'").replace(/\u2018/g, "'");
   for (const row of existing ?? []) {
     if (row.journee !== null) byJourneeKey[`${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
     else if (row.phase)       byPhaseKey[`${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`]     = row;
