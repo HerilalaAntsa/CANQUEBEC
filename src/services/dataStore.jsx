@@ -277,17 +277,23 @@ function applySupabaseScores(matches, supabaseScores) {
 
 /**
  * Fusionne deux sources de joueurs — la liste "listes" a priorité sur "horaire"
- * Clé de déduplication : number + team
+ * Clé de déduplication :
+ *  - Joueur actif  → "number:team" (un seul par numéro/équipe)
+ *  - Joueur banni  → "banned:name:team" (clé par nom pour éviter collision si numéro réattribué)
  */
 function mergePlayerSources(primary, secondary) {
   const map = new Map();
+  const playerKey = (p) => p.banned
+    ? `banned:${(p.name || '').toLowerCase().trim()}:${p.team}`
+    : `${p.number}:${p.team}`;
   // D'abord la source secondaire (moins prioritaire)
   for (const p of secondary) {
-    map.set(`${p.number}:${p.team}`, p);
+    map.set(playerKey(p), p);
   }
-  // Puis la source primaire (écrase)
+  // Puis la source primaire (écrase — mais bannis gardent leur propre clé)
   for (const p of primary) {
-    map.set(`${p.number}:${p.team}`, { ...map.get(`${p.number}:${p.team}`), ...p });
+    const key = playerKey(p);
+    map.set(key, { ...map.get(key), ...p });
   }
   return [...map.values()];
 }
