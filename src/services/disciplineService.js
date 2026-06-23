@@ -51,6 +51,11 @@ export async function getSuspensionMap(teamName, teamMatches = []) {
     .map(m => Number(m.journee))
     .sort((a, b) => a - b);
 
+  // Matchs à venir triés par journée (pour calculer la journée de retour)
+  const upcomingMatches = teamMatches
+    .filter(m => !PLAYED_STATUSES.includes(m.status) && m.journee != null)
+    .sort((a, b) => Number(a.journee) - Number(b.journee));
+
   // matchId → durée de suspension (override admin)
   const overrideByMatch = {};
   for (const o of overrides) {
@@ -73,12 +78,16 @@ export async function getSuspensionMap(teamName, teamMatches = []) {
 
     // Garder le remaining le plus élevé si plusieurs rouges pour le même joueur
     if (!map[key] || remaining > map[key].remaining) {
+      // Match de retour = le (remaining)-ème match à venir (après avoir purgé remaining matchs)
+      const returnMatch   = remaining > 0 ? (upcomingMatches[remaining] ?? null) : null;
       map[key] = {
-        hasRed:     true,
-        suspended:  remaining > 0,
+        hasRed:        true,
+        suspended:     remaining > 0,
         remaining,
-        playerName: ev.player_name ?? null,
-        playerNum:  ev.player_num  ?? null,
+        playerName:    ev.player_name ?? null,
+        playerNum:     ev.player_num  ?? null,
+        returnJournee: returnMatch?.journee ?? null,
+        returnDate:    returnMatch?.date    ?? null,
       };
     }
   }

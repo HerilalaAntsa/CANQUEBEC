@@ -120,12 +120,21 @@ export default function EquipePage() {
   const suspendedRoster = Object.entries(suspMap)
     .filter(([, info]) => info.suspended && info.remaining > 0)
     .map(([num, info]) => ({
-      id:        `susp-${num}`,
-      number:    info.playerNum ?? parseInt(num),
-      name:      info.playerName ?? `Joueur #${num}`,
-      remaining: info.remaining,
+      id:            `susp-${num}`,
+      number:        info.playerNum ?? parseInt(num),
+      name:          info.playerName ?? `Joueur #${num}`,
+      remaining:     info.remaining,
+      returnJournee: info.returnJournee ?? null,
+      returnDate:    info.returnDate    ?? null,
     }))
     .sort((a, b) => b.remaining - a.remaining);
+
+  const fmtDate = (d) => {
+    if (!d) return null;
+    const dt = d instanceof Date ? d : new Date(d);
+    if (isNaN(dt.getTime())) return null;
+    return dt.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short' });
+  };
 
   return (
     <div className={styles.page}>
@@ -220,12 +229,25 @@ export default function EquipePage() {
                         </span>
                       )
                     },
-                    { key: 'remaining', label: 'Matchs restants', sortable: true,
+                    { key: 'remaining', label: 'Matchs manqués', sortable: true,
                       render: (v) => (
                         <span className={styles.suspCountBadge}>
                           🚫 {v} match{v > 1 ? 's' : ''}
                         </span>
                       )
+                    },
+                    { key: 'returnJournee', label: 'Retour', sortable: false,
+                      render: (v, row) => {
+                        const j = v != null ? `J${v}` : null;
+                        const d = fmtDate(row.returnDate);
+                        if (!j && !d) return <em style={{ color:'var(--color-text-muted)', fontSize:'0.8rem' }}>Fin de tournoi</em>;
+                        return (
+                          <span style={{ display:'flex', flexDirection:'column', gap:'0.1rem', lineHeight:1.3 }}>
+                            {j && <strong style={{ color:'var(--color-accent)' }}>{j}</strong>}
+                            {d && <span style={{ fontSize:'0.75rem', color:'var(--color-text-muted)' }}>{d}</span>}
+                          </span>
+                        );
+                      }
                     },
                   ]}
                   data={suspendedRoster}
