@@ -5,7 +5,7 @@ import { useLeagueData } from '../services/dataStore';
 import { generateSlug, normalizeTeamName } from '../config/teams';
 
 export function useTeam(slug) {
-  const { teams, matches, standings, liveStandings, players, scorers, assisters, teamMeta } = useLeagueData();
+  const { teams, matches, standings, liveStandings, players, scorers, assisters, teamMeta, bannedPlayers } = useLeagueData();
 
   const mergedStandings = useMemo(() => {
     // Si liveStandings disponibles (Supabase), ils ont priorité
@@ -56,7 +56,7 @@ export function useTeam(slug) {
     }
 
     const roster = players
-      .filter(p => normalizeTeamName(p.team) === name)
+      .filter(p => normalizeTeamName(p.team) === name && !p.banned)
       .map(p => {
         const num = String(p.number ?? '');
         const liveGoals   = goalsByPlayer[num];
@@ -68,6 +68,29 @@ export function useTeam(slug) {
         };
       })
       .sort((a, b) => a.number - b.number);
+
+    // ── Joueurs bannis (Excel + Supabase permanents) ────────────────
+    // 1. Bannis détectés dans l'Excel (banned: true)
+    const excelBanned = players.filter(p => normalizeTeamName(p.team) === name && p.banned);
+    // 2. Bannis stockés dans Supabase mais absent de l'Excel actuel (supprimés par erreur)
+    const excelBannedNames = new Set(excelBanned.map(p => p.name?.toLowerCase().trim()));
+    const supabaseBanned = (bannedPlayers ?? [])
+      .filter(p => normalizeTeamName(p.team) === name)
+      .filter(p => !excelBannedNames.has(p.name?.toLowerCase().trim()));
+    // 3. Fusion + conflit de numéro : si le numéro d'un banni = numéro d'un actif → null
+    const activeNumbers = new Set(roster.map(p => p.number).filter(Boolean));
+    const bannedRoster = [...excelBanned, ...supabaseBanned]
+      .map(p => ({
+        ...p,
+        number:  (p.number && activeNumbers.has(p.number)) ? null : p.number,
+        goals:   0,
+        assists: 0,
+      }))
+      .sort((a, b) => {
+        if (a.number === null && b.number !== null) return 1;
+        if (b.number === null && a.number !== null) return -1;
+        return (a.number ?? 0) - (b.number ?? 0);
+      });
 
     const topScorers = scorers
       .filter(s => normalizeTeamName(s.team) === name)
@@ -84,6 +107,6 @@ export function useTeam(slug) {
 
     const meta = teamMeta.find(m => normalizeTeamName(m.name) === name) ?? null;
 
-    return { team, name, standing, teamMatches, roster, topScorers, topAssisters, meta };
-  }, [slug, teams, matches, mergedStandings, players, scorers, assisters, teamMeta]);
+    return { team, name, standing, teamMatches, roster, bannedRoster, topScorers, topAssisters, meta };
+  }, [slug, teams, matches, mergedStandings, players, scorers, assisters, teamMeta, bannedPlayers]);
 }

@@ -381,8 +381,23 @@ function parseJoueursSheet(ws) {
 
 // ─── FICHIER LISTES JOUEURS (Groupe A ou B) ────
 
+/**
+ * Retourne true si la cellule (r, c) a un formatage barré (strikethrough).
+ * Nécessite cellStyles: true dans XLSX.read().
+ */
+function isCellStrike(ws, r, c) {
+  if (c < 0) return false;
+  const cell = ws[XLSX.utils.encode_cell({ r, c })];
+  if (!cell) return false;
+  // Style cellule entière
+  if (cell.s?.font?.strike || cell.s?.font?.strikethrough) return true;
+  // Texte riche (barré partiel sur un run)
+  if (Array.isArray(cell.r)) return cell.r.some(run => run.s?.strike || run.s?.strikethrough);
+  return false;
+}
+
 function parsePlayersFile(buffer, corrId) {
-  const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
+  const wb = XLSX.read(buffer, { type: 'array', cellDates: true, cellStyles: true });
   const allPlayers = [];
   const allTeamMeta = [];
 
@@ -483,6 +498,11 @@ function parseTeamSheet(ws, teamName) {
     const posRaw    = posIdx >= 0 ? cleanStr(row[posIdx]) : null;
     const ageRaw    = ageIdx >= 0 ? row[ageIdx] : null;
 
+    // Détecter le barré (joueur banni) sur les cellules numéro, prénom ou nom
+    const isBanned = [numIdx, preIdx, nomIdx]
+      .filter(c => c >= 0)
+      .some(c => isCellStrike(ws, i, c));
+
     players.push({
       number:      num,
       firstName,
@@ -496,6 +516,7 @@ function parseTeamSheet(ws, teamName) {
       goals:       0,   // enrichi après jointure
       assists:     0,   // enrichi après jointure
       hasFullData: !!(firstName || lastName),
+      banned:      isBanned,
     });
   }
 

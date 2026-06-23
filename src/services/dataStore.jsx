@@ -30,6 +30,7 @@ const initialState = {
   // Scores live depuis Supabase (clé: `${journee}:${teamA}:${teamB}`)
   supabaseScores: {},
   penaltyPoints:  [],   // [{ team, points, reason }] déductions/bonus au classement
+  bannedPlayers:  [],   // [{ team, number, name, reason, notes }] bannis permanents (Supabase)
 
   // État de chargement
   loading:        true,   // true par défaut pour éviter le flash "introuvable" au refresh
@@ -117,11 +118,13 @@ function reducer(state, action) {
     case 'SUPABASE_SCORES_LOADED': {
       const scores = action.scores; // { [key]: { id, scoreA, scoreB, status, goals } }
       const penalties = action.penalties ?? state.penaltyPoints;
+      const bannedPlayers = action.bannedPlayers ?? state.bannedPlayers;
       return {
         ...state,
         loadingScores:  false,
         supabaseScores: scores,
         penaltyPoints:  penalties,
+        bannedPlayers,
         matches:        applySupabaseScores(state.matches, scores),
         liveStandings:  computeLiveStandings(state.matches, scores, penalties),
       };
@@ -303,14 +306,26 @@ export function DataProvider({ children }) {
     if (!isSupabaseEnabled) return;
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
-      const [matchesRes, eventsRes, redEventsRes, penaltyRes] = await Promise.all([
+      const [matchesRes, eventsRes, redEventsRes, penaltyRes, bannedRes] = await Promise.all([
         supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'red'),
         supabase.from('penalty_points').select('team, points').then(r => r),
+        supabase.from('banned_players').select('team, player_num, player_name, reason, notes'),
       ]);
       if (matchesRes.error) throw matchesRes.error;
-      const penaltyData = penaltyRes.error ? [] : (penaltyRes.data ?? []);
+      const penaltyData  = penaltyRes.error  ? [] : (penaltyRes.data ?? []);
+      const bannedData   = bannedRes.error   ? [] : (bannedRes.data ?? []).map(r => ({
+        team:        r.team,
+        number:      r.player_num ?? null,
+        name:        r.player_name,
+        reason:      r.reason ?? 'excel',
+        notes:       r.notes ?? null,
+        banned:      true,
+        goals:       0,
+        assists:     0,
+        hasFullData: true,
+      }));
 
       // Regrouper les buts par match_id
       const goalsByMatch = {};
@@ -358,7 +373,7 @@ export function DataProvider({ children }) {
         // (n'écrase pas si une vraie clé journée existe déjà)
         if (!scores[fallbackKey]) scores[fallbackKey] = entry;
       }
-      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyData });
+      dispatch({ type: 'SUPABASE_SCORES_LOADED', scores, penalties: penaltyData, bannedPlayers: bannedData });
       log.info('SUPABASE_SCORES_LOADED', { count: matchesRes.data?.length });
     } catch (err) {
       log.warn('SUPABASE_SCORES_ERROR', { error: err.message });
@@ -414,6 +429,23 @@ export function DataProvider({ children }) {
         playersData: results,
         fileInfo:    { names: [urlA, urlB].map(u => u.split('/').pop()), loadedAt: new Date() },
       });
+      // Sync joueurs bannis vers Supabase (fire & forget)
+      // Permet de les retrouver même si l'Excel est modifié plus tard
+      if (isSupabaseEnabled) {
+        const allParsed = results.flatMap(d => d.players ?? []);
+        const banned = allParsed.filter(p => p.banned);
+        if (banned.length > 0) {
+          supabase.from('banned_players').upsert(
+            banned.map(p => ({
+              team:        p.team,
+              player_num:  p.number ?? null,
+              player_name: p.name,
+              reason:      'excel',
+            })),
+            { onConflict: 'team,player_name', ignoreDuplicates: true }
+          ).then(({ error }) => { if (error) console.warn('[banned sync]', error.message); });
+        }
+      }
     } catch (err) {
       log.warn('PLAYERS_LOAD_UNEXPECTED', { error: err.message });
       dispatch({ type: 'PLAYERS_LOAD_DONE' });

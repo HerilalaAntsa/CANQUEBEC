@@ -42,6 +42,28 @@ function buildRosterCols(suspMap, stylesObj) {
   ];
 }
 
+function buildBannedCols(stylesObj) {
+  return [
+    { key: 'number',   label: '#',      sortable: true,  align: 'right',
+      render: (v) => v ?? <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>—</span>
+    },
+    { key: 'name',     label: 'Joueur', sortable: true,
+      render: (v, row) => (
+        <span style={{ display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' }}>
+          <span className={stylesObj.bannedName}>{v}</span>
+          <span className={stylesObj.banniBadge}>
+            {row.reason === 'manual' ? '🚫 BANNI' : '🚫 BANNI'}
+          </span>
+          {row.notes && <em style={{ fontSize:'0.7rem', color:'var(--color-text-muted)' }}>{row.notes}</em>}
+        </span>
+      )
+    },
+    { key: 'position', label: 'Poste',  sortable: false,
+      render: (v) => v ?? '—'
+    },
+  ];
+}
+
 function StatBadge({ label, value, accent }) {
   return (
     <div className={styles.stat}>
@@ -90,11 +112,12 @@ export default function EquipePage() {
     );
   }
 
-  const { team, name, standing, teamMatches, roster, topScorers: _topScorers, meta } = teamData;
+  const { team, name, standing, teamMatches, roster, bannedRoster, topScorers: _topScorers, meta } = teamData;
   const played   = teamMatches.filter(m => m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b');
   const upcoming = teamMatches.filter(m => m.status === 'upcoming');
 
   const rosterCols = buildRosterCols(suspMap, styles);
+  const bannedCols  = buildBannedCols(styles);
 
   return (
     <div className={styles.page}>
@@ -150,6 +173,26 @@ export default function EquipePage() {
               <p className={styles.empty}>Effectif non disponible.</p>
             )}
           </section>
+
+          {/* Joueurs bannis */}
+          {bannedRoster?.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={`${styles.sectionTitle} ${styles.bannedTitle}`}>
+                Joueurs bannis ({bannedRoster.length})
+              </h2>
+              <div className={styles.rosterWrap}>
+                <SortableTable
+                  columns={bannedCols}
+                  data={bannedRoster.map(p => ({ ...p, id: `banned-${p.name}-${p.team}` }))}
+                  defaultSort="number"
+                  defaultDir="asc"
+                  rowKey="id"
+                  emptyMessage=""
+                  getRowClass={() => styles.bannedRow}
+                />
+              </div>
+            </section>
+          )}
 
           <div className={styles.rightCol}>
             {/* Matchs — onglets */}

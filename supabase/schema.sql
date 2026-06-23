@@ -139,6 +139,30 @@ CREATE POLICY "auth write lineup"
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
 
+-- ── Joueurs bannis ────────────────────────────────────────────────
+-- Stockage permanent des joueurs exclus du tournoi (barré dans Excel ou banni manuellement).
+-- Survit aux mises à jour du fichier Excel.
+CREATE TABLE IF NOT EXISTS banned_players (
+  id          BIGSERIAL PRIMARY KEY,
+  team        TEXT NOT NULL,
+  player_num  INTEGER,         -- peut être NULL si conflit de numéro avec un joueur actif
+  player_name TEXT NOT NULL,
+  reason      TEXT DEFAULT 'excel',   -- 'excel' | 'manual'
+  notes       TEXT,                   -- notes admin optionnelles
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(team, player_name)
+);
+
+ALTER TABLE banned_players ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read banned_players"
+  ON banned_players FOR SELECT USING (true);
+
+CREATE POLICY "auth write banned_players"
+  ON banned_players FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
 -- ── Points de pénalité (déductions au classement) ──────────────
 CREATE TABLE IF NOT EXISTS penalty_points (
   id         BIGSERIAL PRIMARY KEY,
