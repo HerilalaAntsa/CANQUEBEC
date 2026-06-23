@@ -7,6 +7,7 @@ import {
   getSuspensions, createSuspension, updateSuspension, liftSuspension, decrementSuspension,
   setOverrideSuspension,
   getPenaltyPoints, addPenaltyPoints, deletePenaltyPoints,
+  getBannedPlayers, banPlayer, unbanPlayer,
 } from '../../services/adminService';
 import { getAllActiveSuspensions } from '../../services/disciplineService';
 import { supabase, isSupabaseEnabled } from '../../services/supabaseClient';
@@ -472,6 +473,150 @@ function SuspensionsTab({ players, allMatches = [] }) {
   );
 }
 
+// ─── Onglet Joueurs Bannis ────────────────────────────────────────────────────
+
+function BannedTab() {
+  const { players } = useLeagueData();
+  const [banned,  setBanned]  = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [msg,     setMsg]     = useState('');
+  const [saving,  setSaving]  = useState(false);
+  // Form ajout
+  const [bTeam,   setBTeam]   = useState('');
+  const [bNum,    setBNum]    = useState('');
+  const [bName,   setBName]   = useState('');
+  const [bNotes,  setBNotes]  = useState('');
+  // Confirm lever
+  const [unbanConfirm, setUnbanConfirm] = useState(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setBanned(await getBannedPlayers()); }
+    catch (e) { setMsg('⚠️ ' + e.message); }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 4000); };
+
+  async function handleBan() {
+    if (!bTeam || !bName.trim()) return;
+    setSaving(true);
+    try {
+      await banPlayer({ team: bTeam, playerNum: bNum ? parseInt(bNum) : null, playerName: bName.trim(), notes: bNotes });
+      flash('✅ Joueur banni.');
+      setBTeam(''); setBNum(''); setBName(''); setBNotes('');
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  async function handleUnban(b) {
+    setSaving(true);
+    try {
+      await unbanPlayer(b.id);
+      flash('✅ Bannissement levé.');
+      setUnbanConfirm(null);
+      load();
+    } catch (e) { flash('⚠️ ' + e.message); }
+    finally { setSaving(false); }
+  }
+
+  const REASON_LABELS = { excel: '📋 Excel (barré)', manual: '✏️ Manuel' };
+
+  return (
+    <div>
+      {msg && <div className={msg.startsWith('⚠️') ? styles.msgError : styles.msg}>{msg}</div>}
+
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          Joueurs bannis <span className={styles.count}>{banned.length}</span>
+        </h2>
+      </div>
+      <p className={styles.info} style={{ marginBottom: '1rem' }}>
+        Les joueurs barrés dans l'Excel sont détectés automatiquement et synchronisés ici.<br />
+        Vous pouvez aussi bannir manuellement ou lever un bannissement.
+      </p>
+
+      {/* Formulaire ajout manuel */}
+      <div className={styles.addForm}>
+        <select className={styles.input} value={bTeam} onChange={e => { setBTeam(e.target.value); setBNum(''); setBName(''); }}>
+          <option value="">— Équipe —</option>
+          {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+        </select>
+        {(() => {
+          const teamPlayers = players
+            .filter(p => p.team?.trim().toUpperCase() === bTeam?.trim().toUpperCase() && !p.banned)
+            .sort((a, b) => (a.number ?? 99) - (b.number ?? 99));
+          return teamPlayers.length > 0 ? (
+            <select className={styles.input} value={bNum} onChange={e => {
+              const p = teamPlayers.find(x => String(x.number) === e.target.value);
+              setBNum(e.target.value);
+              if (p) setBName(p.name);
+            }} disabled={!bTeam}>
+              <option value="">— Joueur —</option>
+              {teamPlayers.map(p => (
+                <option key={p.number} value={String(p.number)}>#{p.number} — {p.name}</option>
+              ))}
+            </select>
+          ) : (
+            <>
+              <input className={styles.input} type="number" placeholder="N° maillot" value={bNum} onChange={e => setBNum(e.target.value)} disabled={!bTeam} />
+              <input className={styles.input} placeholder="Nom complet" value={bName} onChange={e => setBName(e.target.value)} disabled={!bTeam} />
+            </>
+          );
+        })()}
+        <input className={styles.input} placeholder="Notes (optionnel)" value={bNotes} onChange={e => setBNotes(e.target.value)} />
+        <button className={styles.addBtn} disabled={saving || !bTeam || !bName.trim()} onClick={handleBan}>
+          {saving ? '⏳…' : '🚫 Bannir'}
+        </button>
+      </div>
+
+      {/* Liste */}
+      {loading ? <p className={styles.info}>Chargement…</p> :
+       banned.length === 0 ? <p className={styles.info}>Aucun joueur banni.</p> :
+       <div className={styles.cards}>
+         {banned.map(b => (
+           <div key={b.id} className={styles.suspCard}>
+             <div className={styles.cardTop}>
+               <span className={styles.suspTeamBadge}>{b.team}</span>
+               <span className={styles.suspTypeBadge}>{REASON_LABELS[b.reason] ?? b.reason}</span>
+             </div>
+             <div className={styles.suspPlayer}>
+               {b.player_num && <span className={styles.jersey}>#{b.player_num}</span>}
+               <strong style={{ textDecoration: 'line-through', opacity: 0.7 }}>{b.player_name}</strong>
+             </div>
+             {b.notes && <p className={styles.reason}>{b.notes}</p>}
+             <div className={styles.suspActions}>
+               <button className={styles.liftBtn} onClick={() => setUnbanConfirm(b)}>🔓 Lever le ban</button>
+             </div>
+           </div>
+         ))}
+       </div>
+      }
+
+      {/* Confirm lever */}
+      {unbanConfirm && (
+        <div className={styles.overlay} onClick={() => setUnbanConfirm(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>Lever le bannissement</h3>
+            <p className={styles.modalSub}>
+              Autoriser à nouveau <strong>{unbanConfirm.player_name}</strong> ({unbanConfirm.team}) à participer ?<br />
+              <em style={{ fontSize: '0.8rem', opacity: 0.7 }}>Note : si le nom est encore barré dans l'Excel, il sera re-synchronisé au prochain chargement.</em>
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setUnbanConfirm(null)}>Annuler</button>
+              <button className={styles.liftConfirmBtn} disabled={saving} onClick={() => handleUnban(unbanConfirm)}>
+                {saving ? '⏳…' : '🔓 Confirmer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Page principale ──────────────────────────────────────────────────────────
 
 // ─── Onglet Points de pénalité ────────────────────────────────────────────────
@@ -636,12 +781,19 @@ export default function AdminGestionPage() {
         >
           ⚠️ Pénalités
         </button>
+        <button
+          className={`${styles.tab} ${tab === 'banned' ? styles.tabActive : ''}`}
+          onClick={() => setTab('banned')}
+        >
+          🚫 Bannis
+        </button>
       </div>
 
       <div className={styles.content}>
         {tab === 'postponed'   && <PostponedTab />}
         {tab === 'suspensions' && <SuspensionsTabWrapper />}
         {tab === 'penalties'   && <PenaltyTab />}
+        {tab === 'banned'      && <BannedTab />}
 
       </div>
     </div>

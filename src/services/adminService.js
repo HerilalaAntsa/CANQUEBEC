@@ -558,3 +558,33 @@ export async function deletePenaltyPoints(id) {
   const { error } = await supabase.from('penalty_points').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ── Joueurs bannis ──────────────────────────────────────────────────────────
+
+/** Retourne tous les joueurs bannis */
+export async function getBannedPlayers() {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('banned_players')
+    .select('*')
+    .order('team', { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/** Banni un joueur manuellement */
+export async function banPlayer({ team, playerNum, playerName, notes }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('banned_players').upsert(
+    [{ team, player_num: playerNum ?? null, player_name: playerName, reason: 'manual', notes: notes || null }],
+    { onConflict: 'team,player_name' }
+  );
+  if (error) throw error;
+}
+
+/** Lève un bannissement par id */
+export async function unbanPlayer(id) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase.from('banned_players').delete().eq('id', id);
+  if (error) throw error;
+}
