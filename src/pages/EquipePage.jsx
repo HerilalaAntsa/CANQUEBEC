@@ -116,6 +116,17 @@ export default function EquipePage() {
   const rosterCols = buildRosterCols(suspMap, styles);
   const bannedCols  = buildBannedCols(styles);
 
+  // Joueurs suspendus (carton rouge, remaining > 0)
+  const suspendedRoster = Object.entries(suspMap)
+    .filter(([, info]) => info.suspended && info.remaining > 0)
+    .map(([num, info]) => ({
+      id:        `susp-${num}`,
+      number:    info.playerNum ?? parseInt(num),
+      name:      info.playerName ?? `Joueur #${num}`,
+      remaining: info.remaining,
+    }))
+    .sort((a, b) => b.remaining - a.remaining);
+
   return (
     <div className={styles.page}>
       <div className="container">
@@ -186,6 +197,43 @@ export default function EquipePage() {
                   rowKey="id"
                   emptyMessage=""
                   getRowClass={() => styles.bannedRow}
+                />
+              </div>
+            </section>
+          )}
+
+          {/* Joueurs suspendus */}
+          {suspendedRoster.length > 0 && (
+            <section className={styles.section}>
+              <h2 className={`${styles.sectionTitle} ${styles.suspTitle}`}>
+                Joueurs suspendus ({suspendedRoster.length})
+              </h2>
+              <div className={styles.rosterWrap}>
+                <SortableTable
+                  columns={[
+                    { key: 'number', label: '#', sortable: true, align: 'right' },
+                    { key: 'name', label: 'Joueur', sortable: true,
+                      render: (v) => (
+                        <span style={{ display:'flex', alignItems:'center', gap:'0.4rem' }}>
+                          <span>🟥</span>
+                          <strong>{v}</strong>
+                        </span>
+                      )
+                    },
+                    { key: 'remaining', label: 'Matchs restants', sortable: true,
+                      render: (v) => (
+                        <span className={styles.suspCountBadge}>
+                          🚫 {v} match{v > 1 ? 's' : ''}
+                        </span>
+                      )
+                    },
+                  ]}
+                  data={suspendedRoster}
+                  defaultSort="remaining"
+                  defaultDir="desc"
+                  rowKey="id"
+                  emptyMessage=""
+                  getRowClass={() => styles.suspRow}
                 />
               </div>
             </section>

@@ -279,3 +279,31 @@
   line-height: 1.4;
   text-transform: uppercase;
 }
+
+/* ── Joueurs suspendus ─────────────────────── */
+.suspTitle {
+  color: var(--color-text-muted);
+  font-size: var(--text-base);
+  border-bottom-color: transparent;
+}
+
+.suspRow {
+  background: rgba(220, 100, 20, 0.10) !important;
+}
+
+.suspRow:hover {
+  background: rgba(220, 100, 20, 0.18) !important;
+}
+
+.suspCountBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  background: #c0392b;
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  white-space: nowrap;
+  line-height: 1.5;
+}
