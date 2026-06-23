@@ -22,12 +22,10 @@ function buildRosterCols(suspMap, stylesObj) {
         return (
           <span style={{ display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' }}>
             {v}
-            {info?.hasRed && (
+            {info?.suspended && info.remaining > 0 && (
               <span style={{ display:'inline-flex', alignItems:'center', gap:'0.25rem' }}>
                 <span style={{ fontSize:'0.85rem', lineHeight:1 }}>🟥</span>
-                {info.suspended && info.remaining > 0 && (
-                  <em className={stylesObj.suspText}>suspendu ({info.remaining} match{info.remaining > 1 ? 's' : ''})</em>
-                )}
+                <em className={stylesObj.suspText}>suspendu ({info.remaining} match{info.remaining > 1 ? 's' : ''})</em>
               </span>
             )}
           </span>
