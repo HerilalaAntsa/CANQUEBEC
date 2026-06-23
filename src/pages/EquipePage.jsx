@@ -44,16 +44,13 @@ function buildRosterCols(suspMap, stylesObj) {
 
 function buildBannedCols(stylesObj) {
   return [
-    { key: 'number',   label: '#',      sortable: true,  align: 'right',
-      render: (v) => v ?? <span style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>—</span>
+    { key: 'number',   label: '#',      sortable: false,  align: 'right',
+      render: () => <span className={stylesObj.banniBadgeNum}>BANNI</span>
     },
     { key: 'name',     label: 'Joueur', sortable: true,
       render: (v, row) => (
         <span style={{ display:'flex', alignItems:'center', gap:'0.4rem', flexWrap:'wrap' }}>
           <span className={stylesObj.bannedName}>{v}</span>
-          <span className={stylesObj.banniBadge}>
-            {row.reason === 'manual' ? '🚫 BANNI' : '🚫 BANNI'}
-          </span>
           {row.notes && <em style={{ fontSize:'0.7rem', color:'var(--color-text-muted)' }}>{row.notes}</em>}
         </span>
       )

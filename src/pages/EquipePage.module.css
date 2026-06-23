@@ -241,17 +241,16 @@
 }
 
 .bannedRow {
-  opacity: 0.55;
-  background: var(--color-surface) !important;
+  background: rgba(180, 20, 20, 0.10) !important;
 }
 
 .bannedRow:hover {
-  opacity: 0.7;
+  background: rgba(180, 20, 20, 0.18) !important;
 }
 
 .bannedName {
   text-decoration: line-through;
-  color: var(--color-text-muted);
+  color: #c0392b;
 }
 
 .banniBadge {
@@ -261,10 +260,22 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   color: #fff;
-  background: #888;
+  background: #c0392b;
   border-radius: 999px;
   padding: 0.1rem 0.45rem;
   white-space: nowrap;
   line-height: 1.5;
   text-decoration: none;
+}
+.banniBadgeNum {
+  font-size: 0.6rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  color: #fff;
+  background: #c0392b;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  white-space: nowrap;
+  line-height: 1.4;
+  text-transform: uppercase;
 }

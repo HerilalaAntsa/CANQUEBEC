@@ -498,16 +498,27 @@ function parseTeamSheet(ws, teamName) {
     const posRaw    = posIdx >= 0 ? cleanStr(row[posIdx]) : null;
     const ageRaw    = ageIdx >= 0 ? row[ageIdx] : null;
 
-    // Détecter le barré (joueur banni) sur les cellules numéro, prénom ou nom
-    const isBanned = [numIdx, preIdx, nomIdx]
+    // Détection banni :
+    // 1. Strikethrough via cellStyles (fonctionne sur .xls, parfois .xlsx)
+    const hasStrike = [numIdx, preIdx, nomIdx]
       .filter(c => c >= 0)
       .some(c => isCellStrike(ws, i, c));
+    // 2. Marqueur texte (X) dans prénom ou nom (ex: "ALLAOUA KEDDAM (X)")
+    const BAN_MARKER = /\s*\(\s*[Xx]\.?\s*\)\s*$/;
+    const firstNameHasX = firstName ? BAN_MARKER.test(firstName) : false;
+    const lastNameHasX  = lastName  ? BAN_MARKER.test(lastName)  : false;
+    const isBanned = hasStrike || firstNameHasX || lastNameHasX;
+
+    // Nettoyer le marqueur (X) du nom affiché
+    const cleanName = (s) => s ? s.replace(BAN_MARKER, '').trim() : s;
+    const cleanedFirst = cleanName(firstName);
+    const cleanedLast  = cleanName(lastName);
 
     players.push({
       number:      num,
-      firstName,
-      lastName,
-      name:        [firstName, lastName].filter(Boolean).join(' ').trim() || `Joueur #${num}`,
+      firstName:   cleanedFirst,
+      lastName:    cleanedLast,
+      name:        [cleanedFirst, cleanedLast].filter(Boolean).join(' ').trim() || `Joueur #${num}`,
       position:    posRaw ? (POSITION_LABELS[posRaw] ?? posRaw) : null,
       positionRaw: posRaw,
       age:         typeof ageRaw === 'number' ? ageRaw : null,
