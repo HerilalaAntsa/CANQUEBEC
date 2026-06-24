@@ -101,7 +101,22 @@ function parseHoraire(buffer) {
   const wb = XLSX.read(buffer, { type: 'array', cellDates: true });
 
   const players = parseJoueursSheet(wb.Sheets['JOUEURS']);
-  const matches   = parseMatches(wb.Sheets['MATCHS']);
+
+  // Lire feuille principale + éventuelle copie (ex: "Copie de MATCHS")
+  const matchesMain = parseMatches(wb.Sheets['MATCHS']);
+  const matchesCopy = parseMatches(wb.Sheets['Copie de MATCHS']);
+
+  // Fusionner : prendre les matchs de la copie qui n'existent pas dans la principale
+  const seenKey = (m) => {
+    if (m.journee !== null && m.journee !== undefined) {
+      return `g:${m.journee}:${(m.teamA||'').toUpperCase().trim()}:${(m.teamB||'').toUpperCase().trim()}`;
+    }
+    return `p:${m.phase||''}:${(m.teamA||'').toUpperCase().trim()}:${(m.teamB||'').toUpperCase().trim()}`;
+  };
+  const seen = new Set(matchesMain.map(seenKey));
+  const extra = matchesCopy.filter(m => !seen.has(seenKey(m)));
+  const matches = [...matchesMain, ...extra];
+
   const teams     = parseTeams(wb.Sheets['EQUIPES']);
   const standings = parseStandings(wb.Sheets['CLASSEMENT']);
   const rawScorers   = parseRawScorers(wb.Sheets['CLASSEMENT_BUTEURS']);
@@ -152,8 +167,26 @@ function parseMatches(ws) {
   let inPhaseFinale   = false;
   let currentRound    = '';
 
+  // Auto-détecter l'offset de colonnes :
+  // Fichier local : a une colonne "G" (groupe) en position 4 → offset = 1
+  //   row[4]=G, row[5]=ÉquipeA, row[6]=vs, row[7]=ÉquipeB, row[8]=ScoreA, row[9]=ScoreB
+  // Export Google Sheets : pas de colonne "G" → offset = 0
+  //   row[4]=ÉquipeA, row[5]=vs, row[6]=ÉquipeB, row[7]=ScoreA, row[8]=ScoreB
+  let c = 1; // offset par défaut = local
   for (const row of rows) {
-    if (!row || row.every(c => c === null)) continue;
+    if (!row || row.every(x => x === null)) continue;
+    if (row[0] === 'ID ') {
+      // header présent : détecter par col[4]
+      // Local → 'G', GSheets → 'Équipe A' (ou autre)
+      const col4 = row[4] ? String(row[4]).trim() : '';
+      c = (col4 === 'G') ? 1 : 0;
+      break;
+    }
+    break; // pas de header trouvé, garder offset=1
+  }
+
+  for (const row of rows) {
+    if (!row || row.every(x => x === null)) continue;
 
     // Ligne header
     if (row[1] === 'Date' || row[0] === 'ID ') continue;
@@ -165,7 +198,8 @@ function parseMatches(ws) {
     }
 
     // Ligne séparateur journée : col B = "JOURNÉE 01"
-    if (!inPhaseFinale && typeof row[1] === 'string' && row[1].toUpperCase().startsWith('JOURNÉE')) {
+    if (!inPhaseFinale && typeof row[1] === 'string' &&
+        row[1].toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').startsWith('JOURNEE')) {
       const m = row[1].match(/(\d+)/);
       if (m) currentJournee = parseInt(m[1]);
       continue;
@@ -173,8 +207,8 @@ function parseMatches(ws) {
 
     // ── Phase finale ──────────────────────────────────
     if (inPhaseFinale) {
-      // Détection ronde depuis col[5] (ex: "1/8e finale", "1/4 finale")
-      const possibleRound = row[5] ? row[5].toString().trim() : '';
+      // Détection ronde depuis col[4+c] (ex: "1/8e finale", "1/4 finale")
+      const possibleRound = row[4 + c] ? row[4 + c].toString().trim() : '';
       if (ROUND_KEYWORDS.some(k => possibleRound.toLowerCase().includes(k))) {
         currentRound = normalizeRound(possibleRound);
       }
@@ -185,15 +219,16 @@ function parseMatches(ws) {
         ? rawDate
         : parseStringDate(rawDate);
 
-      // Lire les équipes depuis col 5 et 7 (même structure que groupes)
-      // Si vide → étiquette positionnelle (ex: "1er Gr. A") ou placeholder
-      const rawTeamA = row[5] ? row[5].toString().trim() : '';
-      const rawTeamB = row[7] ? row[7].toString().trim() : '';
-      const teamA = rawTeamA || (row[6] ? row[6].toString().trim() : '') || 'À déterminer';
-      const teamB = rawTeamB || (row[8] ? row[8].toString().trim() : '') || 'À déterminer';
+      // Équipes : col[4+c] et col[6+c]
+      const rawTeamA = row[4 + c] ? row[4 + c].toString().trim() : '';
+      const rawTeamB = row[6 + c] ? row[6 + c].toString().trim() : '';
+      // Ne pas prendre le nom de ronde comme nom d'équipe
+      const isRound = (s) => ROUND_KEYWORDS.some(k => s.toLowerCase().includes(k));
+      const teamA = (!isRound(rawTeamA) && rawTeamA) || 'À déterminer';
+      const teamB = (!isRound(rawTeamB) && rawTeamB) || 'À déterminer';
 
-      const scoreA = typeof row[9]  === 'number' ? row[9]  : null;
-      const scoreB = typeof row[10] === 'number' ? row[10] : null;
+      const scoreA = typeof row[7 + c] === 'number' ? row[7 + c] : null;
+      const scoreB = typeof row[8 + c] === 'number' ? row[8 + c] : null;
 
       matches.push({
         id:       null,
@@ -203,36 +238,36 @@ function parseMatches(ws) {
         dateRaw:  typeof rawDate === 'string' ? rawDate : null,
         venue:    row[2] ? row[2].toString().trim() : '',
         time:     row[3] ? row[3].toString().trim() : '',
-        group:    row[4] ? row[4].toString().trim().toUpperCase() : '',
+        group:    (c === 1 && row[4]) ? row[4].toString().trim().toUpperCase() : '',
         teamA,
         teamB,
         scoreA,
         scoreB,
         status:      (scoreA !== null && scoreB !== null) ? 'played' : 'upcoming',
         restTeams:   '',
-        referee:     row[11] ? row[11].toString().trim() : '',
-        ref1:        row[12] ? row[12].toString().trim() : '',
-        ref2:        row[13] ? row[13].toString().trim() : '',
-        coordinator: row[14] ? row[14].toString().trim() : '',
+        referee:     row[10 + c] ? row[10 + c].toString().trim() : '',
+        ref1:        row[11 + c] ? row[11 + c].toString().trim() : '',
+        ref2:        row[12 + c] ? row[12 + c].toString().trim() : '',
+        coordinator: row[13 + c] ? row[13 + c].toString().trim() : '',
       });
       continue;
     }
 
     // ── Match phase de groupes ────────────────────────
     const rawDate = row[1];
-    const teamA = normalizeTeamName(row[5]);
-    const teamB = normalizeTeamName(row[7]);
+    const teamA = normalizeTeamName(row[4 + c]);  // col E (GSheets) ou col F (local)
+    const teamB = normalizeTeamName(row[6 + c]);  // col G (GSheets) ou col H (local)
 
     if (!rawDate || !teamA || !teamB) continue;
 
     const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
     if (isNaN(date.getTime())) continue;
 
-    const scoreA = typeof row[8] === 'number' ? row[8] : null;
-    const scoreB = typeof row[9] === 'number' ? row[9] : null;
+    const scoreA = typeof row[7 + c] === 'number' ? row[7 + c] : null;
+    const scoreB = typeof row[8 + c] === 'number' ? row[8 + c] : null;
 
-    // Détection forfait : col K (index 10) = "FORFAIT A" ou "FORFAIT B"
-    const forfaitCol = row[10] ? row[10].toString().trim().toUpperCase() : '';
+    // Détection forfait : col "Au repos" (index 9+c) peut contenir "FORFAIT A"/"FORFAIT B"
+    const forfaitCol = row[9 + c] ? row[9 + c].toString().trim().toUpperCase() : '';
     let status, finalScoreA, finalScoreB;
     if (forfaitCol === 'FORFAIT A') {
       status = 'forfait_a'; finalScoreA = 0; finalScoreB = 3;
@@ -250,17 +285,17 @@ function parseMatches(ws) {
       date,
       venue:     row[2] ? row[2].toString().trim() : '',
       time:      row[3] ? row[3].toString().trim() : '',
-      group:     row[4] ? row[4].toString().trim().toUpperCase() : '',
+      group:     (c === 1 && row[4]) ? row[4].toString().trim().toUpperCase() : '',
       teamA,
       teamB,
       scoreA:    finalScoreA,
       scoreB:    finalScoreB,
       status,
-      restTeams: forfaitCol.startsWith('FORFAIT') ? '' : (row[10] ? row[10].toString().trim() : ''),
-      referee:     row[11] ? row[11].toString().trim() : '',
-      ref1:        row[12] ? row[12].toString().trim() : '',
-      ref2:        row[13] ? row[13].toString().trim() : '',
-      coordinator: row[14] ? row[14].toString().trim() : '',
+      restTeams: forfaitCol.startsWith('FORFAIT') ? '' : (row[9 + c] ? row[9 + c].toString().trim() : ''),
+      referee:     row[10 + c] ? row[10 + c].toString().trim() : '',
+      ref1:        row[11 + c] ? row[11 + c].toString().trim() : '',
+      ref2:        row[12 + c] ? row[12 + c].toString().trim() : '',
+      coordinator: row[13 + c] ? row[13 + c].toString().trim() : '',
     });
   }
 
