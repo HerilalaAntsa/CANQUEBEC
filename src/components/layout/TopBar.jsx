@@ -22,10 +22,6 @@ export default function TopBar() {
           className={styles.logoImg}
           onError={(e) => { e.target.style.display = 'none'; }}
         />
-        <span className={styles.logoText}>
-          QCN
-          <span className={styles.logoSub}>2026</span>
-        </span>
       </NavLink>
 
       <nav className={styles.desktopNav}>
