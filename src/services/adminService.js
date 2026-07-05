@@ -285,8 +285,14 @@ export async function importMatchesFromExcel(parsedMatches) {
   const byJourneeKey = {};
   const byPhaseKey = {};
   for (const row of existing ?? []) {
-    if (row.journee !== null) byJourneeKey[`${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
-    else if (row.phase)       byPhaseKey[`${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`]     = row;
+    if (row.journee !== null) {
+      // Indexer dans les deux sens pour éviter les doublons si l'ordre des équipes est inversé
+      byJourneeKey[`${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
+      byJourneeKey[`${row.journee}:${normKey(row.team_b)}:${normKey(row.team_a)}`] = row;
+    } else if (row.phase) {
+      byPhaseKey[`${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
+      byPhaseKey[`${row.phase}:${normKey(row.team_b)}:${normKey(row.team_a)}`] = row;
+    }
   }
 
   const toInsert = [];
