@@ -191,10 +191,16 @@ function parseMatches(ws) {
     // Ligne header
     if (row[1] === 'Date' || row[0] === 'ID ') continue;
 
-    // Détection frontière phase finale
-    if (typeof row[1] === 'string' && row[1].toUpperCase().includes('PHASE FINALE')) {
-      inPhaseFinale = true;
-      continue;
+    // Détection frontière phase finale :
+    // - Fichier local : "PHASE FINALE" dans row[1]
+    // - Google Sheets : "PHASE FINALE" ou "BARRAGE" dans n'importe quelle cellule
+    if (!inPhaseFinale) {
+      const rowFlat = row.map(c => c ? String(c).toUpperCase() : '').join('|');
+      if (rowFlat.includes('PHASE FINALE') || rowFlat.includes('BARRAGE')) {
+        inPhaseFinale = true;
+        currentRound = '1/8e de finale'; // défaut lors de l'entrée en phase finale
+        continue;
+      }
     }
 
     // Ligne séparateur journée : col B = "JOURNÉE 01"
@@ -207,7 +213,8 @@ function parseMatches(ws) {
 
     // ── Phase finale ──────────────────────────────────
     if (inPhaseFinale) {
-      // Détection ronde depuis col[4+c] (ex: "1/8e finale", "1/4 finale")
+      // Détection ronde depuis col[4+c] ou n'importe quelle cellule de la ligne
+      // (ex: "1/8e finale", "1/4 finale", "1/2 finale")
       const possibleRound = row[4 + c] ? row[4 + c].toString().trim() : '';
       if (ROUND_KEYWORDS.some(k => possibleRound.toLowerCase().includes(k))) {
         currentRound = normalizeRound(possibleRound);
