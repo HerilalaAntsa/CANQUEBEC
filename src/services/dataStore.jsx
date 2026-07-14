@@ -64,11 +64,15 @@ function reducer(state, action) {
         data.rawAssisters,
         mergedPlayers
       );
+      const matchesWithSupa = injectSupabaseOnlyMatches(
+        applySupabaseScores(data.matches, state.supabaseScores),
+        state.supabaseScores
+      );
       return {
         ...state,
         loading:    false,
         error:      null,
-        matches:    applySupabaseScores(data.matches, state.supabaseScores),
+        matches:    matchesWithSupa,
         teams:      data.teams,
         standings:  data.standings,
         liveStandings: computeLiveStandings(data.matches, state.supabaseScores, state.penaltyPoints),
@@ -119,13 +123,17 @@ function reducer(state, action) {
       const scores = action.scores; // { [key]: { id, scoreA, scoreB, status, goals } }
       const penalties = action.penalties ?? state.penaltyPoints;
       const bannedPlayers = action.bannedPlayers ?? state.bannedPlayers;
+      const mergedMatches = injectSupabaseOnlyMatches(
+        applySupabaseScores(state.matches, scores),
+        scores
+      );
       return {
         ...state,
         loadingScores:  false,
         supabaseScores: scores,
         penaltyPoints:  penalties,
         bannedPlayers,
-        matches:        applySupabaseScores(state.matches, scores),
+        matches:        mergedMatches,
         liveStandings:  computeLiveStandings(state.matches, scores, penalties),
       };
     }
@@ -273,6 +281,52 @@ function applySupabaseScores(matches, supabaseScores) {
   }
 
   return [...byKey.values()];
+}
+
+/**
+ * Injecte les matchs Supabase qui n'ont pas d'équivalent dans l'Excel (ex: phase finale saisie directement en admin).
+ * Ces matchs existent dans supabaseScores mais ne correspondent à aucun match Excel.
+ */
+function injectSupabaseOnlyMatches(matches, supabaseScores) {
+  const norm = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
+  const existingKeys = new Set();
+  for (const m of matches) {
+    if (m.phase) {
+      existingKeys.add(`phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`);
+      existingKeys.add(`phase:${m.phase}:${norm(m.teamB)}:${norm(m.teamA)}`);
+    } else {
+      existingKeys.add(`${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`);
+    }
+  }
+
+  const extra = [];
+  for (const [key, entry] of Object.entries(supabaseScores)) {
+    if (!key.startsWith('phase:')) continue;   // seulement phase finale
+    if (existingKeys.has(key)) continue;        // déjà dans Excel
+    if (key.startsWith('teams:')) continue;
+    // Reconstruire un objet match depuis l'entrée Supabase
+    extra.push({
+      id:          entry.id,
+      supabaseId:  entry.id,
+      journee:     null,
+      phase:       (() => { const parts = key.split(':'); return parts.slice(1, parts.length - 2).join(':'); })(),
+      teamA:       entry.teamA,
+      teamB:       entry.teamB,
+      scoreA:      entry.scoreA ?? null,
+      scoreB:      entry.scoreB ?? null,
+      status:      entry.status ?? 'upcoming',
+      date:        entry.date ?? null,
+      time:        entry.time ?? null,
+      venue:       entry.venue ?? null,
+      goals:       entry.goals ?? [],
+      redCards:    entry.redCards ?? [],
+      referee:     entry.referee ?? null,
+      ref1:        entry.ref1 ?? null,
+      ref2:        entry.ref2 ?? null,
+      coordinator: entry.coordinator ?? null,
+    });
+  }
+  return [...matches, ...extra];
 }
 
 /**
