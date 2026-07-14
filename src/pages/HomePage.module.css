@@ -5,6 +5,56 @@
   max-width: 100%;
 }
 
+/* Widget toggle (Liste / Arbre dans Phase Finale) */
+.widgetToggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-3);
+}
+
+.wToggleBtn {
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border, #d0d7de);
+  background: transparent;
+  color: var(--color-text-muted, #536171);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.wToggleBtn:hover {
+  border-color: var(--color-primary, #003087);
+  color: var(--color-primary, #003087);
+}
+
+.wToggleActive {
+  background: var(--color-primary, #003087);
+  border-color: var(--color-primary, #003087);
+  color: #fff;
+}
+
+/* Bracket en home : scroll horizontal limité */
+.bracketHome {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 calc(-1 * var(--space-3));
+  padding: 0 var(--space-3) var(--space-2);
+}
+
+/* Lien "Voir tous les matchs" */
+.seeMore {
+  display: block;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-primary, #003087);
+  padding: var(--space-2) 0;
+  text-decoration: none;
+}
+.seeMore:hover { text-decoration: underline; }
+
 /* Hero */
 .heroWrap {
   background: linear-gradient(135deg, var(--color-primary) 0%, #001f5e 100%);

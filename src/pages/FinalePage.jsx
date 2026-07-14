@@ -5,10 +5,17 @@ import BracketView, { ROUND_KEYS } from '../components/finale/BracketView';
 import styles from './FinalePage.module.css';
 
 const ROUND_ICONS = {
-  '1/8e de finale':   '⚔️',
-  'Quarts de finale': '🔥',
-  'Demi-finales':     '⭐',
-  'Finale':           '🏆',
+  '1/8e de finale':   '',
+  'Quarts de finale': '',
+  'Demi-finales':     '',
+  'Finale':           '',
+};
+
+const ROUND_LABELS = {
+  '1/8e de finale':   '1/8 de finale',
+  'Quarts de finale': 'Quarts de finale',
+  'Demi-finales':     'Demi-finales',
+  'Finale':           'Finale',
 };
 
 function formatDateHeader(dateStr) {
@@ -91,13 +98,13 @@ export default function FinalePage() {
                 className={`${styles.toggleBtn} ${view === 'list' ? styles.toggleActive : ''}`}
                 onClick={() => setView('list')}
               >
-                📋 Liste
+                Liste
               </button>
               <button
                 className={`${styles.toggleBtn} ${view === 'bracket' ? styles.toggleActive : ''}`}
                 onClick={() => setView('bracket')}
               >
-                🌳 Arbre
+                Arbre
               </button>
             </div>
 
@@ -105,8 +112,7 @@ export default function FinalePage() {
             {view === 'list' && byRound.map(({ round, byDate }) => (
               <div key={round} className={styles.roundSection}>
                 <div className={styles.roundHeader}>
-                  <span className={styles.roundIcon}>{ROUND_ICONS[round] ?? '⚽'}</span>
-                  <h2 className={styles.roundTitle}>{round}</h2>
+                  <h2 className={styles.roundTitle}>{ROUND_LABELS[round] ?? round}</h2>
                 </div>
 
                 {byDate.map(([dateKey, dayMatches]) => (

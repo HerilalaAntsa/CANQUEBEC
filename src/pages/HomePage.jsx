@@ -1,7 +1,8 @@
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLeagueData } from '../services/dataStore';
 import MatchCard from '../components/calendrier/MatchCard';
+import BracketView from '../components/finale/BracketView';
 import FlagBadge from '../components/shared/FlagBadge';
 import { generateSlug } from '../config/teams';
 import styles from './HomePage.module.css';
@@ -49,6 +50,41 @@ function MiniStandings({ standings, teams }) {
         <div className={styles.miniEllipsis}>···</div>
       )}
       {bot4.map(renderRow)}
+    </div>
+  );
+}
+
+function PhaseFinaleWidget({ matches }) {
+  const [view, setView] = useState('list');
+  const phaseMatches = useMemo(() => matches.filter(m => m.phase), [matches]);
+
+  if (!phaseMatches.length) return <p className={styles.empty}>Les matchs de phase finale apparaîtront ici.</p>;
+
+  return (
+    <div>
+      <div className={styles.widgetToggle}>
+        <button
+          className={`${styles.wToggleBtn} ${view === 'list' ? styles.wToggleActive : ''}`}
+          onClick={() => setView('list')}
+        >Liste</button>
+        <button
+          className={`${styles.wToggleBtn} ${view === 'bracket' ? styles.wToggleActive : ''}`}
+          onClick={() => setView('bracket')}
+        >Arbre</button>
+      </div>
+      {view === 'list' && (
+        <div className={styles.matchList}>
+          {phaseMatches.slice(0, 4).map((m, i) => <MatchCard key={m.id ?? i} match={m} />)}
+          {phaseMatches.length > 4 && (
+            <Link to="/finale" className={styles.seeMore}>Voir tous les matchs ({phaseMatches.length}) →</Link>
+          )}
+        </div>
+      )}
+      {view === 'bracket' && (
+        <div className={styles.bracketHome}>
+          <BracketView matches={phaseMatches} />
+        </div>
+      )}
     </div>
   );
 }
@@ -176,19 +212,13 @@ export default function HomePage() {
 
         <div className={styles.grid}>
 
-          {/* Prochains matchs */}
+          {/* Phase Finale */}
           <section className={styles.widget}>
             <div className={styles.widgetHeader}>
-              <h2 className={styles.widgetTitle}>Prochains matchs</h2>
-              <Link to="/qualification" className={styles.widgetLink}>Voir tout →</Link>
+              <h2 className={styles.widgetTitle}>Phase Finale</h2>
+              <Link to="/finale" className={styles.widgetLink}>Voir tout →</Link>
             </div>
-            {upcoming.length > 0 ? (
-              <div className={styles.matchList}>
-                {upcoming.map((m, i) => <MatchCard key={m.id ?? i} match={m} />)}
-              </div>
-            ) : (
-              <p className={styles.empty}>Aucun match à venir.</p>
-            )}
+            <PhaseFinaleWidget matches={matches} />
           </section>
 
           {/* Derniers résultats */}
