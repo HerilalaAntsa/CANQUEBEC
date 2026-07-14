@@ -160,10 +160,25 @@
 
 .bMatchMeta {
   font-size: 0.62rem;
-  color: var(--color-text-faint, #9faab5);
+  color: var(--color-accent, #d4001e);
+  font-weight: 600;
   text-align: center;
-  margin-top: 2px;
+  margin-top: 3px;
   letter-spacing: 0.02em;
+}
+
+.bMatchLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  width: 100%;
+}
+
+.bMatchLink:hover .bMatch,
+.bMatchClickable:hover {
+  border-color: var(--color-primary, #003087);
+  box-shadow: 0 2px 8px rgba(0,48,135,.18);
+  cursor: pointer;
 }
 
 /* ── Lignes d'équipes ─────────────────────────────────────────────────────── */

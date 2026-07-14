@@ -13,8 +13,15 @@
  *   SF  : 1 match              → Finale / 3e place
  */
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { getFlag, getShortName, normalizeTeamName } from '../../config/teams';
 import styles from './BracketView.module.css';
+
+const VENUE_LABELS = {
+  'VANIER':     'Vanier',
+  'NEUFCHATEL': 'Neufchâtel',
+  'CHAUVEAU':   'Chauveau',
+};
 
 export const ROUND_KEYS = [
   '1/8e de finale',
@@ -165,12 +172,16 @@ function BracketMatch({ match, isRight = false, isFinal = false }) {
     || match?.status === 'forfait_b';
   const eqScore  = isPlayed && match?.scoreA === match?.scoreB;
 
-  return (
+  const venue = match?.venue ? (VENUE_LABELS[match.venue.trim().toUpperCase()] ?? match.venue) : null;
+  const metaParts = [match?.time, venue].filter(Boolean);
+
+  const card = (
     <div className={[
       styles.bMatch,
       isPlayed ? styles.bMatchPlayed : '',
       isFinal  ? styles.bMatchFinal  : '',
       !match   ? styles.bMatchEmpty  : '',
+      match?.supabaseId ? styles.bMatchClickable : '',
     ].filter(Boolean).join(' ')}>
       <TeamRow
         team={match?.teamA}
@@ -189,11 +200,22 @@ function BracketMatch({ match, isRight = false, isFinal = false }) {
         isLoser={loser === match?.teamB}
         isRight={isRight}
       />
-      {match?.time && !isPlayed && (
-        <div className={styles.bMatchMeta}>{match.time}</div>
+      {metaParts.length > 0 && (
+        <div className={styles.bMatchMeta}>
+          {metaParts.join(' · ')}
+        </div>
       )}
     </div>
   );
+
+  if (match?.supabaseId) {
+    return (
+      <Link to={`/match/${match.supabaseId}`} className={styles.bMatchLink}>
+        {card}
+      </Link>
+    );
+  }
+  return card;
 }
 
 /** Colonne d'un round. pairSize matches par groupe pour les connecteurs. */
