@@ -287,8 +287,8 @@
 
 /* ── Légende des rounds (bas) ─────────────────────────────────────────────── */
 .legend {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 148px 148px 148px 176px 148px 148px 148px;
   align-items: center;
   padding: 0.4rem 0 0;
   border-top: 1px solid var(--color-border-light, #e8ecf0);
@@ -296,24 +296,26 @@
 }
 
 .legendCol {
-  width: 148px;
   text-align: center;
   font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--color-text-faint, #9faab5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 2px;
 }
 
 .legendCenter {
-  flex: 1;
-  min-width: 176px;
   text-align: center;
   font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--color-primary, #003087);
+  white-space: nowrap;
 }
 
 /* ── Responsive : scroll horizontal sur mobile ───────────────────────────── */
@@ -327,6 +329,5 @@
   .teamScore { font-size: 0.8rem; }
   .flagImg   { width: 17px; height: 11px; }
 
-  .legendCol    { width: 120px; }
-  .legendCenter { min-width: 148px; }
+  .legend { grid-template-columns: 120px 120px 120px 148px 120px 120px 120px; }
 }
