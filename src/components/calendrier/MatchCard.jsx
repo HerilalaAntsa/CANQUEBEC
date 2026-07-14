@@ -33,11 +33,10 @@ function ArbitresRow({ match }) {
 }
 
 function formatDate(date, dateRaw) {
-  if (!date) return dateRaw ?? '';
-  // Forcer interprétation locale (pas UTC) pour éviter le décalage timezone
-  const safe = String(date).length === 10 ? date + 'T00:00:00' : date;
-  const d = new Date(safe);
-  if (isNaN(d.getTime())) return dateRaw ?? '';
+  if (!date) return typeof dateRaw === 'string' ? dateRaw : '';
+  // Normalise : accepte string ISO ou objet Date
+  const d = date instanceof Date ? date : new Date(String(date).slice(0, 10) + 'T00:00:00');
+  if (isNaN(d.getTime())) return typeof dateRaw === 'string' ? dateRaw : '';
   return d.toLocaleDateString('fr-CA', {
     weekday: 'short', day: 'numeric', month: 'short',
   });

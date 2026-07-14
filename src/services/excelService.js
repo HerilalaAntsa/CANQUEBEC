@@ -222,9 +222,13 @@ function parseMatches(ws) {
       if (!currentRound) continue;
 
       const rawDate = row[1];
-      const date = rawDate instanceof Date
+      const parsedDate = rawDate instanceof Date
         ? rawDate
         : parseStringDate(rawDate);
+      // Toujours stocker la date comme string ISO YYYY-MM-DD (jamais un objet Date)
+      const date = parsedDate instanceof Date && !isNaN(parsedDate)
+        ? parsedDate.toISOString().slice(0, 10)
+        : (typeof rawDate === 'string' ? rawDate : null);
 
       // Équipes : col[4+c] et col[6+c]
       const rawTeamA = row[4 + c] ? row[4 + c].toString().trim() : '';
@@ -267,8 +271,10 @@ function parseMatches(ws) {
 
     if (!rawDate || !teamA || !teamB) continue;
 
-    const date = rawDate instanceof Date ? rawDate : new Date(rawDate);
-    if (isNaN(date.getTime())) continue;
+    const parsedDateObj = rawDate instanceof Date ? rawDate : new Date(rawDate);
+    if (isNaN(parsedDateObj.getTime())) continue;
+    // Stocker comme string ISO YYYY-MM-DD (jamais un objet Date)
+    const date = parsedDateObj.toISOString().slice(0, 10);
 
     const scoreA = typeof row[7 + c] === 'number' ? row[7 + c] : null;
     const scoreB = typeof row[8 + c] === 'number' ? row[8 + c] : null;

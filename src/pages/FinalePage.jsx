@@ -13,9 +13,9 @@ const ROUND_ICONS = {
 
 function formatDateHeader(dateStr) {
   if (!dateStr) return 'Date à confirmer';
-  const safe = String(dateStr).slice(0, 10) + 'T00:00:00';
-  const d = new Date(safe);
-  if (isNaN(d.getTime())) return dateStr;
+  // Normalise : accepte string ISO ou objet Date
+  const d = dateStr instanceof Date ? dateStr : new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+  if (isNaN(d.getTime())) return String(dateStr);
   return d.toLocaleDateString('fr-CA', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
