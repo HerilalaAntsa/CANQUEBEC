@@ -1,0 +1,322 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   BracketView — arbre de tournoi à élimination directe
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Scroll container ─────────────────────────────────────────────────────── */
+.bracketScroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.75rem;
+}
+
+/* ── Bracket layout ───────────────────────────────────────────────────────── */
+.bracket {
+  display: flex;
+  align-items: stretch;
+  min-height: 520px;
+  min-width: 860px;
+  gap: 0;
+}
+
+/* ── Round columns ────────────────────────────────────────────────────────── */
+.col {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+}
+
+/* Largeurs des colonnes selon leur rôle */
+.colSlots4 { width: 148px; }
+.colSlots2 { width: 148px; }
+.colSlots1 { width: 148px; }
+.colSF     { width: 148px; }
+.colCenter {
+  flex: 1;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 0 8px;
+}
+
+/* ── Pair groups ──────────────────────────────────────────────────────────── */
+/* Chaque pairGroup prend une fraction égale de la hauteur de la colonne.
+   Avec flex:1 sur chaque pairSlot, les matchs se centrent automatiquement
+   sur leur position du bracket (pas besoin de calc() complexes). */
+
+.pairGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Connecteurs bracket (côté gauche) ───────────────────────────────────── */
+/*
+  Schéma :
+    Match A ────┐
+                │  ← trait vertical reliant les centres de A et B
+                ├──── match suivant
+                │
+    Match B ────┘
+*/
+
+/* Espace pour le trait horizontal sortant */
+.pairLeft { padding-right: 14px; }
+
+/* Trait vertical : du centre du 1er slot au centre du 2e slot */
+.pairLeft::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;      /* centre du 1er slot (slot = 50% du pairGroup) */
+  height: 50%;   /* s'étend jusqu'au centre du 2e slot */
+  border-right: 2px solid rgba(255, 255, 255, 0.22);
+}
+
+/* Trait horizontal depuis chaque match vers la droite */
+.pairLeft .pairSlot::after {
+  content: '';
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-1px);
+  width: 14px;
+  border-top: 2px solid rgba(255, 255, 255, 0.22);
+}
+
+/* ── Connecteurs bracket (côté droit, miroir) ────────────────────────────── */
+.pairRight { padding-left: 14px; }
+
+.pairRight::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  height: 50%;
+  border-left: 2px solid rgba(255, 255, 255, 0.22);
+}
+
+.pairRight .pairSlot::after {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-1px);
+  width: 14px;
+  border-top: 2px solid rgba(255, 255, 255, 0.22);
+}
+
+/* ── Pair slot ────────────────────────────────────────────────────────────── */
+.pairSlot {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding: 3px 0;
+}
+
+/* ── Match card ───────────────────────────────────────────────────────────── */
+.bMatch {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: border-color 0.2s;
+  position: relative;
+}
+
+.bMatch:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.bMatchPlayed {
+  border-color: rgba(255, 215, 0, 0.28);
+  background: rgba(255, 215, 0, 0.06);
+}
+
+/* Séparateur entre les deux équipes */
+.bMatchSep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 1px 0;
+}
+
+/* Heure affichée sous les équipes (seulement si match "à venir") */
+.bMatchTime {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin-top: 1px;
+}
+
+/* ── Lignes d'équipes ─────────────────────────────────────────────────────── */
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  min-height: 22px;
+}
+
+/* Miroir côté droit (flex-direction inversé) */
+.bMatchRight .teamRow {
+  flex-direction: row-reverse;
+}
+
+.teamWin {
+  color: #fff;
+  font-weight: 700;
+}
+
+.teamTbd {
+  color: rgba(255, 255, 255, 0.35);
+  font-style: italic;
+}
+
+.teamName {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.7rem;
+  letter-spacing: 0.01em;
+}
+
+.bMatchRight .teamName {
+  text-align: right;
+}
+
+.teamScore {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffd700;
+  min-width: 16px;
+  text-align: center;
+}
+
+/* Score du gagnant : blanc */
+.teamWin .teamScore {
+  color: #fff;
+}
+
+/* ── Drapeaux ─────────────────────────────────────────────────────────────── */
+.flagImg {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.flagEmoji {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.flagEmpty {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+/* ── Colonne centrale (Finale / 3e place) ────────────────────────────────── */
+.centerTop,
+.centerBot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.centerTop {
+  flex: 1;
+  justify-content: flex-end;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.centerBot {
+  flex: 1;
+  justify-content: flex-start;
+  padding-top: 8px;
+}
+
+.centerLabel {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+/* Carte de finale : un peu plus grande */
+.colCenter .bMatch {
+  border-color: rgba(255, 215, 0, 0.25);
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.colCenter .teamRow {
+  min-height: 26px;
+  font-size: 0.78rem;
+}
+
+/* ── Légende des rounds (bas) ─────────────────────────────────────────────── */
+.legend {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0 0;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.legend span {
+  width: 148px;
+  text-align: center;
+}
+
+.legendCenter {
+  flex: 1;
+  min-width: 168px;
+}
+
+/* ── Responsive : scroll horizontal sur mobile ───────────────────────────── */
+@media (max-width: 768px) {
+  .bracket {
+    min-width: 700px;
+  }
+
+  .colSlots4,
+  .colSlots2,
+  .colSlots1,
+  .colSF {
+    width: 120px;
+  }
+
+  .colCenter {
+    min-width: 140px;
+  }
+
+  .teamName  { font-size: 0.62rem; }
+  .teamScore { font-size: 0.8rem; }
+  .flagImg   { width: 16px; height: 11px; }
+
+  .legend span { width: 120px; }
+  .legendCenter { min-width: 140px; }
+}

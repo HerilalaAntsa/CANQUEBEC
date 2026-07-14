@@ -1,6 +1,41 @@
 /* FinalePage.module.css */
 .page { padding: var(--space-6) 0; }
 
+/* ── Sélecteur de vue Arbre / Liste ── */
+.viewToggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.5rem;
+}
+
+.toggleBtn {
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.toggleBtn:hover {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.toggleActive {
+  background: var(--color-accent, #3b82f6);
+  border-color: var(--color-accent, #3b82f6);
+  color: #fff;
+}
+
+/* ── Wrapper arbre ── */
+.bracketWrapper {
+  margin-bottom: 2rem;
+}
+
 .pageHeader {
   margin-bottom: var(--space-8);
 }

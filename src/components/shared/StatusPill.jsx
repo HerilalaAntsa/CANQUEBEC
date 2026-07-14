@@ -9,8 +9,11 @@ TODAY.setHours(0, 0, 0, 0);
 export default function StatusPill({ match }) {
   if (!match) return null;
 
-  const matchDay = new Date(match.date);
-  matchDay.setHours(0, 0, 0, 0);
+  // Guard: null or invalid date must not trigger 'Terminé'
+  const rawDate = match.date ? String(match.date).slice(0, 10) + 'T00:00:00' : null;
+  const matchDay = rawDate ? new Date(rawDate) : null;
+  if (matchDay) matchDay.setHours(0, 0, 0, 0);
+  const isValidDay = matchDay && !isNaN(matchDay.getTime());
 
   let variant, label;
 
@@ -26,10 +29,10 @@ export default function StatusPill({ match }) {
   } else if (match.status === 'postponed') {
     variant = 'postponed';
     label   = '⚠️ Reporté';
-  } else if (matchDay.getTime() === TODAY.getTime()) {
+  } else if (isValidDay && matchDay.getTime() === TODAY.getTime()) {
     variant = 'today';
     label   = "Aujourd'hui";
-  } else if (matchDay < TODAY) {
+  } else if (isValidDay && matchDay < TODAY) {
     variant = 'played';
     label   = 'Terminé';
   } else {
