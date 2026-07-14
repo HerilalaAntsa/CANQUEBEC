@@ -1,6 +1,6 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useLeagueData } from '../services/dataStore';
-import MatchCard from '../components/calendrier/MatchCard';
+import KnockoutMatchRow from '../components/finale/KnockoutMatchRow';
 import BracketView, { ROUND_KEYS } from '../components/finale/BracketView';
 import styles from './FinalePage.module.css';
 
@@ -13,7 +13,7 @@ const ROUND_ICONS = {
 
 export default function FinalePage() {
   const { matches, loadSupabaseScores } = useLeagueData();
-  const [view, setView] = useState('bracket'); // 'bracket' | 'list'
+  const [view, setView] = useState('list'); // default: liste compacte
 
   // Rafraîchir les scores/statuts toutes les 30s
   useEffect(() => {
@@ -86,7 +86,7 @@ export default function FinalePage() {
               </div>
             )}
 
-            {/* ── Vue liste (round par round) ── */}
+            {/* ── Vue liste compacte ── */}
             {view === 'list' && byRound.map(([round, rMatches]) => (
               <div key={round} className={styles.roundSection}>
                 <div className={styles.roundHeader}>
@@ -96,9 +96,9 @@ export default function FinalePage() {
                     {rMatches.length} match{rMatches.length > 1 ? 's' : ''}
                   </span>
                 </div>
-                <div className={styles.roundGrid}>
+                <div className={styles.matchList}>
                   {rMatches.map((m, i) => (
-                    <MatchCard key={`${round}-${i}`} match={m} />
+                    <KnockoutMatchRow key={`${round}-${i}`} match={m} />
                   ))}
                 </div>
               </div>

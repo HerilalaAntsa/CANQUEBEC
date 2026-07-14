@@ -4,17 +4,17 @@
 
 /* ── Scroll container ─────────────────────────────────────────────────────── */
 .bracketScroll {
+  --conn: var(--color-primary, #003087);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 0.75rem;
+  padding-bottom: 1rem;
 }
 
-/* ── Bracket layout ───────────────────────────────────────────────────────── */
 .bracket {
   display: flex;
   align-items: stretch;
-  min-height: 520px;
-  min-width: 860px;
+  min-height: 460px;
+  min-width: 900px;
   gap: 0;
 }
 
@@ -22,24 +22,21 @@
 .col {
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   flex-shrink: 0;
 }
 
-/* Largeurs des colonnes selon leur rôle */
-.colSlots4 { width: 148px; }
-.colSlots2 { width: 148px; }
-.colSlots1 { width: 148px; }
-.colSF     { width: 148px; }
+.slots4 { width: 148px; }
+.slots2 { width: 148px; }
+.slots1 { width: 148px; }
+.colSF  { width: 148px; }
 .colCenter {
   flex: 1;
-  min-width: 168px;
+  min-width: 176px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
   justify-content: center;
-  gap: 1.5rem;
-  padding: 0 8px;
+  gap: 0;
+  padding: 0 6px;
 }
 
 /* ── Pair groups ──────────────────────────────────────────────────────────── */
@@ -116,46 +113,57 @@
   display: flex;
   align-items: center;
   position: relative;
-  padding: 3px 0;
+  padding: 4px 0;
 }
 
 /* ── Match card ───────────────────────────────────────────────────────────── */
 .bMatch {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 5px 8px;
+  min-height: 58px;
+  background: var(--color-surface, #fff);
+  border: 1.5px solid var(--color-border, #d0d7de);
+  border-radius: var(--radius, 8px);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,.08));
+  padding: 6px 8px 5px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  transition: border-color 0.2s;
+  gap: 1px;
+  transition: border-color 0.15s, box-shadow 0.15s;
   position: relative;
 }
 
 .bMatch:hover {
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.09);
+  border-color: var(--color-primary, #003087);
+  box-shadow: 0 2px 8px rgba(0,48,135,.12);
 }
 
 .bMatchPlayed {
-  border-color: rgba(255, 215, 0, 0.28);
-  background: rgba(255, 215, 0, 0.06);
+  border-left: 3px solid var(--color-primary, #003087);
 }
 
-/* Séparateur entre les deux équipes */
+.bMatchFinal {
+  border-color: #c8960c;
+  border-left: 3px solid #c8960c;
+}
+
+.bMatchEmpty {
+  border-style: dashed;
+  opacity: 0.5;
+  box-shadow: none;
+}
+
 .bMatchSep {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-  margin: 1px 0;
+  background: var(--color-border-light, #e8ecf0);
+  margin: 2px 0;
 }
 
-/* Heure affichée sous les équipes (seulement si match "à venir") */
-.bMatchTime {
-  font-size: 0.65rem;
-  color: rgba(255, 255, 255, 0.4);
+.bMatchMeta {
+  font-size: 0.62rem;
+  color: var(--color-text-faint, #9faab5);
   text-align: center;
-  margin-top: 1px;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
 }
 
 /* ── Lignes d'équipes ─────────────────────────────────────────────────────── */
@@ -165,22 +173,29 @@
   gap: 5px;
   font-size: 0.72rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--color-text, #0f1923);
   min-height: 22px;
 }
 
-/* Miroir côté droit (flex-direction inversé) */
-.bMatchRight .teamRow {
-  flex-direction: row-reverse;
+/* Miroir cote droit */
+.teamRight { flex-direction: row-reverse; }
+.teamRight .teamName { text-align: right; }
+
+/* Gagnant : gras + bleu */
+.teamWin {
+  font-weight: 700;
+  color: var(--color-primary, #003087);
 }
 
-.teamWin {
-  color: #fff;
-  font-weight: 700;
+/* Elimine : grise + barre */
+.teamLoss {
+  opacity: 0.38;
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-muted, #536171);
 }
 
 .teamTbd {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--color-text-faint, #9faab5);
   font-style: italic;
 }
 
@@ -193,30 +208,27 @@
   letter-spacing: 0.01em;
 }
 
-.bMatchRight .teamName {
-  text-align: right;
-}
-
 .teamScore {
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  color: #ffd700;
-  min-width: 16px;
+  color: var(--color-text, #0f1923);
+  min-width: 18px;
   text-align: center;
+  flex-shrink: 0;
 }
 
-/* Score du gagnant : blanc */
 .teamWin .teamScore {
-  color: #fff;
+  color: var(--color-primary, #003087);
 }
 
 /* ── Drapeaux ─────────────────────────────────────────────────────────────── */
 .flagImg {
-  width: 20px;
-  height: 14px;
+  width: 22px;
+  height: 15px;
   object-fit: cover;
   border-radius: 2px;
   flex-shrink: 0;
+  border: 0.5px solid rgba(0,0,0,.08);
 }
 
 .flagEmoji {
@@ -225,98 +237,96 @@
   flex-shrink: 0;
 }
 
-.flagEmpty {
+.flagTbd {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--color-text-faint, #9faab5);
   flex-shrink: 0;
+  width: 22px;
+  text-align: center;
 }
 
 /* ── Colonne centrale (Finale / 3e place) ────────────────────────────────── */
-.centerTop,
-.centerBot {
+.centerHalf {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  justify-content: center;
   gap: 6px;
+  padding: 8px 0;
 }
 
-.centerTop {
-  flex: 1;
-  justify-content: flex-end;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.centerBot {
-  flex: 1;
-  justify-content: flex-start;
-  padding-top: 8px;
+.centerDivider {
+  height: 1px;
+  background: var(--color-border, #d0d7de);
+  margin: 0 4px;
 }
 
 .centerLabel {
-  font-size: 0.65rem;
+  font-family: var(--font-display, 'Barlow Condensed', sans-serif);
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  margin-bottom: 2px;
+  color: var(--color-text-muted, #536171);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
-/* Carte de finale : un peu plus grande */
+.centerIcon { font-size: 0.9rem; }
+
 .colCenter .bMatch {
-  border-color: rgba(255, 215, 0, 0.25);
-  background: rgba(255, 215, 0, 0.05);
+  min-height: 68px;
+  border-color: #c8960c;
 }
 
 .colCenter .teamRow {
-  min-height: 26px;
-  font-size: 0.78rem;
+  min-height: 25px;
+  font-size: 0.76rem;
 }
 
 /* ── Légende des rounds (bas) ─────────────────────────────────────────────── */
 .legend {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0 0;
-  font-size: 0.6rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.3);
+  align-items: center;
+  padding: 0.4rem 0 0;
+  border-top: 1px solid var(--color-border-light, #e8ecf0);
+  margin-top: 0.4rem;
 }
 
-.legend span {
+.legendCol {
   width: 148px;
   text-align: center;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-faint, #9faab5);
 }
 
 .legendCenter {
   flex: 1;
-  min-width: 168px;
+  min-width: 176px;
+  text-align: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary, #003087);
 }
 
 /* ── Responsive : scroll horizontal sur mobile ───────────────────────────── */
 @media (max-width: 768px) {
-  .bracket {
-    min-width: 700px;
-  }
+  .bracket { min-width: 720px; }
 
-  .colSlots4,
-  .colSlots2,
-  .colSlots1,
-  .colSF {
-    width: 120px;
-  }
-
-  .colCenter {
-    min-width: 140px;
-  }
+  .slots4, .slots2, .slots1, .colSF { width: 120px; }
+  .colCenter { min-width: 148px; }
 
   .teamName  { font-size: 0.62rem; }
   .teamScore { font-size: 0.8rem; }
-  .flagImg   { width: 16px; height: 11px; }
+  .flagImg   { width: 17px; height: 11px; }
 
-  .legend span { width: 120px; }
-  .legendCenter { min-width: 140px; }
+  .legendCol    { width: 120px; }
+  .legendCenter { min-width: 148px; }
 }

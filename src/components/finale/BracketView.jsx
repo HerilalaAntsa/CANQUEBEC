@@ -13,10 +13,9 @@
  *   SF  : 1 match              → Finale / 3e place
  */
 import { useMemo } from 'react';
-import { getFlag, getShortName } from '../../config/teams';
+import { getFlag, getShortName, normalizeTeamName } from '../../config/teams';
 import styles from './BracketView.module.css';
 
-// Ordre et libellés des rounds (étendable)
 export const ROUND_KEYS = [
   '1/8e de finale',
   'Quarts de finale',
@@ -24,10 +23,10 @@ export const ROUND_KEYS = [
   'Finale',
 ];
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Pure helpers ─────────────────────────────────────────────────────────────
 
-/** Retourne le nom de l'équipe gagnante, null si match non joué */
-function getWinner(m) {
+/** Gagnant (null si non joue). Supporte les tirs au but via penaltyA/penaltyB. */
+export function getWinner(m) {
   if (!m) return null;
   if (m.status === 'forfait_a') return m.teamB;
   if (m.status === 'forfait_b') return m.teamA;
@@ -36,14 +35,31 @@ function getWinner(m) {
   const b = m.scoreB ?? -2;
   if (a > b) return m.teamA;
   if (b > a) return m.teamB;
-  return null; // nul (rare en KO)
+  const pA = m.penaltyA ?? -1;
+  const pB = m.penaltyB ?? -2;
+  if (pA > pB) return m.teamA;
+  if (pB > pA) return m.teamB;
+  return null;
 }
 
-/** Trie par date puis par heure */
+/** Perdant (null si non joue) */
+export function getLoser(m) {
+  const w = getWinner(m);
+  if (!w) return null;
+  return w === m?.teamA ? m?.teamB : m?.teamA;
+}
+
+/** '2' ou '0 (4)' si tirs au but */
+function fmtScore(score, penalty) {
+  if (score == null) return null;
+  if (penalty != null) return `${score} (${penalty})`;
+  return String(score);
+}
+
 function sortByTime(arr) {
   return [...arr].sort((a, b) => {
-    const ka = `${a.date ?? '9999'}${a.time ?? '99:99'}`;
-    const kb = `${b.date ?? '9999'}${b.time ?? '99:99'}`;
+    const ka = `${a.date ?? '9999-99-99'}${a.time ?? '99:99'}`;
+    const kb = `${b.date ?? '9999-99-99'}${b.time ?? '99:99'}`;
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
 }
@@ -60,123 +76,104 @@ function groupByRound(matches) {
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-/** Affiche le drapeau d'une équipe (SVG ou emoji) */
 function TeamFlag({ team }) {
-  if (!team) return <span className={styles.flagEmpty}>?</span>;
-  const f = getFlag(team);
-  if (!f || f === '🏴') return <span className={styles.flagEmoji}>🏴</span>;
-  if (f.startsWith('/')) {
+  if (!team) return <span className={styles.flagTbd}>?</span>;
+  const f = getFlag(normalizeTeamName(team));
+  if (f && f.startsWith('/')) {
     return <img src={f} alt={team} className={styles.flagImg} />;
   }
-  return <span className={styles.flagEmoji}>{f}</span>;
+  if (f && f !== '\uD83C\uDFF4') return <span className={styles.flagEmoji}>{f}</span>;
+  return <span className={styles.flagTbd}>?</span>;
 }
 
 /**
- * Une ligne d'équipe dans une carte match du bracket.
- * side='left'   → flag | nom | score
- * side='right'  → score | nom | flag (miroir)
- * side='center' → flag | nom | score (idem left, pour la finale)
+ * Ligne d'equipe : flag | nom | score (gauche) ou score | nom | flag (droite).
+ * isLoser => grised + score barre (equipe eliminee).
  */
-function TeamRow({ team, score, isWinner, side }) {
-  const name = team ? (getShortName(team) || team) : null;
-  const isRight = side === 'right';
+function TeamRow({ team, score, penalty, isWinner, isLoser, isRight }) {
+  const name = team ? (getShortName(normalizeTeamName(team)) || team) : null;
+  const scoreStr = fmtScore(score, penalty);
 
   return (
     <div className={[
       styles.teamRow,
-      isWinner ? styles.teamWin : '',
-      !team ? styles.teamTbd : '',
-    ].join(' ')}>
-      {isRight && score != null && <span className={styles.teamScore}>{score}</span>}
-      {isRight && <span className={styles.teamName}>{name ?? 'À déterm.'}</span>}
+      isWinner ? styles.teamWin  : '',
+      isLoser  ? styles.teamLoss : '',
+      !team    ? styles.teamTbd  : '',
+      isRight  ? styles.teamRight : '',
+    ].filter(Boolean).join(' ')}>
+      {isRight && scoreStr != null && <span className={styles.teamScore}>{scoreStr}</span>}
+      {isRight && <span className={styles.teamName}>{name ?? 'A det.'}</span>}
       <TeamFlag team={team} />
-      {!isRight && <span className={styles.teamName}>{name ?? 'À déterm.'}</span>}
-      {!isRight && score != null && <span className={styles.teamScore}>{score}</span>}
+      {!isRight && <span className={styles.teamName}>{name ?? 'A det.'}</span>}
+      {!isRight && scoreStr != null && <span className={styles.teamScore}>{scoreStr}</span>}
     </div>
   );
 }
 
-/**
- * Carte match dans le bracket.
- * - isTop / isBottom indiquent la position au sein de la paire (pour les connecteurs CSS)
- */
-function BracketMatch({ match, side, isTop = false, isBottom = false }) {
-  const winner = getWinner(match);
-  const played = match?.status === 'played' || match?.status?.startsWith('forfait');
-
-  const connClass = isTop ? styles.connTop : isBottom ? styles.connBottom : '';
-  const isRight   = side === 'right';
+/** Carte match dans le bracket. */
+function BracketMatch({ match, isRight = false, isFinal = false }) {
+  const winner   = getWinner(match);
+  const loser    = getLoser(match);
+  const isPlayed = match?.status === 'played'
+    || match?.status === 'forfait_a'
+    || match?.status === 'forfait_b';
+  const eqScore  = isPlayed && match?.scoreA === match?.scoreB;
 
   return (
     <div className={[
       styles.bMatch,
-      played     ? styles.bMatchPlayed : '',
-      isRight    ? styles.bMatchRight  : '',
-      connClass,
-    ].join(' ')}>
+      isPlayed ? styles.bMatchPlayed : '',
+      isFinal  ? styles.bMatchFinal  : '',
+      !match   ? styles.bMatchEmpty  : '',
+    ].filter(Boolean).join(' ')}>
       <TeamRow
         team={match?.teamA}
-        score={played ? match?.scoreA : null}
+        score={isPlayed ? match?.scoreA : null}
+        penalty={eqScore ? match?.penaltyA : null}
         isWinner={winner === match?.teamA}
-        side={side}
+        isLoser={loser === match?.teamA}
+        isRight={isRight}
       />
       <div className={styles.bMatchSep} />
       <TeamRow
         team={match?.teamB}
-        score={played ? match?.scoreB : null}
+        score={isPlayed ? match?.scoreB : null}
+        penalty={eqScore ? match?.penaltyB : null}
         isWinner={winner === match?.teamB}
-        side={side}
+        isLoser={loser === match?.teamB}
+        isRight={isRight}
       />
-      {match?.time && !played && (
-        <div className={styles.bMatchTime}>{match.time}</div>
+      {match?.time && !isPlayed && (
+        <div className={styles.bMatchMeta}>{match.time}</div>
       )}
     </div>
   );
 }
 
-/**
- * Colonne de round.
- * Chaque slot a flex:1 → distribution automatique égale.
- * Les matches sont regroupés en paires pour dessiner les connecteurs.
- *   pairSize=2 : 2 matches → 1 connecteur vertical entre eux
- *   pairSize=1 : match seul (SF, ou colonne avec 1 seul match)
- */
-function RoundCol({ matches, totalSlots, side, pairSize = 2 }) {
-  // Compléter jusqu'à totalSlots avec null (placeholder TBD)
+/** Colonne d'un round. pairSize matches par groupe pour les connecteurs. */
+function RoundCol({ matches, totalSlots, isRight = false, pairSize = 2 }) {
   const slots = Array.from({ length: totalSlots }, (_, i) => matches[i] ?? null);
-
-  // Découper en paires
   const pairs = [];
   for (let i = 0; i < slots.length; i += pairSize) {
     pairs.push(slots.slice(i, i + pairSize));
   }
 
-  const isRight = side === 'right';
-
   return (
-    <div className={[styles.col, styles['colSlots' + totalSlots]].join(' ')}>
+    <div className={[styles.col, styles['slots' + totalSlots]].join(' ')}>
       {pairs.map((pair, pi) => (
         <div
           key={pi}
           className={[
             styles.pairGroup,
             pairSize > 1 ? (isRight ? styles.pairRight : styles.pairLeft) : '',
-          ].join(' ')}
+          ].filter(Boolean).join(' ')}
         >
-          {pair.map((match, mi) => {
-            const isTop    = pairSize > 1 && mi === 0;
-            const isBottom = pairSize > 1 && mi === pair.length - 1;
-            return (
-              <div key={mi} className={styles.pairSlot}>
-                <BracketMatch
-                  match={match}
-                  side={side}
-                  isTop={isTop}
-                  isBottom={isBottom}
-                />
-              </div>
-            );
-          })}
+          {pair.map((match, mi) => (
+            <div key={mi} className={styles.pairSlot}>
+              <BracketMatch match={match} isRight={isRight} />
+            </div>
+          ))}
         </div>
       ))}
     </div>
@@ -188,80 +185,79 @@ function RoundCol({ matches, totalSlots, side, pairSize = 2 }) {
 export default function BracketView({ matches }) {
   const { r16L, r16R, qfL, qfR, sfL, sfR, fin, third } = useMemo(() => {
     const byRound = groupByRound(matches);
-
     const r16 = sortByTime(byRound['1/8e de finale']);
     const qf  = sortByTime(byRound['Quarts de finale']);
     const sf  = sortByTime(byRound['Demi-finales']);
     const fn  = sortByTime(byRound['Finale']);
-
-    // Partage gauche / droite : premiers 4 à gauche, 4 suivants à droite
     return {
-      r16L: r16.slice(0, 4),
-      r16R: r16.slice(4, 8),
-      qfL:  qf.slice(0, 2),
-      qfR:  qf.slice(2, 4),
-      sfL:  sf[0] ?? null,
-      sfR:  sf[1] ?? null,
-      fin:  fn[0] ?? null,
+      r16L:  r16.slice(0, 4),
+      r16R:  r16.slice(4, 8),
+      qfL:   qf.slice(0, 2),
+      qfR:   qf.slice(2, 4),
+      sfL:   sf[0] ?? null,
+      sfR:   sf[1] ?? null,
+      fin:   fn[0] ?? null,
       third: fn[1] ?? null,
     };
   }, [matches]);
-
-  const totalR16 = Math.max(r16L.length, 4);
-  const totalQF  = Math.max(qfL.length, 2);
 
   return (
     <div className={styles.bracketScroll}>
       <div className={styles.bracket}>
 
-        {/* ── Côté gauche ── */}
-        <RoundCol matches={r16L} totalSlots={4} side="left" pairSize={2} />
-        <RoundCol matches={qfL}  totalSlots={2} side="left" pairSize={2} />
+        {/* Gauche : R16 -> QF -> SF */}
+        <RoundCol matches={r16L} totalSlots={4} isRight={false} pairSize={2} />
+        <RoundCol matches={qfL}  totalSlots={2} isRight={false} pairSize={2} />
 
-        {/* SF gauche : 1 match seul, avec connecteur sortant vers le centre */}
-        <div className={[styles.col, styles.colSlots1, styles.colSF].join(' ')}>
-          <div className={styles.pairGroup}>
+        {/* SF gauche */}
+        <div className={[styles.col, styles['slots1'], styles.colSF].join(' ')}>
+          <div className={[styles.pairGroup, styles.pairSfLeft].join(' ')}>
             <div className={styles.pairSlot}>
-              <BracketMatch match={sfL} side="left" />
+              <BracketMatch match={sfL} isRight={false} />
             </div>
           </div>
         </div>
 
-        {/* ── Centre : Finale + 3e place ── */}
-        <div className={[styles.col, styles.colCenter].join(' ')}>
-          <div className={styles.centerTop}>
-            <span className={styles.centerLabel}>🏆 GRANDE FINALE</span>
-            <BracketMatch match={fin} side="center" />
+        {/* Centre : Finale + 3e place */}
+        <div className={styles.colCenter}>
+          <div className={styles.centerHalf}>
+            <div className={styles.centerLabel}>
+              <span className={styles.centerIcon}>🏆</span> Grande Finale
+            </div>
+            <BracketMatch match={fin} isFinal />
           </div>
-          <div className={styles.centerBot}>
-            <span className={styles.centerLabel}>🥉 3ème PLACE</span>
-            <BracketMatch match={third} side="center" />
+          <div className={styles.centerDivider} />
+          <div className={styles.centerHalf}>
+            <div className={styles.centerLabel}>
+              <span className={styles.centerIcon}>🥉</span> 3e Place
+            </div>
+            <BracketMatch match={third} isFinal />
           </div>
         </div>
 
-        {/* ── Côté droit (miroir) ── */}
-        <div className={[styles.col, styles.colSlots1, styles.colSF].join(' ')}>
-          <div className={styles.pairGroup}>
+        {/* Droite : SF -> QF -> R16 (miroir) */}
+        <div className={[styles.col, styles['slots1'], styles.colSF].join(' ')}>
+          <div className={[styles.pairGroup, styles.pairSfRight].join(' ')}>
             <div className={styles.pairSlot}>
-              <BracketMatch match={sfR} side="right" />
+              <BracketMatch match={sfR} isRight />
             </div>
           </div>
         </div>
 
-        <RoundCol matches={qfR}  totalSlots={2} side="right" pairSize={2} />
-        <RoundCol matches={r16R} totalSlots={4} side="right" pairSize={2} />
+        <RoundCol matches={qfR}  totalSlots={2} isRight pairSize={2} />
+        <RoundCol matches={r16R} totalSlots={4} isRight pairSize={2} />
 
       </div>
 
-      {/* Légende rounds */}
+      {/* Legende rounds */}
       <div className={styles.legend}>
-        <span>1/8e de finale</span>
-        <span>Quarts</span>
-        <span>Demi-finales</span>
-        <span className={styles.legendCenter}>Finale · 3e place</span>
-        <span>Demi-finales</span>
-        <span>Quarts</span>
-        <span>1/8e de finale</span>
+        <div className={styles.legendCol}>1/8</div>
+        <div className={styles.legendCol}>Quarts</div>
+        <div className={styles.legendCol}>Demis</div>
+        <div className={styles.legendCenter}>Finale</div>
+        <div className={styles.legendCol}>Demis</div>
+        <div className={styles.legendCol}>Quarts</div>
+        <div className={styles.legendCol}>1/8</div>
       </div>
     </div>
   );

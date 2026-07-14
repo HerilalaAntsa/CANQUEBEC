@@ -1,0 +1,187 @@
+/* KnockoutMatchRow — ligne compacte style FIFA */
+
+.link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.row {
+  display: grid;
+  grid-template-columns:
+    auto        /* status pill */
+    110px       /* date/heure */
+    1fr         /* equipe A */
+    28px        /* vs */
+    1fr         /* equipe B */
+    72px;       /* lieu */
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #d0d7de);
+  border-radius: var(--radius, 8px);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.row:hover,
+.link:hover .row {
+  border-color: var(--color-primary, #003087);
+  box-shadow: 0 2px 8px rgba(0,48,135,.10);
+}
+
+.rowPlayed {
+  border-left: 3px solid var(--color-primary, #003087);
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+/* ── Status ── */
+.status {
+  flex-shrink: 0;
+}
+
+/* ── Date/heure ── */
+.datetime {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.date {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text, #0f1923);
+  white-space: nowrap;
+}
+
+.time {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #536171);
+}
+
+/* ── Cellule equipe ── */
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text, #0f1923);
+  overflow: hidden;
+}
+
+/* Equipe B : miroir (score | nom | flag) */
+.teamRight {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+}
+
+.win {
+  font-weight: 700;
+  color: var(--color-primary, #003087);
+}
+
+.loss {
+  opacity: 0.38;
+  text-decoration: line-through;
+  text-decoration-color: var(--color-text-muted, #536171);
+}
+
+.tbd {
+  color: var(--color-text-faint, #9faab5);
+  font-style: italic;
+}
+
+.name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.teamRight .name {
+  text-align: right;
+}
+
+.score {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--color-text, #0f1923);
+  min-width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.win .score {
+  color: var(--color-primary, #003087);
+}
+
+/* ── Drapeaux ── */
+.flag {
+  width: 24px;
+  height: 16px;
+  object-fit: cover;
+  border-radius: 2px;
+  flex-shrink: 0;
+  border: 0.5px solid rgba(0,0,0,.08);
+}
+
+.flagEmoji {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.flagTbd {
+  font-size: 0.8rem;
+  color: var(--color-text-faint, #9faab5);
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+}
+
+/* ── vs ── */
+.vs {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--color-text-faint, #9faab5);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Lieu ── */
+.venue {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #536171);
+  text-align: right;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns:
+      auto        /* status */
+      80px        /* date */
+      1fr         /* A */
+      22px        /* vs */
+      1fr         /* B */
+      0;          /* lieu masque */
+    gap: 5px;
+    padding: 8px 10px;
+  }
+
+  .venue { display: none; }
+
+  .date { font-size: 0.65rem; }
+  .name { font-size: 0.72rem; }
+  .score { font-size: 0.8rem; }
+  .flag { width: 18px; height: 12px; }
+}
