@@ -391,7 +391,7 @@ export function DataProvider({ children }) {
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
       const [matchesRes, eventsRes, redEventsRes, penaltyRes, bannedRes] = await Promise.all([
-        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, time, venue, referee, ref1, ref2, coordinator'),
+        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, date, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'red'),
         supabase.from('penalty_points').select('team, points').then(r => r),
