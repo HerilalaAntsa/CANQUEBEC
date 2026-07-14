@@ -56,8 +56,53 @@ function fmtScore(score, penalty) {
   return String(score);
 }
 
+/**
+ * Positions exactes du bracket 1/8e selon le tirage officiel.
+ * Indices 0-3 = cote GAUCHE (top→bottom), 4-7 = cote DROIT (top→bottom).
+ * La clé est insensible a l'ordre des equipes (A:B ou B:A).
+ * Pour les rounds suivants (QF/SF), on utilisera bracket_position de Supabase
+ * ou l'ordre de creation par defaut.
+ */
+const R16_POSITIONS = {
+  // Gauche (0-3) ─────────────────────────────────────
+  'SÉNÉGAL:HAÏTI':              0, 'HAÏTI:SÉNÉGAL':              0,
+  'NATIONS-UNIES:MADAGASCAR':   1, 'MADAGASCAR:NATIONS-UNIES':   1,
+  'CAMEROUN:MALI':              2, 'MALI:CAMEROUN':              2,
+  "CÔTE D'IVOIRE:TANZANIE":     3, "TANZANIE:CÔTE D'IVOIRE":     3,
+  // Droite (4-7) ─────────────────────────────────────
+  'CENTRAFRIQUE:ALGÉRIE':       4, 'ALGÉRIE:CENTRAFRIQUE':       4,
+  'GUINÉE:GABON':               5, 'GABON:GUINÉE':               5,
+  'BURKINA FASO:TOGO':          6, 'TOGO:BURKINA FASO':          6,
+  'GAMBIE:RD CONGO':            7, 'RD CONGO:GAMBIE':            7,
+};
+
+function pairKey(m) {
+  const n = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
+  return `${n(m.teamA)}:${n(m.teamB)}`;
+}
+
+/**
+ * Trie les R16 selon les positions officielles du tirage.
+ * Les rounds suivants (QF/SF) sont tries par bracket_position Supabase ou
+ * par date/heure par defaut.
+ */
+function sortR16ByBracket(arr) {
+  return [...arr].sort((a, b) => {
+    const pa = R16_POSITIONS[pairKey(a)] ?? 99;
+    const pb = R16_POSITIONS[pairKey(b)] ?? 99;
+    if (pa !== pb) return pa - pb;
+    // Fallback : date/heure
+    const ka = `${a.date ?? '9999'}${a.time ?? '99:99'}`;
+    const kb = `${b.date ?? '9999'}${b.time ?? '99:99'}`;
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
+}
+
 function sortByTime(arr) {
   return [...arr].sort((a, b) => {
+    const pa = a.bracket_position ?? 99;
+    const pb = b.bracket_position ?? 99;
+    if (pa !== pb) return pa - pb;
     const ka = `${a.date ?? '9999-99-99'}${a.time ?? '99:99'}`;
     const kb = `${b.date ?? '9999-99-99'}${b.time ?? '99:99'}`;
     return ka < kb ? -1 : ka > kb ? 1 : 0;
@@ -185,7 +230,7 @@ function RoundCol({ matches, totalSlots, isRight = false, pairSize = 2 }) {
 export default function BracketView({ matches }) {
   const { r16L, r16R, qfL, qfR, sfL, sfR, fin, third } = useMemo(() => {
     const byRound = groupByRound(matches);
-    const r16 = sortByTime(byRound['1/8e de finale']);
+    const r16 = sortR16ByBracket(byRound['1/8e de finale']);
     const qf  = sortByTime(byRound['Quarts de finale']);
     const sf  = sortByTime(byRound['Demi-finales']);
     const fn  = sortByTime(byRound['Finale']);
