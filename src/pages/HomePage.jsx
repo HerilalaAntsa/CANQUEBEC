@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useLeagueData } from '../services/dataStore';
 import MatchCard from '../components/calendrier/MatchCard';
@@ -55,36 +55,13 @@ function MiniStandings({ standings, teams }) {
 }
 
 function PhaseFinaleWidget({ matches }) {
-  const [view, setView] = useState('list');
   const phaseMatches = useMemo(() => matches.filter(m => m.phase), [matches]);
 
   if (!phaseMatches.length) return <p className={styles.empty}>Les matchs de phase finale apparaîtront ici.</p>;
 
   return (
-    <div>
-      <div className={styles.widgetToggle}>
-        <button
-          className={`${styles.wToggleBtn} ${view === 'list' ? styles.wToggleActive : ''}`}
-          onClick={() => setView('list')}
-        >Liste</button>
-        <button
-          className={`${styles.wToggleBtn} ${view === 'bracket' ? styles.wToggleActive : ''}`}
-          onClick={() => setView('bracket')}
-        >Arbre</button>
-      </div>
-      {view === 'list' && (
-        <div className={styles.matchList}>
-          {phaseMatches.slice(0, 4).map((m, i) => <MatchCard key={m.id ?? i} match={m} />)}
-          {phaseMatches.length > 4 && (
-            <Link to="/finale" className={styles.seeMore}>Voir tous les matchs ({phaseMatches.length}) →</Link>
-          )}
-        </div>
-      )}
-      {view === 'bracket' && (
-        <div className={styles.bracketHome}>
-          <BracketView matches={phaseMatches} />
-        </div>
-      )}
+    <div className={styles.bracketHome}>
+      <BracketView matches={phaseMatches} />
     </div>
   );
 }
