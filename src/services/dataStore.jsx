@@ -236,7 +236,7 @@ function applySupabaseScores(matches, supabaseScores) {
       ? `phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`
       : `${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`;
     const fallbackKey = `teams:${norm(m.teamA)}:${norm(m.teamB)}`;
-    const canUseFallback = !m.phase && (pairCounts.get(fallbackKey) ?? 0) === 1;
+    const canUseFallback = !m.phase && (pairCounts.get(fallbackKey) ?? 0) === 1; // jamais pour la phase finale
     const live = supabaseScores[key] ?? (canUseFallback ? supabaseScores[fallbackKey] : undefined);
     if (!live) return m;
     return {
@@ -286,47 +286,70 @@ function applySupabaseScores(matches, supabaseScores) {
 /**
  * Injecte les matchs Supabase qui n'ont pas d'équivalent dans l'Excel (ex: phase finale saisie directement en admin).
  * Ces matchs existent dans supabaseScores mais ne correspondent à aucun match Excel.
+ * Supprime aussi les placeholders "À déterminer" de l'Excel pour les phases couvertes par Supabase.
  */
 function injectSupabaseOnlyMatches(matches, supabaseScores) {
   const norm = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
-  const existingKeys = new Set();
-  for (const m of matches) {
-    if (m.phase) {
-      existingKeys.add(`phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`);
-      existingKeys.add(`phase:${m.phase}:${norm(m.teamB)}:${norm(m.teamA)}`);
-    } else {
-      existingKeys.add(`${m.journee}:${norm(m.teamA)}:${norm(m.teamB)}`);
-    }
+  const isPlaceholder = (m) =>
+    !m.teamA || !m.teamB ||
+    m.teamA === 'À déterminer' || m.teamB === 'À déterminer' ||
+    m.teamA === 'À DÉTERMINER' || m.teamB === 'À DÉTERMINER';
+
+  // Collecter les phases réelles dans Supabase
+  const supabasePhases = new Set();
+  const supabaseMatches = [];
+  for (const [key, entry] of Object.entries(supabaseScores)) {
+    if (!key.startsWith('phase:')) continue;
+    if (key.startsWith('teams:')) continue;
+    if (!entry.teamA || !entry.teamB) continue;
+    const parts = key.split(':');
+    // key = "phase:PHASE_NAME:TEAM_A:TEAM_B"
+    const phase = parts.slice(1, parts.length - 2).join(':');
+    supabasePhases.add(phase);
+    supabaseMatches.push({ key, entry, phase });
   }
 
+  // Trouver les clés déjà couvertes par l'Excel (matchs avec vrais noms)
+  const existingKeys = new Set();
+  for (const m of matches) {
+    if (!m.phase || isPlaceholder(m)) continue;
+    existingKeys.add(`phase:${m.phase}:${norm(m.teamA)}:${norm(m.teamB)}`);
+    existingKeys.add(`phase:${m.phase}:${norm(m.teamB)}:${norm(m.teamA)}`);
+  }
+
+  // Filtrer les matches Excel : supprimer les placeholders des phases couvertes par Supabase
+  const filtered = matches.filter(m => {
+    if (!m.phase) return true;  // garder tous les matchs de groupe
+    if (!isPlaceholder(m)) return true;  // garder les vrais matchs
+    return !supabasePhases.has(m.phase);  // supprimer placeholder si Supabase couvre cette phase
+  });
+
+  // Ajouter les matchs Supabase absents de l'Excel
   const extra = [];
-  for (const [key, entry] of Object.entries(supabaseScores)) {
-    if (!key.startsWith('phase:')) continue;   // seulement phase finale
-    if (existingKeys.has(key)) continue;        // déjà dans Excel
-    if (key.startsWith('teams:')) continue;
-    // Reconstruire un objet match depuis l'entrée Supabase
+  for (const { key, entry, phase } of supabaseMatches) {
+    if (existingKeys.has(key)) continue;
     extra.push({
       id:          entry.id,
       supabaseId:  entry.id,
       journee:     null,
-      phase:       (() => { const parts = key.split(':'); return parts.slice(1, parts.length - 2).join(':'); })(),
+      phase,
       teamA:       entry.teamA,
       teamB:       entry.teamB,
       scoreA:      entry.scoreA ?? null,
       scoreB:      entry.scoreB ?? null,
       status:      entry.status ?? 'upcoming',
-      date:        entry.date ?? null,
-      time:        entry.time ?? null,
-      venue:       entry.venue ?? null,
-      goals:       entry.goals ?? [],
+      date:        entry.date   ?? null,
+      time:        entry.time   ?? null,
+      venue:       entry.venue  ?? null,
+      goals:       entry.goals  ?? [],
       redCards:    entry.redCards ?? [],
-      referee:     entry.referee ?? null,
-      ref1:        entry.ref1 ?? null,
-      ref2:        entry.ref2 ?? null,
+      referee:     entry.referee  ?? null,
+      ref1:        entry.ref1     ?? null,
+      ref2:        entry.ref2     ?? null,
       coordinator: entry.coordinator ?? null,
     });
   }
-  return [...matches, ...extra];
+  return [...filtered, ...extra];
 }
 
 /**
