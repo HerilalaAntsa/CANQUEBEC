@@ -11,6 +11,7 @@ import {
 } from './excelService';
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { log } from './logger';
+import { canonicalizeTeam } from '../config/teams';
 
 // ─────────────────────────────────────────────
 // ÉTAT INITIAL
@@ -427,9 +428,9 @@ export function DataProvider({ children }) {
 
       const scores = {};
       for (const row of matchesRes.data ?? []) {
-        // Normaliser les noms pour éviter mismatch apostrophe (U+2019 vs U+0027)
-        const tA = (row.team_a || '').trim().toUpperCase().replace(/\u2019/g, "'");
-        const tB = (row.team_b || '').trim().toUpperCase().replace(/\u2019/g, "'");
+        // Normaliser + corriger accents (saisies manuelles sans accent dans Supabase)
+        const tA = canonicalizeTeam(row.team_a);
+        const tB = canonicalizeTeam(row.team_b);
         // Clé principale : journee:teamA:teamB
         // Clé secondaire (fallback si journee erronée) : teamA:teamB seul
         const key = row.phase
@@ -438,8 +439,8 @@ export function DataProvider({ children }) {
         const fallbackKey = `teams:${tA}:${tB}`;
         const entry = {
           id:          row.id,
-          teamA:       row.team_a,
-          teamB:       row.team_b,
+          teamA:       tA,
+          teamB:       tB,
           scoreA:      row.score_a,
           scoreB:      row.score_b,
           status:      row.status,

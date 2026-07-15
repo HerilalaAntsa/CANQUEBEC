@@ -52,6 +52,38 @@ export const SHEET_TO_TEAM = {
 };
 
 /**
+ * Map des variantes sans accent → nom canonique officiel.
+ * Permet de corriger les saisies manuelles dans Supabase.
+ */
+export const TEAM_ALIASES = {
+  'SENEGAL':         'SÉNÉGAL',
+  'HAITI':           'HAÏTI',
+  'ALGERIE':         'ALGÉRIE',
+  'GUINEE':          'GUINÉE',
+  "COTE D'IVOIRE":   "CÔTE D'IVOIRE",
+  'CIV':             "CÔTE D'IVOIRE",
+  'QUEBEC':          'QUÉBEC',
+  'BURKINA':         'BURKINA FASO',
+  'CONGO':           'RD CONGO',
+  'RD CONGO':        'RD CONGO',
+  'CENTRAFRIQUE':    'CENTRAFRIQUE',
+  'NATIONS UNIES':   'NATIONS-UNIES',
+  'NATIONS_UNIES':   'NATIONS-UNIES',
+};
+
+/**
+ * Normalise ET corrige les accents/variantes d'un nom d'équipe.
+ * À utiliser sur les données venant de Supabase (saisies manuelles).
+ */
+export function canonicalizeTeam(name) {
+  if (!name) return '';
+  const norm = name.toString().trim().toUpperCase()
+    .replace(/\u2019/g, "'")
+    .replace(/\s+/g, ' ');
+  return TEAM_ALIASES[norm] ?? norm;
+}
+
+/**
  * Normalise un nom d'équipe (trim, uppercase, apostrophe unifiée)
  */
 export function normalizeTeamName(name) {
