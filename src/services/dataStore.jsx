@@ -454,7 +454,11 @@ export function DataProvider({ children }) {
           ref2:        row.ref2        ?? null,
           coordinator: row.coordinator ?? null,
         };
-        scores[key] = entry;
+        // En cas de doublon (même clé), préférer l'entrée avec le plus de données (arbitres, score, etc.)
+        const richness = e => (e.referee ? 1 : 0) + (e.scoreA != null ? 1 : 0) + (e.goals?.length ?? 0);
+        if (!scores[key] || richness(entry) > richness(scores[key])) {
+          scores[key] = entry;
+        }
         // Fallback : si journée erronée dans Supabase, permettre merge par équipes seules
         // (n'écrase pas si une vraie clé journée existe déjà)
         if (!scores[fallbackKey]) scores[fallbackKey] = entry;
