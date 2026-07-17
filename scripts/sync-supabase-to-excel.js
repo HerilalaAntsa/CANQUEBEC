@@ -19,6 +19,24 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
+// Correction accents / variantes saisies manuellement dans Supabase
+const TEAM_ALIASES = {
+  'SENEGAL':       'SÉNÉGAL',
+  'HAITI':         'HAÏTI',
+  'ALGERIE':       'ALGÉRIE',
+  'GUINEE':        'GUINÉE',
+  "COTE D'IVOIRE": "CÔTE D'IVOIRE",
+  'CIV':           "CÔTE D'IVOIRE",
+  'QUEBEC':        'QUÉBEC',
+  'BURKINA':       'BURKINA FASO',
+  'CONGO':         'RD CONGO',
+};
+function canon(name) {
+  if (!name) return '';
+  const n = name.toString().trim().toUpperCase().replace(/\u2019/g, "'").replace(/\s+/g, ' ');
+  return TEAM_ALIASES[n] ?? n;
+}
+
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const SUPABASE_URL  = process.env.VITE_SUPABASE_URL;
@@ -53,7 +71,7 @@ async function main() {
   // Index par clé journee:teamA:teamB
   const scoreMap = {};
   for (const m of matches) {
-    const key = `${m.journee}:${m.team_a.toUpperCase().trim()}:${m.team_b.toUpperCase().trim()}`;
+    const key = `${m.journee}:${canon(m.team_a)}:${canon(m.team_b)}`;
     scoreMap[key] = { scoreA: m.score_a, scoreB: m.score_b };
   }
 
@@ -85,8 +103,8 @@ async function main() {
       continue;
     }
 
-    const teamA = (row[5] ?? '').toString().toUpperCase().trim();
-    const teamB = (row[7] ?? '').toString().toUpperCase().trim();
+    const teamA = canon(row[5]);
+    const teamB = canon(row[7]);
     if (!teamA || !teamB) continue;
 
     const key   = `${currentJournee}:${teamA}:${teamB}`;
