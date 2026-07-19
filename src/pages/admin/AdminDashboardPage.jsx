@@ -240,7 +240,11 @@ export default function AdminDashboardPage() {
     if (filter === 'upcoming') return m.status === 'upcoming';
     if (filter === 'played')   return m.status === 'played' || m.status === 'forfait_a' || m.status === 'forfait_b';
     return true;
-  }).filter(m => !journeeFilter || String(m.journee) === journeeFilter);
+  }).filter(m => {
+    if (!journeeFilter) return true;
+    if (journeeFilter === 'phase') return !!m.phase;   // filtre "Phase finale"
+    return String(m.journee) === journeeFilter;
+  });
 
   const liveCount = matches.filter(m => m.status === 'live').length;
 
@@ -341,6 +345,7 @@ export default function AdminDashboardPage() {
           {[...new Set(matches.map(m => m.journee).filter(Boolean))].sort((a,b)=>a-b).map(j => (
             <option key={j} value={String(j)}>Journée {j}</option>
           ))}
+          {matches.some(m => m.phase) && <option value="phase">🏆 Phase finale</option>}
         </select>
       </div>
 
