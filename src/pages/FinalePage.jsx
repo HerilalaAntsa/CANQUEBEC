@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import { useLeagueData } from '../services/dataStore';
 import MatchCard from '../components/calendrier/MatchCard';
-import BracketView, { ROUND_KEYS } from '../components/finale/BracketView';
+import BracketView, { buildBracket } from '../components/finale/BracketView';
 import styles from './FinalePage.module.css';
 
 const ROUND_ICONS = {
@@ -43,35 +43,31 @@ export default function FinalePage() {
     [matches],
   );
 
-  // Groupement par round → par date (pour la vue liste)
+  // Groupement par round → par date (pour la vue liste).
+  // buildBracket projette automatiquement les gagnants dans les tours suivants :
+  // les admins n'ont qu'à saisir les scores des 1/8, les quarts se remplissent seuls.
   const byRound = useMemo(() => {
-    const roundMap = new Map();
-    for (const m of phaseMatches) {
-      if (!roundMap.has(m.phase)) roundMap.set(m.phase, []);
-      roundMap.get(m.phase).push(m);
-    }
-
-    return [...roundMap.entries()]
-      .sort((a, b) => {
-        const ia = ROUND_KEYS.indexOf(a[0]);
-        const ib = ROUND_KEYS.indexOf(b[0]);
-        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-      })
-      .map(([round, rMatches]) => {
-        // Sous-groupe par date
-        const dateMap = new Map();
-        const sorted = [...rMatches].sort((a, b) => {
-          const ka = `${a.date ?? '9999'}${a.time ?? '99:99'}`;
-          const kb = `${b.date ?? '9999'}${b.time ?? '99:99'}`;
-          return ka < kb ? -1 : ka > kb ? 1 : 0;
-        });
-        for (const m of sorted) {
-          const key = m.date ?? 'unknown';
-          if (!dateMap.has(key)) dateMap.set(key, []);
-          dateMap.get(key).push(m);
-        }
-        return { round, byDate: [...dateMap.entries()] };
+    const b = buildBracket(phaseMatches);
+    const rounds = [
+      { round: '1/8e de finale',   matches: b.r16 },
+      { round: 'Quarts de finale', matches: b.qf },
+      { round: 'Demi-finales',     matches: b.sf },
+      { round: 'Finale',           matches: [b.finale, b.third].filter(Boolean) },
+    ];
+    return rounds.map(({ round, matches: rMatches }) => {
+      const dateMap = new Map();
+      const sorted = [...rMatches].sort((a, b) => {
+        const ka = `${a.date ?? '9999'}${a.time ?? '99:99'}`;
+        const kb = `${b.date ?? '9999'}${b.time ?? '99:99'}`;
+        return ka < kb ? -1 : ka > kb ? 1 : 0;
       });
+      for (const m of sorted) {
+        const key = m.date ?? 'unknown';
+        if (!dateMap.has(key)) dateMap.set(key, []);
+        dateMap.get(key).push(m);
+      }
+      return { round, byDate: [...dateMap.entries()] };
+    });
   }, [phaseMatches]);
 
   const total = phaseMatches.length;

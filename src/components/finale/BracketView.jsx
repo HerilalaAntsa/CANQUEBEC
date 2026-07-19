@@ -14,7 +14,7 @@
  */
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getFlag, getShortName, normalizeTeamName } from '../../config/teams';
+import { getFlag, getShortName, normalizeTeamName, canonicalizeTeam } from '../../config/teams';
 import styles from './BracketView.module.css';
 
 const VENUE_LABELS = {
@@ -105,15 +105,77 @@ function sortR16ByBracket(arr) {
   });
 }
 
-function sortByTime(arr) {
-  return [...arr].sort((a, b) => {
-    const pa = a.bracket_position ?? 99;
-    const pb = b.bracket_position ?? 99;
-    if (pa !== pb) return pa - pb;
-    const ka = `${a.date ?? '9999-99-99'}${a.time ?? '99:99'}`;
-    const kb = `${b.date ?? '9999-99-99'}${b.time ?? '99:99'}`;
-    return ka < kb ? -1 : ka > kb ? 1 : 0;
+// ─── Avancement automatique (projection des gagnants) ────────────────────────
+
+/** Positions R16 (0-7) alimentant chaque slot de quart (0-3). */
+const QF_FEEDERS = [[0, 1], [2, 3], [4, 5], [6, 7]];
+/** Slots de quart (0-3) alimentant chaque slot de demie (0-1). */
+const SF_FEEDERS = [[0, 1], [2, 3]];
+
+const teamPairKey = (a, b) =>
+  [canonicalizeTeam(a), canonicalizeTeam(b)].sort().join('|');
+
+/** Match provisoire = matchup projeté sans ligne Supabase (non cliquable, sans score). */
+function provisional(phase, teamA, teamB) {
+  return {
+    phase,
+    teamA: teamA ?? 'À déterminer',
+    teamB: teamB ?? 'À déterminer',
+    projected: true,
+    status: 'upcoming',
+    scoreA: null,
+    scoreB: null,
+  };
+}
+
+/**
+ * Construit l'arbre complet en PROJETANT automatiquement les gagnants dans les
+ * tours suivants. Les admins n'ont qu'à saisir les scores des matchs : le gagnant
+ * monte tout seul.
+ *  - Si un vrai match (saisi en admin) existe pour un matchup projeté, on l'utilise
+ *    (scores, buteurs, clic). Sinon on affiche une carte provisoire avec les équipes.
+ * Retourne { r16:[8], qf:[4], sf:[2], finale, third }.
+ */
+export function buildBracket(phaseMatches) {
+  const byRound = groupByRound(phaseMatches ?? []);
+
+  // Index des vrais matchs par (round → clé de paire d'équipes canonicalisée)
+  const realByRound = {};
+  for (const round of ROUND_KEYS) {
+    realByRound[round] = new Map();
+    for (const m of byRound[round] ?? []) {
+      if (!m.teamA || !m.teamB) continue;
+      if (m.teamA === 'À déterminer' || m.teamB === 'À déterminer') continue;
+      realByRound[round].set(teamPairKey(m.teamA, m.teamB), m);
+    }
+  }
+  const findReal = (round, a, b) =>
+    (a && b) ? (realByRound[round]?.get(teamPairKey(a, b)) ?? null) : null;
+
+  // R16 : positions fixes du tirage officiel
+  const r16 = sortR16ByBracket(byRound['1/8e de finale'] ?? []);
+
+  // Quarts : gagnant(feeder0) vs gagnant(feeder1)
+  const qf = QF_FEEDERS.map(([f0, f1]) => {
+    const a = getWinner(r16[f0]);
+    const b = getWinner(r16[f1]);
+    return findReal('Quarts de finale', a, b) ?? provisional('Quarts de finale', a, b);
   });
+
+  // Demies : gagnant(qf0) vs gagnant(qf1), etc.
+  const sf = SF_FEEDERS.map(([q0, q1]) => {
+    const a = getWinner(qf[q0]);
+    const b = getWinner(qf[q1]);
+    return findReal('Demi-finales', a, b) ?? provisional('Demi-finales', a, b);
+  });
+
+  // Finale : gagnants des 2 demies ; 3e place : perdants des 2 demies
+  const finA = getWinner(sf[0]); const finB = getWinner(sf[1]);
+  const thdA = getLoser(sf[0]);  const thdB = getLoser(sf[1]);
+  const finale = findReal('Finale', finA, finB) ?? provisional('Finale', finA, finB);
+  const third  = findReal('Finale', thdA, thdB) ?? provisional('Finale', thdA, thdB);
+
+  return { r16, qf, sf, finale, third };
 }
 
 /** Groupement des matches par round */
@@ -251,11 +313,8 @@ function RoundCol({ matches, totalSlots, isRight = false, pairSize = 2 }) {
 
 export default function BracketView({ matches }) {
   const { r16L, r16R, qfL, qfR, sfL, sfR, fin, third } = useMemo(() => {
-    const byRound = groupByRound(matches);
-    const r16 = sortR16ByBracket(byRound['1/8e de finale']);
-    const qf  = sortByTime(byRound['Quarts de finale']);
-    const sf  = sortByTime(byRound['Demi-finales']);
-    const fn  = sortByTime(byRound['Finale']);
+    // Projection automatique : les gagnants montent seuls dans les tours suivants.
+    const { r16, qf, sf, finale, third: thirdPlace } = buildBracket(matches);
     return {
       r16L:  r16.slice(0, 4),
       r16R:  r16.slice(4, 8),
@@ -263,8 +322,8 @@ export default function BracketView({ matches }) {
       qfR:   qf.slice(2, 4),
       sfL:   sf[0] ?? null,
       sfR:   sf[1] ?? null,
-      fin:   fn[0] ?? null,
-      third: fn[1] ?? null,
+      fin:   finale ?? null,
+      third: thirdPlace ?? null,
     };
   }, [matches]);
 
