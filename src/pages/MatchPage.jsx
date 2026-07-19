@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { useLeagueData } from '../services/dataStore';
+import { canonicalizeTeam } from '../config/teams';
 import FlagBadge from '../components/shared/FlagBadge';
 import { JerseyBadge, JerseyModal } from '../components/shared/JerseyBadge';
 import { getJerseys } from '../config/jerseyConfig';
@@ -62,7 +63,7 @@ function storeMatchToApi(m) {
 
 export default function MatchPage() {
   const { id } = useParams();
-  const { matches: storeMatches } = useLeagueData();
+  const { matches: storeMatches, players } = useLeagueData();
   const [match, setMatch] = useState(null);
   const [showJerseyModal, setShowJerseyModal] = useState(false);
   const [events, setEvents] = useState([]);
@@ -123,8 +124,24 @@ export default function MatchPage() {
   const played  = ['played', 'forfait_a', 'forfait_b'].includes(match.status);
   const isForfait = match.status === 'forfait_a' || match.status === 'forfait_b';
 
+  // Fallback noms : certains buts ont été saisis sans nom (player_name vide) à cause
+  // d'un mismatch d'accents à la saisie (ex. "SENEGAL" vs roster "SÉNÉGAL"). On résout
+  // le nom depuis le roster par équipe canonicalisée + numéro. Purement affichage.
+  const rosterByKey = new Map();
+  for (const p of players ?? []) {
+    if (p.number != null) rosterByKey.set(`${canonicalizeTeam(p.team)}:${p.number}`, p.name);
+  }
+  const rosterName = (team, num) =>
+    (num != null && num !== '') ? rosterByKey.get(`${canonicalizeTeam(team)}:${num}`) : undefined;
+  const withNames = events.map(ev => ({
+    ...ev,
+    player_name: ev.player_name || rosterName(ev.team, ev.player_num) || ev.player_name,
+    secondary_player_name:
+      ev.secondary_player_name || rosterName(ev.team, ev.secondary_player_num) || ev.secondary_player_name,
+  }));
+
   // Trier par minute (null → 1 en premier)
-  const sortedEvents = [...events].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1));
+  const sortedEvents = [...withNames].sort((a, b) => (a.minute ?? 1) - (b.minute ?? 1));
 
   // Normalisation pour éviter les mismatch (espaces, apostrophes typographiques)
   const normTeam = (v) => (v || '').trim().toUpperCase().replace(/\u2019/g, "'");

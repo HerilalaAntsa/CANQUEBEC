@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry, createSuspension, getSuspensions, decrementSuspension } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
+import { canonicalizeTeam } from '../../config/teams';
 import styles from './AdminMatchEdit.module.css';
 
 const EVENT_TYPES = [
@@ -289,9 +290,13 @@ export default function AdminMatchEditPage() {
   /** Cherche un joueur par numéro + équipe dans la liste Excel */
   const lookupPlayer = useCallback((num, team) => {
     if (!num || !team || !players?.length) return null;
+    // Canonicaliser les deux côtés : le roster stocke "SÉNÉGAL" (accent) alors que
+    // Supabase peut stocker "SENEGAL" (saisie manuelle sans accent). Sans ça, le nom
+    // du buteur n'est jamais trouvé et est sauvé vide.
+    const canonTeam = canonicalizeTeam(team);
     return players.find(p =>
       String(p.number) === String(num) &&
-      p.team?.toLowerCase().trim() === team?.toLowerCase().trim()
+      canonicalizeTeam(p.team) === canonTeam
     ) ?? null;
   }, [players]);
 
