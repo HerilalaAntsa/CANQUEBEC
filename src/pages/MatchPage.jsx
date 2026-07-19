@@ -252,6 +252,12 @@ export default function MatchPage() {
             ) : (
               <span className={styles.scoreVs}>VS</span>
             )}
+            {played && match.score_a === match.score_b &&
+             (match.penalty_a != null || match.penalty_b != null) && (
+              <span className={styles.penaltyLine}>
+                🎯 Tirs au but {match.penalty_a ?? 0} – {match.penalty_b ?? 0}
+              </span>
+            )}
             {(match.status === 'forfait_a' || match.status === 'forfait_b') ? (
               <span className={`${styles.statusPill} ${styles.forfait}`}>🚫 Forfait</span>
             ) : (

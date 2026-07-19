@@ -6,6 +6,7 @@
  */
 import { supabase, isSupabaseEnabled } from './supabaseClient';
 import { loadHoraireFromUrl } from './excelService';
+import { canonicalizeTeam } from '../config/teams';
 
 const OFFLINE_QUEUE_KEY = 'cnq_admin_offline_queue';
 
@@ -104,6 +105,63 @@ export async function updateScore(matchId, scoreA, scoreB) {
     enqueueOffline({ type: 'updateScore', matchId, scoreA, scoreB });
     throw e;
   }
+}
+
+/** Enregistre les tirs au but (égalité en élimination directe). */
+export async function updatePenalties(matchId, penaltyA, penaltyB) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const { error } = await supabase
+    .from('matches')
+    .update({
+      penalty_a: penaltyA === '' || penaltyA == null ? null : Number(penaltyA),
+      penalty_b: penaltyB === '' || penaltyB == null ? null : Number(penaltyB),
+    })
+    .eq('id', matchId);
+  if (error) throw error;
+}
+
+/** Retourne tous les matchs de phase finale (phase non nulle). */
+export async function getPhaseMatches() {
+  if (!isSupabaseEnabled) return [];
+  const { data, error } = await supabase
+    .from('matches')
+    .select('id, phase, team_a, team_b, score_a, score_b, penalty_a, penalty_b, status, date, time, venue')
+    .not('phase', 'is', null);
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Crée un match de phase finale s'il n'existe pas déjà (équipes canonicalisées).
+ * Idempotent : garde-fou par (phase + paire d'équipes) + index unique en base.
+ * Retourne le match créé, l'existant, ou null si échec silencieux.
+ */
+export async function createPhaseMatch({ phase, teamA, teamB, date = null, time = null, venue = null }) {
+  if (!isSupabaseEnabled) throw new Error('Supabase non configuré');
+  const a = canonicalizeTeam(teamA);
+  const b = canonicalizeTeam(teamB);
+  if (!phase || !a || !b) return null;
+
+  // Ne pas dupliquer : chercher un match existant de cette phase avec ces 2 équipes (ordre indifférent)
+  const existing = await getPhaseMatches();
+  const found = existing.find(m =>
+    m.phase === phase &&
+    ((canonicalizeTeam(m.team_a) === a && canonicalizeTeam(m.team_b) === b) ||
+     (canonicalizeTeam(m.team_a) === b && canonicalizeTeam(m.team_b) === a))
+  );
+  if (found) return found;
+
+  const { data, error } = await supabase
+    .from('matches')
+    .insert([{ phase, team_a: a, team_b: b, date, time, venue, status: 'upcoming' }])
+    .select()
+    .single();
+  if (error) {
+    // 23505 = violation d'unicité → le match existe déjà (course concurrente), on ignore
+    if (error.code === '23505') return null;
+    throw error;
+  }
+  return data;
 }
 
 /** Change le statut d'un match : 'upcoming' | 'live' | 'played' */

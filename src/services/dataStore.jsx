@@ -245,6 +245,8 @@ function applySupabaseScores(matches, supabaseScores) {
       supabaseId: live.id,
       scoreA:     live.scoreA ?? m.scoreA,
       scoreB:     live.scoreB ?? m.scoreB,
+      penaltyA:   live.penaltyA ?? m.penaltyA ?? null,
+      penaltyB:   live.penaltyB ?? m.penaltyB ?? null,
       status:     live.status,
       goals:      live.goals    ?? [],
       redCards:   live.redCards ?? [],
@@ -339,6 +341,8 @@ function injectSupabaseOnlyMatches(matches, supabaseScores) {
       teamB:       entry.teamB,
       scoreA:      entry.scoreA ?? null,
       scoreB:      entry.scoreB ?? null,
+      penaltyA:    entry.penaltyA ?? null,
+      penaltyB:    entry.penaltyB ?? null,
       status:      entry.status ?? 'upcoming',
       date:        entry.date   ?? null,
       time:        entry.time   ?? null,
@@ -392,7 +396,7 @@ export function DataProvider({ children }) {
     dispatch({ type: 'SUPABASE_SCORES_START' });
     try {
       const [matchesRes, eventsRes, redEventsRes, penaltyRes, bannedRes] = await Promise.all([
-        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, status, date, time, venue, referee, ref1, ref2, coordinator'),
+        supabase.from('matches').select('id, journee, phase, team_a, team_b, score_a, score_b, penalty_a, penalty_b, status, date, time, venue, referee, ref1, ref2, coordinator'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'goal'),
         supabase.from('match_events').select('match_id, type, team, player_name, player_num, minute').eq('type', 'red'),
         supabase.from('penalty_points').select('team, points').then(r => r),
@@ -443,6 +447,8 @@ export function DataProvider({ children }) {
           teamB:       tB,
           scoreA:      row.score_a,
           scoreB:      row.score_b,
+          penaltyA:    row.penalty_a ?? null,
+          penaltyB:    row.penalty_b ?? null,
           status:      row.status,
           date:        row.date        ?? null,
           time:        row.time        ?? null,

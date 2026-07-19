@@ -235,3 +235,11 @@
   color: #ef4444;
   font-weight: 600;
 }
+
+.penaltyRow {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #b45309;
+  margin-top: 2px;
+}

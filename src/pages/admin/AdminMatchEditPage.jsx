@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMatchWithEvents, updateScore, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry, createSuspension, getSuspensions, decrementSuspension } from '../../services/adminService';
+import { getMatchWithEvents, updateScore, updatePenalties, addEvent, deleteEvent, updateEvent, setMatchStatus, updateMatchDateTime, getLineup, addLineupEntry, deleteLineupEntry, createSuspension, getSuspensions, decrementSuspension, getPhaseMatches, createPhaseMatch } from '../../services/adminService';
 import { useLeagueData } from '../../services/dataStore';
 import { canonicalizeTeam } from '../../config/teams';
+import { buildBracket } from '../../components/finale/BracketView';
 import styles from './AdminMatchEdit.module.css';
 
 const EVENT_TYPES = [
@@ -29,6 +30,9 @@ export default function AdminMatchEditPage() {
   const [postponeTime, setPostponeTime] = useState('');
   const [scoreA,    setScoreA]    = useState('0');
   const [scoreB,    setScoreB]    = useState('0');
+  const [penaltyA,  setPenaltyA]  = useState('');
+  const [penaltyB,  setPenaltyB]  = useState('');
+  const [savingPen, setSavingPen] = useState(false);
   const [savedMsg,  setSavedMsg]  = useState('');
 
   // New event form
@@ -73,6 +77,8 @@ export default function AdminMatchEditPage() {
       setEvents(ev);
       setScoreA(m.score_a ?? 0);
       setScoreB(m.score_b ?? 0);
+      setPenaltyA(m.penalty_a ?? '');
+      setPenaltyB(m.penalty_b ?? '');
       setEvtTeam(m.team_a);
       setLuTeam(m.team_a);
       getLineup(id).then(rows => setLineup(rows)).catch(() => {});
@@ -125,6 +131,10 @@ export default function AdminMatchEditPage() {
         newStatus === 'forfait_b' ? '🚫 Forfait B enregistré' : 'Statut mis à jour'
       );
       setTimeout(() => setSavedMsg(''), 3000);
+      // Match de phase finale décidé → créer automatiquement le tour suivant
+      if (match?.phase && ['played', 'forfait_a', 'forfait_b'].includes(newStatus)) {
+        await syncNextRound();
+      }
     } catch (e) {
       setSavedMsg('⚠️ Erreur : ' + e.message);
       setTimeout(() => setSavedMsg(''), 4000);
@@ -182,6 +192,57 @@ export default function AdminMatchEditPage() {
       return;
     }
     await doSaveScore();
+  }
+
+  /**
+   * Crée automatiquement les matchs du tour suivant dès qu'un matchup est décidé.
+   * Les admins n'ont qu'à saisir les scores : le gagnant monte et son prochain
+   * match apparaît, prêt à être rempli. Non bloquant.
+   */
+  async function syncNextRound() {
+    try {
+      const rows = await getPhaseMatches();
+      const asMatches = rows.map(m => ({
+        supabaseId: m.id, phase: m.phase,
+        teamA: m.team_a, teamB: m.team_b,
+        scoreA: m.score_a, scoreB: m.score_b,
+        penaltyA: m.penalty_a, penaltyB: m.penalty_b,
+        status: m.status,
+      }));
+      const b = buildBracket(asMatches);
+      const decided = [...b.qf, ...b.sf, b.finale, b.third].filter(Boolean);
+      let created = 0;
+      for (const c of decided) {
+        if (c.projected && c.teamA && c.teamB &&
+            c.teamA !== 'À déterminer' && c.teamB !== 'À déterminer') {
+          const res = await createPhaseMatch({ phase: c.phase, teamA: c.teamA, teamB: c.teamB });
+          if (res && res.id) created++;
+        }
+      }
+      if (created > 0) {
+        setSavedMsg(`🏆 ${created} match(s) du tour suivant créé(s) automatiquement`);
+        setTimeout(() => setSavedMsg(''), 4000);
+      }
+    } catch { /* non bloquant */ }
+  }
+
+  async function handleSavePenalties() {
+    setSavingPen(true);
+    try {
+      await updatePenalties(id, penaltyA, penaltyB);
+      setMatch(prev => ({
+        ...prev,
+        penalty_a: penaltyA === '' ? null : Number(penaltyA),
+        penalty_b: penaltyB === '' ? null : Number(penaltyB),
+      }));
+      setSavedMsg('Tirs au but sauvegardés ✅');
+      setTimeout(() => setSavedMsg(''), 3000);
+      if (match?.phase) await syncNextRound();
+    } catch (e) {
+      alert('Erreur : ' + e.message);
+    } finally {
+      setSavingPen(false);
+    }
   }
 
   async function handleAddEvent(e) {
@@ -626,6 +687,34 @@ export default function AdminMatchEditPage() {
           </button>
         </form>
       </section>
+
+      {/* Tirs au but — élimination directe, uniquement en cas d'égalité */}
+      {match.phase && Number(scoreA) === Number(scoreB) &&
+       !['forfait_a', 'forfait_b'].includes(match.status) && (
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>🎯 Tirs au but (égalité)</h2>
+          <div className={styles.scoreRow}>
+            <span className={styles.teamLabel}>{match.team_a}</span>
+            <input
+              type="number" min="0" max="99"
+              className={styles.scoreInput}
+              value={penaltyA}
+              onChange={e => setPenaltyA(e.target.value)}
+            />
+            <span className={styles.dash}>—</span>
+            <input
+              type="number" min="0" max="99"
+              className={styles.scoreInput}
+              value={penaltyB}
+              onChange={e => setPenaltyB(e.target.value)}
+            />
+            <span className={styles.teamLabel}>{match.team_b}</span>
+          </div>
+          <button type="button" className={styles.saveBtn} disabled={savingPen} onClick={handleSavePenalties}>
+            {savingPen ? 'Sauvegarde...' : 'Enregistrer les tirs au but'}
+          </button>
+        </section>
+      )}
 
       {/* Add event */}
       <section className={styles.section}>

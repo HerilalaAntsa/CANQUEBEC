@@ -79,6 +79,13 @@ export default function MatchCard({ match }) {
         </div>
       </div>
 
+      {match.scoreA != null && match.scoreA === match.scoreB &&
+       (match.penaltyA != null || match.penaltyB != null) && (
+        <div className={styles.penaltyRow}>
+          🎯 Tirs au but {match.penaltyA ?? 0} – {match.penaltyB ?? 0}
+        </div>
+      )}
+
       {match.goals?.length > 0 && (
         <div className={styles.scorers}>
           <div className={styles.scorersCol}>
