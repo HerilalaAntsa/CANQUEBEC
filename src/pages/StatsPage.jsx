@@ -4,8 +4,17 @@ import { useLeagueData } from '../services/dataStore';
 import { supabase, isSupabaseEnabled } from '../services/supabaseClient';
 import { getAllRedCards, getAllActiveSuspensions } from '../services/disciplineService';
 import FlagBadge from '../components/shared/FlagBadge';
-import { generateSlug } from '../config/teams';
+import { generateSlug, canonicalizeTeam } from '../config/teams';
 import styles from './StatsPage.module.css';
+
+/** Résout le nom d'un joueur depuis le roster (équipe canonicalisée + numéro). */
+function makeRosterResolver(players) {
+  const byKey = new Map();
+  for (const p of players ?? []) {
+    if (p.number != null) byKey.set(`${canonicalizeTeam(p.team)}#${p.number}`, p.name);
+  }
+  return (team, num) => (num == null ? null : byKey.get(`${canonicalizeTeam(team)}#${num}`) ?? null);
+}
 
 const REASON_LABELS = {
   red_card:  '🟥 Carton rouge',
@@ -13,20 +22,31 @@ const REASON_LABELS = {
   manual:    '✏️ Manuelle',
 };
 
+/**
+ * Clé de regroupement d'un joueur : équipe canonicalisée + numéro (identifiant
+ * fiable). Le NOM n'entre PAS dans la clé — sinon un même joueur avec nom parfois
+ * vide (bug d'accent à la saisie) serait scindé en plusieurs lignes au classement.
+ */
+function playerKey(team, num, name) {
+  const ct = canonicalizeTeam(team);
+  return num != null ? `${ct}#${num}` : `${ct}::${(name || '').toUpperCase().trim()}`;
+}
+
 /** Agrège les buts depuis supabaseScores (déjà dans le store) */
-function buildScorerList(supabaseScores) {
+function buildScorerList(supabaseScores, players) {
+  const rosterName = makeRosterResolver(players);
   const map = {};
   for (const [_key, match] of Object.entries(supabaseScores)) {
     if (_key.startsWith('teams:')) continue;
     for (const g of match.goals ?? []) {
-      if (!g.player_name && !g.player_num) continue;
-      const key = `${g.team}__${g.player_num ?? ''}__${g.player_name ?? ''}`;
+      if (!g.player_name && g.player_num == null) continue;
+      const key = playerKey(g.team, g.player_num, g.player_name);
       if (!map[key]) {
         map[key] = {
           key,
-          team:       g.team,
+          team:       canonicalizeTeam(g.team),
           playerNum:  g.player_num ?? null,
-          playerName: g.player_name || (g.player_num ? `#${g.player_num}` : '—'),
+          playerName: g.player_name || rosterName(g.team, g.player_num) || (g.player_num != null ? `#${g.player_num}` : '—'),
           goals: 0,
         };
       }
@@ -37,17 +57,18 @@ function buildScorerList(supabaseScores) {
 }
 
 /** Construit le classement passeurs depuis les events Supabase */
-function buildAssistList(assistEvents) {
+function buildAssistList(assistEvents, players) {
+  const rosterName = makeRosterResolver(players);
   const map = {};
   for (const ev of assistEvents) {
-    if (!ev.player_name && !ev.player_num) continue;
-    const key = `${ev.team}__${ev.player_num ?? ''}__${ev.player_name ?? ''}`;
+    if (!ev.player_name && ev.player_num == null) continue;
+    const key = playerKey(ev.team, ev.player_num, ev.player_name);
     if (!map[key]) {
       map[key] = {
         key,
-        team:       ev.team,
+        team:       canonicalizeTeam(ev.team),
         playerNum:  ev.player_num ?? null,
-        playerName: ev.player_name || (ev.player_num ? `#${ev.player_num}` : '—'),
+        playerName: ev.player_name || rosterName(ev.team, ev.player_num) || (ev.player_num != null ? `#${ev.player_num}` : '—'),
         assists: 0,
       };
     }
@@ -57,7 +78,7 @@ function buildAssistList(assistEvents) {
 }
 
 export default function StatsPage() {
-  const { supabaseScores, loadSupabaseScores, matches } = useLeagueData();
+  const { supabaseScores, loadSupabaseScores, matches, players } = useLeagueData();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState('goals');
@@ -101,8 +122,8 @@ export default function StatsPage() {
     }).finally(() => setDisciplineLoading(false));
   }, [tab, matches]);
 
-  const scorers = useMemo(() => buildScorerList(supabaseScores), [supabaseScores]);
-  const assisters = useMemo(() => buildAssistList(assistEvents), [assistEvents]);
+  const scorers = useMemo(() => buildScorerList(supabaseScores, players), [supabaseScores, players]);
+  const assisters = useMemo(() => buildAssistList(assistEvents, players), [assistEvents, players]);
 
   // Journées disponibles dans les rouges
   const journees = useMemo(() => {
