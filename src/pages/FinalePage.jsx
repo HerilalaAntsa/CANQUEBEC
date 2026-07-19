@@ -15,7 +15,8 @@ const ROUND_LABELS = {
   '1/8e de finale':   '1/8 de finale',
   'Quarts de finale': 'Quarts de finale',
   'Demi-finales':     'Demi-finales',
-  'Finale':           'Finale',
+  'Finale':           '🏆 Grande Finale',
+  '3e place':         '🥉 Match pour la 3e place',
 };
 
 function formatDateHeader(dateStr) {
@@ -52,7 +53,8 @@ export default function FinalePage() {
       { round: '1/8e de finale',   matches: b.r16 },
       { round: 'Quarts de finale', matches: b.qf },
       { round: 'Demi-finales',     matches: b.sf },
-      { round: 'Finale',           matches: [b.finale, b.third].filter(Boolean) },
+      { round: 'Finale',           matches: [b.finale].filter(Boolean) },
+      { round: '3e place',         matches: [b.third].filter(Boolean) },
     ];
     return rounds.map(({ round, matches: rMatches }) => {
       const dateMap = new Map();
