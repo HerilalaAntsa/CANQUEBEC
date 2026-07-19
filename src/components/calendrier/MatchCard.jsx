@@ -3,6 +3,8 @@ import styles from './MatchCard.module.css';
 import FlagBadge from '../shared/FlagBadge';
 import ScoreBadge from '../shared/ScoreBadge';
 import StatusPill from '../shared/StatusPill';
+import { useLeagueData } from '../../services/dataStore';
+import { canonicalizeTeam } from '../../config/teams';
 
 const VENUE_LABELS = {
   'VANIER':     '📍 École Vanier',
@@ -43,6 +45,7 @@ function formatDate(date, dateRaw) {
 }
 
 export default function MatchCard({ match }) {
+  const { players } = useLeagueData();
   if (!match) return null;
 
   const venue = VENUE_LABELS[match.venue?.trim()] ?? match.venue;
@@ -54,6 +57,16 @@ export default function MatchCard({ match }) {
   const normT = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
   const tA = normT(match.teamA);
   const tB = normT(match.teamB);
+
+  // R\u00e9sout le nom d'un buteur : nom saisi, sinon depuis le roster (\u00e9quipe + num\u00e9ro
+  // canonicalis\u00e9s \u2014 certains buts ont \u00e9t\u00e9 saisis sans nom), sinon le num\u00e9ro.
+  const rosterName = (team, num) => {
+    if (num == null || num === '') return null;
+    const key = `${canonicalizeTeam(team)}:${num}`;
+    const p = (players ?? []).find(pl => `${canonicalizeTeam(pl.team)}:${pl.number}` === key);
+    return p?.name ?? null;
+  };
+  const scorerName = (g) => g.player_name || rosterName(g.team, g.player_num) || (g.player_num ? `#${g.player_num}` : '?');
 
   const card = (
     <article className={`${styles.card} ${isTBD ? styles.cardTBD : ''} ${isForfait ? styles.cardForfait : ''} ${match.supabaseId ? styles.clickable : ''}`}>
@@ -91,7 +104,7 @@ export default function MatchCard({ match }) {
           <div className={styles.scorersCol}>
             {match.goals.filter(g => normT(g.team) === tA).map((g, i) => (
               <span key={i} className={styles.scorer}>
-                ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+                ⚽ {scorerName(g)}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
               </span>
             ))}
           </div>
@@ -99,7 +112,7 @@ export default function MatchCard({ match }) {
           <div className={`${styles.scorersCol} ${styles.scorersRight}`}>
             {match.goals.filter(g => normT(g.team) === tB).map((g, i) => (
               <span key={i} className={styles.scorer}>
-                ⚽ {g.player_name || (g.player_num ? `#${g.player_num}` : '?')}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
+                ⚽ {scorerName(g)}{g.minute ? <span className={styles.scorerMin}> {g.minute}'</span> : ''}
               </span>
             ))}
           </div>

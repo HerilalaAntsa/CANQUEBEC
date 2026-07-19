@@ -416,18 +416,20 @@ export function DataProvider({ children }) {
         hasFullData: true,
       }));
 
-      // Regrouper les buts par match_id
+      // Regrouper les buts par match_id.
+      // On CANONICALISE l'équipe du but : sinon un but saisi "SENEGAL" (sans accent)
+      // ne correspond pas au match affiché "SÉNÉGAL" et le buteur disparaît des cartes.
       const goalsByMatch = {};
       for (const ev of eventsRes.data ?? []) {
         if (!goalsByMatch[ev.match_id]) goalsByMatch[ev.match_id] = [];
-        goalsByMatch[ev.match_id].push(ev);
+        goalsByMatch[ev.match_id].push({ ...ev, team: canonicalizeTeam(ev.team) });
       }
 
-      // Regrouper les cartons rouges par match_id
+      // Regrouper les cartons rouges par match_id (même canonicalisation)
       const redsByMatch = {};
       for (const ev of redEventsRes.data ?? []) {
         if (!redsByMatch[ev.match_id]) redsByMatch[ev.match_id] = [];
-        redsByMatch[ev.match_id].push(ev);
+        redsByMatch[ev.match_id].push({ ...ev, team: canonicalizeTeam(ev.team) });
       }
 
       const scores = {};
