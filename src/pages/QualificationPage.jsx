@@ -67,7 +67,16 @@ export default function QualificationPage() {
       if (!map.has(j)) map.set(j, []);
       map.get(j).push(m);
     }
-    return [...map.entries()].sort((a, b) => a[0] - b[0]);
+    // Ordre décroissant : matchs les plus récents en haut (dans chaque journée)
+    for (const arr of map.values()) {
+      arr.sort((a, b) => {
+        const ka = `${a.date ?? ''}T${a.time ?? ''}`;
+        const kb = `${b.date ?? ''}T${b.time ?? ''}`;
+        return ka > kb ? -1 : ka < kb ? 1 : 0;
+      });
+    }
+    // ... et journées les plus récentes en haut
+    return [...map.entries()].sort((a, b) => b[0] - a[0]);
   }, [filtered]);
 
   const played = groupMatches.filter(m => ['played', 'forfait_a', 'forfait_b'].includes(m.status)).length;

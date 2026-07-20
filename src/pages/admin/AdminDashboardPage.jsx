@@ -390,6 +390,13 @@ export default function AdminDashboardPage() {
             );
           };
 
+          // Tri décroissant par date/heure : matchs récents en haut
+          const byDateDesc = (a, b) => {
+            const ka = `${a.date ?? ''}T${a.time ?? ''}`;
+            const kb = `${b.date ?? ''}T${b.time ?? ''}`;
+            return ka > kb ? -1 : ka < kb ? 1 : 0;
+          };
+
           // Groupes par journée (matchs de groupe)
           const grouped = {};
           for (const m of filtered) {
@@ -397,10 +404,12 @@ export default function AdminDashboardPage() {
             const j = m.journee ?? 0;
             (grouped[j] ??= []).push(m);
           }
-          const journees = Object.keys(grouped).map(Number).filter(j => j > 0).sort((a, b) => a - b);
+          // Journées les plus récentes en haut + matchs récents en haut dans chaque journée
+          const journees = Object.keys(grouped).map(Number).filter(j => j > 0).sort((a, b) => b - a);
+          for (const j of journees) grouped[j].sort(byDateDesc);
 
-          // Groupes de phase finale (par tour)
-          const PHASE_ORDER = ['1/8e de finale', 'Quarts de finale', 'Demi-finales', 'Finale'];
+          // Groupes de phase finale (par tour, le plus récent d'abord)
+          const PHASE_ORDER = ['Finale', 'Demi-finales', 'Quarts de finale', '1/8e de finale'];
           const PHASE_LABELS = {
             '1/8e de finale': '1/8 de finale', 'Quarts de finale': 'Quarts de finale',
             'Demi-finales': 'Demi-finales', 'Finale': 'Finale',
@@ -410,18 +419,11 @@ export default function AdminDashboardPage() {
             if (m.phase) (phaseGroups[m.phase] ??= []).push(m);
           }
           const phases = PHASE_ORDER.filter(p => phaseGroups[p]);
+          for (const p of phases) phaseGroups[p].sort(byDateDesc);
 
           return (
             <>
-              {journees.map(j => (
-                <div key={`j${j}`} className={styles.journeeGroup}>
-                  <div className={styles.journeeHeader}>
-                    <span className={styles.journeeTitle}>Journée {j}</span>
-                    <span className={styles.journeeCount}>{grouped[j].length} match{grouped[j].length > 1 ? 's' : ''}</span>
-                  </div>
-                  {grouped[j].map(renderCard)}
-                </div>
-              ))}
+              {/* Phase finale d'abord (plus récent) */}
               {phases.map(p => (
                 <div key={p} className={styles.journeeGroup}>
                   <div className={styles.journeeHeader}>
@@ -429,6 +431,15 @@ export default function AdminDashboardPage() {
                     <span className={styles.journeeCount}>{phaseGroups[p].length} match{phaseGroups[p].length > 1 ? 's' : ''}</span>
                   </div>
                   {phaseGroups[p].map(renderCard)}
+                </div>
+              ))}
+              {journees.map(j => (
+                <div key={`j${j}`} className={styles.journeeGroup}>
+                  <div className={styles.journeeHeader}>
+                    <span className={styles.journeeTitle}>Journée {j}</span>
+                    <span className={styles.journeeCount}>{grouped[j].length} match{grouped[j].length > 1 ? 's' : ''}</span>
+                  </div>
+                  {grouped[j].map(renderCard)}
                 </div>
               ))}
             </>
