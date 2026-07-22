@@ -84,8 +84,10 @@ const R16_POSITIONS = {
 };
 
 function pairKey(m) {
-  const n = s => (s || '').trim().toUpperCase().replace(/\u2019/g, "'");
-  return `${n(m.teamA)}:${n(m.teamB)}`;
+  // Canonicaliser : un 1/8 stock\u00e9 "SENEGAL" (sans accent) doit correspondre \u00e0 la
+  // position "S\u00c9N\u00c9GAL" du tirage, sinon le bracket se d\u00e9cale et les appariements
+  // de quarts sont faux.
+  return `${canonicalizeTeam(m.teamA)}:${canonicalizeTeam(m.teamB)}`;
 }
 
 /**
