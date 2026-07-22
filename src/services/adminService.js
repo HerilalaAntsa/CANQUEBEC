@@ -340,38 +340,47 @@ export async function importMatchesFromExcel(parsedMatches) {
     .select('id, journee, phase, team_a, team_b, score_a, score_b, status');
   if (fetchErr) throw fetchErr;
 
-  const byJourneeKey = {};
-  const byPhaseKey = {};
+  // Clé de paire d'équipes CANONICALISÉE (accents normalisés, ordre indifférent).
+  const teamPair = (a, b) => [canonicalizeTeam(a), canonicalizeTeam(b)].sort().join('|');
+
+  const byJourneeKey = {};   // "journee|pair" -> match de groupe
+  const byPhaseKey   = {};   // "phase|pair"   -> match de phase (tour précis)
+  const phaseByPair  = {};   // "pair"         -> match de PHASE FINALE (n'importe quel tour)
   for (const row of existing ?? []) {
-    if (row.journee !== null) {
-      // Indexer dans les deux sens pour éviter les doublons si l'ordre des équipes est inversé
-      byJourneeKey[`${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
-      byJourneeKey[`${row.journee}:${normKey(row.team_b)}:${normKey(row.team_a)}`] = row;
-    } else if (row.phase) {
-      byPhaseKey[`${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`] = row;
-      byPhaseKey[`${row.phase}:${normKey(row.team_b)}:${normKey(row.team_a)}`] = row;
-    }
+    const tp = teamPair(row.team_a, row.team_b);
+    if (row.journee !== null) byJourneeKey[`${row.journee}|${tp}`] = row;
+    if (row.phase)          { byPhaseKey[`${row.phase}|${tp}`] = row; phaseByPair[tp] = row; }
   }
 
-  const toInsert = [];
-  const toUpdate = [];
+  const toInsert     = [];   // nouveaux matchs
+  const toUpdate     = [];   // maj méta d'un match de groupe (scores préservés)
+  const toUpdateSched = [];  // maj HORAIRE seulement (matchs de phase finale gérés par l'appli)
+  const schedFields = (r) => ({
+    date: r.date, time: r.time, venue: r.venue,
+    referee: r.referee, ref1: r.ref1, ref2: r.ref2, coordinator: r.coordinator,
+  });
 
   for (const row of groupRows) {
-    const key = `${row.journee}:${normKey(row.team_a)}:${normKey(row.team_b)}`;
-    const ex  = byJourneeKey[key];
+    const tp = teamPair(row.team_a, row.team_b);
+    const ex = byJourneeKey[`${row.journee}|${tp}`];
     if (ex) {
-      // Préserver les scores/statut déjà saisis via admin
+      // Vrai match de groupe existant → maj méta, on garde scores/statut déjà saisis
       toUpdate.push({ id: ex.id, ...row, score_a: ex.score_a, score_b: ex.score_b, status: ex.status });
+    } else if (phaseByPair[tp]) {
+      // Ces équipes existent déjà comme match de PHASE FINALE (créé par l'appli).
+      // NE PAS créer de doublon "journée" — mettre à jour uniquement l'horaire.
+      toUpdateSched.push({ id: phaseByPair[tp].id, ...schedFields(row) });
     } else {
       toInsert.push(row);
     }
   }
 
   for (const row of finaleRows) {
-    const key = `${row.phase}:${normKey(row.team_a)}:${normKey(row.team_b)}`;
-    const ex  = byPhaseKey[key];
+    const tp = teamPair(row.team_a, row.team_b);
+    const ex = byPhaseKey[`${row.phase}|${tp}`] || phaseByPair[tp];
     if (ex) {
-      toUpdate.push({ id: ex.id, ...row, score_a: ex.score_a, score_b: ex.score_b, status: ex.status });
+      // Match de phase existant → horaire seulement (préserve tour/scores/buteurs)
+      toUpdateSched.push({ id: ex.id, ...schedFields(row) });
     } else {
       toInsert.push(row);
     }
@@ -394,7 +403,19 @@ export async function importMatchesFromExcel(parsedMatches) {
     }
   }
 
-  return toInsert.length + toUpdate.length;
+  // Horaire des matchs de phase : on n'écrase jamais avec une valeur vide.
+  for (const row of toUpdateSched) {
+    const { id, ...fields } = row;
+    const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v != null && v !== ''));
+    if (Object.keys(clean).length === 0) continue;
+    const { error } = await supabase.from('matches').update(clean).eq('id', id);
+    if (error) {
+      console.error('[importMatches] update sched error', { id, error });
+      throw new Error(`Update horaire match #${id} échoué : ${error.message}`);
+    }
+  }
+
+  return toInsert.length + toUpdate.length + toUpdateSched.length;
 }
 
 // ─── Suspensions ──────────────────────────────────────────────────────────────
